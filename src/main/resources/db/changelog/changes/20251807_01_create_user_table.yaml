@@ -1,0 +1,65 @@
+databaseChangeLog:
+  - changeSet:
+      # ID va izohni o'zgarishni aks ettirish uchun yangilash yaxshiroq
+      id: 20231027-01-create-users-table-with-partial-index
+      author: abdulbosit
+      comment: "Creating users table with a partial unique index on username for active users"
+      changes:
+        # 1-qadam: Jadvalni yaratish (lekin username'da oddiy unique cheklovisiz)
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  remarks: "For soft delete functionality via @SQLDelete"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  remarks: "This field is managed by Hibernate @UpdateTimestamp"
+              - column:
+                  name: username
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: password
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+                    checkConstraint: "role IN ('STUDENT', 'ADMIN', 'INSTRUCTOR')"
+
+        # 2-qadam: Yaratilgan jadvalga darhol QISMAN NOYOB INDEKS qo'shish
+        - sql:
+            dbms: postgresql # Bu o'zgarish PostgreSQL uchun ekanligini bildiradi
+            endDelimiter: ;
+            sql: |
+              CREATE UNIQUE INDEX idx_users_username_unique_not_deleted
+              ON users (username)
+              WHERE deleted = false;
+            # Ushbu o'zgarishni orqaga qaytarish uchun rollback logikasi
+            rollback:
+              - dropIndex:
+                  indexName: idx_users_username_unique_not_deleted
+                  tableName: users

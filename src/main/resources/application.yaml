@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: ONLINE-EDUCATION
+
+  config:
+    import: optional:env[.env]
+
+  profiles:
+    active: abdulbosit
+
+  banner:
+    location: classpath:banner.txt
+
