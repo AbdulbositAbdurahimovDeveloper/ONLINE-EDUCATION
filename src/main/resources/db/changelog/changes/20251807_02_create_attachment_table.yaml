@@ -1,6 +1,6 @@
 databaseChangeLog:
   - changeSet:
-      id: 20231027-06-create-attachment-table # Loyiha bo'yicha noyob ID
+      id: 20251807-06-create-attachment-table # Loyiha bo'yicha noyob ID
       author: abdulbosit
       comment: "Creating the attachment table to store file metadata"
       changes:

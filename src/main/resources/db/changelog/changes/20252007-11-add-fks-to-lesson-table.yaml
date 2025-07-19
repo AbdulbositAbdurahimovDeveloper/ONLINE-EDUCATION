@@ -1,0 +1,23 @@
+databaseChangeLog:
+  # =====================================================================
+  # 11-QADAM: "lesson" JADVALIGA TASHQI KALITLARNI QO'SHISH
+  # =====================================================================
+  - changeSet:
+      id: 20252007-11-add-fks-to-lesson-table
+      author: Eldor04
+      comment: "Step 11: Adding foreign key constraints to the lesson table"
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: lesson
+            baseColumnNames: modules_id
+            constraintName: fk_lesson_on_modules
+            referencedTableName: modules
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: lesson
+            baseColumnNames: view_id
+            constraintName: fk_lesson_on_user_view
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: SET NULL

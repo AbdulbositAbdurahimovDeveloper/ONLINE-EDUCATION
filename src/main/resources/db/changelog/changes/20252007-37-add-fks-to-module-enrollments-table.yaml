@@ -1,0 +1,23 @@
+databaseChangeLog:
+  # =====================================================================
+  # 37-QADAM: "module_enrollments" JADVALIGA TASHQI KALITLARNI QO'SHISH
+  # =====================================================================
+  - changeSet:
+      id: 20252007-37-add-fks-to-module-enrollments-table
+      author: Eldor04
+      comment: "Step 37: Adding foreign key constraints to the module_enrollments table"
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: module_enrollments
+            baseColumnNames: user_id
+            constraintName: fk_module_enrollments_on_user
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: module_enrollments
+            baseColumnNames: module_id
+            constraintName: fk_module_enrollments_on_module
+            referencedTableName: modules
+            referencedColumnNames: id
+            onDelete: CASCADE

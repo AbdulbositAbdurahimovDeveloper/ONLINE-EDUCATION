@@ -1,0 +1,28 @@
+databaseChangeLog:
+  # =====================================================================
+  # 44-QADAM: "reviews" JADVALIGA MAXSUS INDEKS VA CHEKLOVLAR QO'SHISH
+  # =====================================================================
+  - changeSet:
+      id: 20252007-44-add-indexes-to-reviews-table
+      author: Eldor04
+      dbms: "postgresql"
+      comment: "Step 44: Adding a partial unique index on (user_id, course_id) and a performance index on course_id"
+      changes:
+        - sql:
+            sql: |
+              CREATE UNIQUE INDEX idx_user_course_review_unique_not_deleted
+              ON reviews (user_id, course_id)
+              WHERE deleted = false;
+        - createIndex:
+            indexName: idx_reviews_on_course_id
+            tableName: reviews
+            columns:
+              - column:
+                  name: course_id
+      rollback:
+        - dropIndex:
+            indexName: idx_user_course_review_unique_not_deleted
+            tableName: reviews
+        - dropIndex:
+            indexName: idx_reviews_on_course_id
+            tableName: reviews

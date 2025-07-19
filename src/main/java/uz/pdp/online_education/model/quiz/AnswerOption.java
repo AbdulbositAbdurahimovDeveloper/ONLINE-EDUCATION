@@ -2,6 +2,9 @@ package uz.pdp.online_education.model.quiz;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.FieldNameConstants;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import uz.pdp.online_education.model.Abs.AbsLongEntity;
 
 @AllArgsConstructor
@@ -11,6 +14,9 @@ import uz.pdp.online_education.model.Abs.AbsLongEntity;
 @ToString(exclude = "question")
 @Entity
 @Table(name = "answer_options")
+@SQLDelete(sql = "UPDATE answer_options SET deleted = true WHERE id = ?")
+@SQLRestriction(value = "deleted=false")
+@FieldNameConstants
 public class AnswerOption extends AbsLongEntity {
 
     @Column(columnDefinition = "TEXT", nullable = false)

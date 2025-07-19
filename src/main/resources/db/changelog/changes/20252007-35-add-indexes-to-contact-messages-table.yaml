@@ -1,0 +1,28 @@
+databaseChangeLog:
+  # =====================================================================
+  # 35-QADAM: "contact_messages" JADVALIGA UNUMDORLIK INDEKSLARINI QO'SHISH
+  # =====================================================================
+  - changeSet:
+      id: 20252007-35-add-indexes-to-contact-messages-table
+      author: Eldor04
+      comment: "Step 35: Adding performance indexes on email and status columns"
+      changes:
+        - createIndex:
+            indexName: idx_contact_messages_on_email
+            tableName: contact_messages
+            columns:
+              - column:
+                  name: email
+        - createIndex:
+            indexName: idx_contact_messages_on_status
+            tableName: contact_messages
+            columns:
+              - column:
+                  name: status
+      rollback:
+        - dropIndex:
+            indexName: idx_contact_messages_on_email
+            tableName: contact_messages
+        - dropIndex:
+            indexName: idx_contact_messages_on_status
+            tableName: contact_messages

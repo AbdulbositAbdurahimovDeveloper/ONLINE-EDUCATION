@@ -1,0 +1,23 @@
+databaseChangeLog:
+  # =====================================================================
+  # 17-QADAM: "attachment_contents" JADVALIGA TASHQI KALITLARNI QO'SHISH
+  # =====================================================================
+  - changeSet:
+      id: 20252007-17-add-fks-to-attachment-contents-table
+      author: Eldor04
+      comment: "Step 17: Adding FKs to link 'attachment_contents' to 'contents' and 'attachment' tables"
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: attachment_contents
+            baseColumnNames: id
+            constraintName: fk_attachment_contents_on_contents
+            referencedTableName: contents
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: attachment_contents
+            baseColumnNames: attachment_id
+            constraintName: fk_attachment_contents_on_attachment
+            referencedTableName: attachment
+            referencedColumnNames: id
+            onDelete: RESTRICT # O'chirishni cheklash, chunki kontent faylga bog'liq

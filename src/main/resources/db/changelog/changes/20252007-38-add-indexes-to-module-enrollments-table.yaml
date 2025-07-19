@@ -1,0 +1,28 @@
+databaseChangeLog:
+  # =====================================================================
+  # 38-QADAM: "module_enrollments" JADVALIGA MAXSUS INDEKS QO'SHISH
+  # =====================================================================
+  - changeSet:
+      id: 20252007-38-add-indexes-to-module-enrollments-table
+      author: Eldor04
+      dbms: "postgresql"
+      comment: "Step 38: Adding a partial unique index on (user_id, module_id) and a performance index on module_id"
+      changes:
+        - sql:
+            sql: |
+              CREATE UNIQUE INDEX idx_user_module_enrollment_unique_not_deleted
+              ON module_enrollments (user_id, module_id)
+              WHERE deleted = false;
+        - createIndex:
+            indexName: idx_module_enrollments_on_module_id
+            tableName: module_enrollments
+            columns:
+              - column:
+                  name: module_id
+      rollback:
+        - dropIndex:
+            indexName: idx_user_module_enrollment_unique_not_deleted
+            tableName: module_enrollments
+        - dropIndex:
+            indexName: idx_module_enrollments_on_module_id
+            tableName: module_enrollments

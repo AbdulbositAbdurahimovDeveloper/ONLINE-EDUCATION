@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       # ID va izohni o'zgarishni aks ettirish uchun yangilash yaxshiroq
-      id: 20231027-01-create-users-table-with-partial-index
+      id: 20251807-01-create-users-table-with-partial-index
       author: abdulbosit
       comment: "Creating users table with a partial unique index on username for active users"
       changes:

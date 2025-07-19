@@ -1,0 +1,23 @@
+databaseChangeLog:
+  # =====================================================================
+  # 20-QADAM: "quiz_contents" JADVALIGA TASHQI KALITLARNI QO'SHISH
+  # =====================================================================
+  - changeSet:
+      id: 20252007-20-add-fks-to-quiz-contents-table
+      author: Eldor04
+      comment: "Step 20: Adding FKs to link 'quiz_contents' to 'contents' and 'quiz' tables"
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: quiz_contents
+            baseColumnNames: id
+            constraintName: fk_quiz_contents_on_contents
+            referencedTableName: contents
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: quiz_contents
+            baseColumnNames: quiz_id
+            constraintName: fk_quiz_contents_on_quiz
+            referencedTableName: quiz
+            referencedColumnNames: id
+            onDelete: RESTRICT # Quiz o'chirilsa, unga bog'liq content ham muammoga uchramasligi uchun cheklash
