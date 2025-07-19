@@ -5,3 +5,5 @@ databaseChangeLog:
       file: db/changelog/changes/20251807_02_create_attachment_table.yaml
   - include:
       file: db/changelog/changes/20251807_03_create_user_profile_table.yaml
+  - include:
+      file: db/changelog/changes/20251907_01_add_column_phone_number_user_profile.yaml

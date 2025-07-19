@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20251907-01-add column phone_number user_profile
+      author: abdulbosit
+      comment: "user_profile add column phone_number"
+      changes:
+        - addColumn:
+            tableName: user_profiles
+            columns:
+              - column:
+                  name: phone_number
+                  type: varchar
+                  constraints:
+                    unique: true

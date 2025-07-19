@@ -81,6 +81,6 @@ public class DataLoader implements CommandLineRunner {
         userProfile.setUser(user);
 
         // User'ni saqlaymiz (Cascade tufayli UserProfile ham avtomatik saqlanadi)
-        userRepository.save(user);
+//        userRepository.save(user);
     }
 }

@@ -1,14 +1,15 @@
 package uz.pdp.online_education.model;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.FieldNameConstants;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import uz.pdp.online_education.model.Abs.AbsLongEntity;
+import uz.pdp.online_education.model.lesson.Lesson;
 
 import java.util.List;
 
@@ -16,8 +17,11 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
-@Entity(name = "course_modules")
-public class CourseModule extends AbsLongEntity {
+@Entity(name = "modules")
+@SQLDelete(sql = "UPDATE modules SET deleted = true WHERE id = ?")
+@SQLRestriction(value = "deleted=false")
+@FieldNameConstants
+public class Module extends AbsLongEntity {
 
     private String title;
 
@@ -32,5 +36,13 @@ public class CourseModule extends AbsLongEntity {
 
     @OneToMany(mappedBy = "module", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Lesson> lessons;
+
+    @OneToMany(mappedBy = "module",fetch = FetchType.LAZY)
+    private List<Payment> payments;
+
+    @OneToMany(mappedBy = "module",fetch =  FetchType.LAZY)
+    private List<ModuleEnrollment> enrollments;
+
+
 
 }

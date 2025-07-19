@@ -31,6 +31,8 @@ public class UserProfile extends AbsLongEntity {
     @Column(nullable = false)
     private String email; // Emailni bu yerda saqlash ham mumkin
 
+    private String phoneNumber;
+
     @OneToOne
     private Attachment profilePicture;
 
@@ -43,5 +45,5 @@ public class UserProfile extends AbsLongEntity {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    // email uchun unique indeks shart
+    // email uchun unique indeks shart lekin delted falselar ortasida
 }

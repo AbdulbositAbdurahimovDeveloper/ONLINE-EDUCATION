@@ -28,8 +28,6 @@ public class Course extends AbsLongEntity {
 
     private String slug;
 
-    private Long totalPrice; // bu yerda narx kiritilmaydin modullarni har bir narxlarning yigindisini beradi
-
     @OneToOne
     private Attachment thumbnailUrl;// course lar royxatida korinatigan rasm 1 ta bolsa yetadi
 
@@ -41,10 +39,6 @@ public class Course extends AbsLongEntity {
     private Category category;//course qaysi categoryda
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CourseModule> courseModules; // coursening modullari
-
-    @OneToMany(mappedBy = "course")
-    private List<Enrollments> enrollments; // coursega kimlar qachon yozilgan
-
+    private List<Module> modules; // coursening modullari
 
 }
