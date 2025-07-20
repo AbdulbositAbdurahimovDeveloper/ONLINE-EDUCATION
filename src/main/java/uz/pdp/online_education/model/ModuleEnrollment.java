@@ -13,8 +13,6 @@ import uz.pdp.online_education.model.Abs.AbsLongEntity;
 @Setter
 @ToString
 @Entity(name = "module_enrollments")
-@SQLDelete(sql = "UPDATE module_enrollments SET deleted = true WHERE id = ?")
-@SQLRestriction(value = "deleted=false")
 @FieldNameConstants
 @Table(uniqueConstraints = {
         // Bitta foydalanuvchi bitta modulga faqat bir marta yozilishi mumkin

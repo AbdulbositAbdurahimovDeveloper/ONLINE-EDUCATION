@@ -1,12 +1,10 @@
 databaseChangeLog:
-  # =====================================================================
-  # 25-QADAM: "faqs" JADVALINING ASOSIY STRUKTURASINI YARATISH
-  # =====================================================================
   - changeSet:
-      id: 20252007-05-create-faqs-table
+      id: 20252007-15-create-full-faq-entity
       author: Eldor04
-      comment: "Step 25: Creating the base structure of the new faqs table"
+      comment: "A single, atomic changeset to create the 'faqs' table with its constraints and indexes"
       changes:
+        # 1-QADAM: JADVALNI YARATISH
         - createTable:
             tableName: faqs
             columns:
@@ -47,3 +45,25 @@ databaseChangeLog:
                   type: INTEGER
                   defaultValueNumeric: 0
                   remarks: "Order for displaying FAQs"
+
+        # 2-QADAM: TASHQI KALITLAR
+        # Bu entity'da tashqi kalitlar mavjud emas.
+
+        # 3-QADAM: UNUMDORLIK INDEKSLARINI YARATISH
+        - createIndex:
+            indexName: idx_faqs_on_display_order
+            tableName: faqs
+            comment: "Adding a performance index on the display_order column for faster sorting"
+            columns:
+              - column:
+                  name: display_order
+
+      # =====================================================================
+      # BARCHA O'ZGARISHLARNI ORQAGA QAYTARISH (ROLLBACK)
+      # =====================================================================
+      rollback:
+        - dropIndex:
+            indexName: idx_faqs_on_display_order
+            tableName: faqs
+        - dropTable:
+            tableName: faqs

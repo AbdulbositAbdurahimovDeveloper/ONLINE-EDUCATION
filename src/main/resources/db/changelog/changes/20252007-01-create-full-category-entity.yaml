@@ -1,0 +1,46 @@
+# Fayl: 20252007-01-create-full-category-entity.yaml
+databaseChangeLog:
+  - changeSet:
+      id: 20252007-01-create-full-category-entity
+      author: Eldor04
+      comment: "A single, atomic changeset to create the 'category' table with a partial unique index via SQL"
+      changes:
+        # 1-QADAM: JADVALNI YARATISH
+        - createTable:
+            tableName: category
+            columns:
+              - column: { name: "id", type: "BIGINT", autoIncrement: true, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: "deleted", type: "BOOLEAN", defaultValueBoolean: false, constraints: { nullable: false } }
+              - column: { name: "created_at", type: "TIMESTAMP WITHOUT TIME ZONE", defaultValueComputed: "CURRENT_TIMESTAMP", constraints: { nullable: false } }
+              - column: { name: "updated_at", type: "TIMESTAMP WITHOUT TIME ZONE" }
+              - column: { name: "name", type: "VARCHAR(255)", constraints: { nullable: false } }
+              - column: { name: "icon", type: "VARCHAR(255)" }
+              - column: { name: "slug", type: "VARCHAR(255)", constraints: { nullable: false } }
+
+        # 2-QADAM: MAXSUS VA UNUMDORLIK INDEKSLARINI YARATISH
+        # BULARNING HAMMASI "changes" BLOKI ICHIDA, Bitta ro'yxatda bo'lishi kerak
+        - sql:
+            dbms: "postgresql"
+            comment: "Adding a partial unique index on slug to support soft-delete uniqueness"
+            sql: |
+              CREATE UNIQUE INDEX idx_category_slug_unique_not_deleted
+              ON category (slug)
+              WHERE deleted = false;
+        - createIndex:
+            indexName: idx_category_name
+            tableName: category
+            comment: "Adding a performance index on the name column for faster lookups"
+            columns:
+              - column:
+                  name: name
+
+      # ROLLBACK ham o'zgarishsiz qoladi, u to'g'ri edi
+      rollback:
+        - dropIndex:
+            indexName: idx_category_name
+            tableName: category
+        - dropIndex:
+            indexName: idx_category_slug_unique_not_deleted
+            tableName: category
+        - dropTable:
+            tableName: category

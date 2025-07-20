@@ -1,0 +1,117 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20252007-13-create-full-comment-entity
+      author: Eldor04
+      comment: "A single, atomic changeset to create the 'comments' table with all its constraints, FKs, CHECKs and indexes"
+      changes:
+        # 1-QADAM: JADVALNI YARATISH
+        - createTable:
+            tableName: comments
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              # Bu entity'da "deleted" ustuni yo'q
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  name: text
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    remarks: "FK to the users table"
+              - column:
+                  name: course_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+                    remarks: "FK to the courses table (for course comments)"
+              - column:
+                  name: lesson_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+                    remarks: "FK to the lesson table (for lesson comments)"
+              - column:
+                  name: parent_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+                    remarks: "Self-referencing FK for replies"
+
+        # 2-QADAM: TASHQI KALITLARNI QO'SHISH
+        - addForeignKeyConstraint:
+            baseTableName: comments
+            baseColumnNames: user_id
+            constraintName: fk_comments_on_user
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: RESTRICT # Foydalanuvchi o'chirilsa, kommentlari qolishi mumkin
+        - addForeignKeyConstraint:
+            baseTableName: comments
+            baseColumnNames: course_id
+            constraintName: fk_comments_on_course
+            referencedTableName: courses
+            referencedColumnNames: id
+            onDelete: CASCADE # Kurs o'chirilsa, kommentlari ham o'chiriladi
+        - addForeignKeyConstraint:
+            baseTableName: comments
+            baseColumnNames: lesson_id
+            constraintName: fk_comments_on_lesson
+            referencedTableName: lesson
+            referencedColumnNames: id
+            onDelete: CASCADE # Dars o'chirilsa, kommentlari ham o'chiriladi
+        - addForeignKeyConstraint:
+            baseTableName: comments
+            baseColumnNames: parent_id
+            constraintName: fk_comments_on_parent_comment
+            referencedTableName: comments
+            referencedColumnNames: id
+            onDelete: CASCADE # Asosiy komment o'chirilsa, javoblari ham o'chiriladi
+
+        # 3-QADAM: MAXSUS CHEKLOV VA UNUMDORLIK INDEKSLARINI YARATISH
+        - sql:
+            dbms: "postgresql"
+            comment: "Adding a CHECK constraint for polymorphism using raw SQL"
+            sql: |
+              ALTER TABLE comments
+              ADD CONSTRAINT chk_comment_polymorphic_owner
+              CHECK ((course_id IS NOT NULL AND lesson_id IS NULL) OR (course_id IS NULL AND lesson_id IS NOT NULL));
+        - createIndex: { indexName: "idx_comments_on_user_id", tableName: "comments", columns: [ { column: { name: "user_id" } } ] }
+        - createIndex: { indexName: "idx_comments_on_course_id", tableName: "comments", columns: [ { column: { name: "course_id" } } ] }
+        - createIndex: { indexName: "idx_comments_on_lesson_id", tableName: "comments", columns: [ { column: { name: "lesson_id" } } ] }
+        - createIndex: { indexName: "idx_comments_on_parent_id", tableName: "comments", columns: [ { column: { name: "parent_id" } } ] }
+
+      # =====================================================================
+      # BARCHA O'ZGARISHLARNI ORQAGA QAYTARISH (ROLLBACK)
+      # =====================================================================
+      rollback:
+        - dropIndex: { indexName: "idx_comments_on_parent_id", tableName: "comments" }
+        - dropIndex: { indexName: "idx_comments_on_lesson_id", tableName: "comments" }
+        - dropIndex: { indexName: "idx_comments_on_course_id", tableName: "comments" }
+        - dropIndex: { indexName: "idx_comments_on_user_id", tableName: "comments" }
+        - sql:
+            dbms: "postgresql"
+            comment: "Dropping the raw SQL CHECK constraint"
+            sql: ALTER TABLE comments DROP CONSTRAINT IF EXISTS chk_comment_polymorphic_owner;
+        - dropForeignKeyConstraint: { baseTableName: "comments", constraintName: "fk_comments_on_parent_comment" }
+        - dropForeignKeyConstraint: { baseTableName: "comments", constraintName: "fk_comments_on_lesson" }
+        - dropForeignKeyConstraint: { baseTableName: "comments", constraintName: "fk_comments_on_course" }
+        - dropForeignKeyConstraint: { baseTableName: "comments", constraintName: "fk_comments_on_user" }
+        - dropTable: { tableName: "comments" }

@@ -29,4 +29,6 @@ public class Faq extends AbsLongEntity {
     
     // FAQ'larni tartiblash uchun
     private int displayOrder;
+
+    private boolean deleted = false;
 }

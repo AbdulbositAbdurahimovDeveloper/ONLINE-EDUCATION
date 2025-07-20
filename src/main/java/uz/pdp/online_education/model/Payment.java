@@ -43,4 +43,6 @@ public class Payment extends AbsLongEntity {
 
   // Tranzaksiya haqida izoh (masalan, "To'lov simulyatsiyasi")
   private String description;
+
+  private boolean deleted = false;
 }

@@ -1,0 +1,57 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20252007-07-create-full-attachment-content-entity
+      author: Eldor04
+      comment: "A single, atomic changeset to create the 'attachment_contents' child table for the JOINED inheritance"
+      changes:
+        # 1-QADAM: JADVALNI YARATISH
+        - createTable:
+            tableName: attachment_contents
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    remarks: "Primary key that is also a foreign key to the base 'contents' table"
+              - column:
+                  name: attachment_id
+                  type: BIGINT
+                  constraints:
+                    unique: true
+                    nullable: false
+                    remarks: "FK to the attachment table. Unique because of @OneToOne."
+
+        # 2-QADAM: TASHQI KALITLARNI QO'SHISH
+        - addForeignKeyConstraint:
+            baseTableName: attachment_contents
+            baseColumnNames: id
+            constraintName: fk_attachment_contents_on_contents
+            referencedTableName: contents
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: attachment_contents
+            baseColumnNames: attachment_id
+            constraintName: fk_attachment_contents_on_attachment
+            referencedTableName: attachment
+            referencedColumnNames: id
+            onDelete: RESTRICT # O'chirishni cheklash, chunki kontent faylga bog'liq
+
+        # 3-QADAM: INDEKSLAR
+        # Jadvalni yaratishda "id" (primary key) va "attachment_id" (unique)
+        # ustunlari uchun indekslar avtomatik yaratiladi. Qo'shimcha indekslar shart emas.
+
+      # =====================================================================
+      # BARCHA O'ZGARISHLARNI ORQAGA QAYTARISH (ROLLBACK)
+      # =====================================================================
+      rollback:
+        - dropForeignKeyConstraint:
+            constraintName: fk_attachment_contents_on_attachment
+            baseTableName: attachment_contents
+        - dropForeignKeyConstraint:
+            constraintName: fk_attachment_contents_on_contents
+            baseTableName: attachment_contents
+        - dropTable:
+            tableName: attachment_contents

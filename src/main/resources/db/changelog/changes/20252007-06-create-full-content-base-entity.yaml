@@ -1,0 +1,85 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20252007-06-create-full-content-base-entity
+      author: Eldor04
+      comment: "A single, atomic changeset to create the base 'contents' table for the JOINED inheritance strategy"
+      changes:
+        # 1-QADAM: JADVALNI YARATISH
+        - createTable:
+            tableName: contents
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              # Bu entity'da "deleted" ustuni yo'q
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  name: content_type
+                  type: VARCHAR(255)
+                  remarks: "Discriminator column for JOINED inheritance strategy"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: block_order
+                  type: INTEGER
+                  constraints:
+                    nullable: false
+                  remarks: "Order of the content block within a lesson"
+              - column:
+                  name: lesson_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    remarks: "FK to the lesson table"
+
+        # 2-QADAM: TASHQI KALITLARNI QO'SHISH
+        - addForeignKeyConstraint:
+            baseTableName: contents
+            baseColumnNames: lesson_id
+            constraintName: fk_contents_on_lesson
+            referencedTableName: lesson
+            referencedColumnNames: id
+            onDelete: CASCADE # Agar dars o'chirilsa, uning kontentlari ham o'chiriladi
+
+        # 3-QADAM: NOYOB CHEKLOV VA UNUMDORLIK INDEKSLARINI YARATISH
+        # Har bir kontent bloki dars ichida o'zining takrorlanmas tartib raqamiga ega bo'lishi kerak.
+        - addUniqueConstraint:
+            tableName: contents
+            columnNames: "lesson_id, block_order"
+            constraintName: uq_content_order_per_lesson
+            comment: "Content block order should be unique within a lesson"
+        - createIndex:
+            indexName: idx_contents_on_lesson_id
+            tableName: contents
+            comment: "Adding a performance index on the lesson_id column for faster lookups"
+            columns:
+              - column:
+                  name: lesson_id
+
+      # =====================================================================
+      # BARCHA O'ZGARISHLARNI ORQAGA QAYTARISH (ROLLBACK)
+      # =====================================================================
+      rollback:
+        - dropIndex:
+            indexName: idx_contents_on_lesson_id
+            tableName: contents
+        - dropUniqueConstraint:
+            constraintName: uq_content_order_per_lesson
+            tableName: contents
+        - dropForeignKeyConstraint:
+            constraintName: fk_contents_on_lesson
+            baseTableName: contents
+        - dropTable:
+            tableName: contents

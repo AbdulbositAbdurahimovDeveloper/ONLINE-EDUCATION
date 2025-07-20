@@ -14,8 +14,6 @@ import uz.pdp.online_education.model.Abs.AbsLongEntity;
 @ToString(exclude = "question")
 @Entity
 @Table(name = "answer_options")
-@SQLDelete(sql = "UPDATE answer_options SET deleted = true WHERE id = ?")
-@SQLRestriction(value = "deleted=false")
 @FieldNameConstants
 public class AnswerOption extends AbsLongEntity {
 

@@ -14,8 +14,6 @@ import uz.pdp.online_education.model.quiz.Quiz; // To'g'ri paketdan import
 @ToString
 @Entity
 @Table(name = "quiz_contents")
-@SQLDelete(sql = "UPDATE quiz_contents SET deleted = true WHERE id = ?")
-@SQLRestriction(value = "deleted=false")
 @DiscriminatorValue("QUIZ")
 @FieldNameConstants
 public class QuizContent extends Content { // 'Content' ota-klassidan meros oladi

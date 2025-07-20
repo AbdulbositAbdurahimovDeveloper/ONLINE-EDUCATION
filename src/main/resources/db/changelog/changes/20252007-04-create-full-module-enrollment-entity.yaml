@@ -1,0 +1,95 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20252007-04-create-full-module-enrollment-entity
+      author: Eldor04
+      comment: "A single, atomic changeset to create the 'module_enrollments' table with all its constraints, FKs, and indexes"
+      changes:
+        # 1-QADAM: JADVALNI YARATISH
+        - createTable:
+            tableName: module_enrollments
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              # Bu entity'da "deleted" ustuni yo'q
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    remarks: "FK to the users table"
+              - column:
+                  name: module_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    remarks: "FK to the modules table"
+              - column:
+                  name: progress_percentage
+                  type: DOUBLE
+                  defaultValueNumeric: 0.0
+                  constraints:
+                    nullable: false
+
+        # 2-QADAM: TASHQI KALITLARNI QO'SHISH
+        - addForeignKeyConstraint:
+            baseTableName: module_enrollments
+            baseColumnNames: user_id
+            constraintName: fk_module_enrollments_on_user
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE # Foydalanuvchi o'chirilsa, uning yozuvlari ham o'chiriladi
+        - addForeignKeyConstraint:
+            baseTableName: module_enrollments
+            baseColumnNames: module_id
+            constraintName: fk_module_enrollments_on_module
+            referencedTableName: modules
+            referencedColumnNames: id
+            onDelete: CASCADE # Modul o'chirilsa, unga yozuvlar ham o'chiriladi
+
+        # 3-QADAM: NOYOB CHEKLOV VA UNUMDORLIK INDEKSLARINI YARATISH
+        - addUniqueConstraint:
+            tableName: module_enrollments
+            columnNames: "user_id, module_id"
+            constraintName: uq_user_module_enrollment
+            comment: "Implements the @UniqueConstraint to prevent duplicate enrollments"
+            # Izoh: Entity'da "course_module_id" yozilgan, lekin JoinColumn "module_id". "module_id" ishlatildi.
+        - createIndex:
+            indexName: idx_module_enrollments_on_module_id
+            tableName: module_enrollments
+            comment: "Adding a performance index on the module_id column for faster lookups"
+            columns:
+              - column:
+                  name: module_id
+
+      # =====================================================================
+      # BARCHA O'ZGARISHLARNI ORQAGA QAYTARISH (ROLLBACK)
+      # =====================================================================
+      rollback:
+        - dropIndex:
+            indexName: idx_module_enrollments_on_module_id
+            tableName: module_enrollments
+        - dropUniqueConstraint:
+            constraintName: uq_user_module_enrollment
+            tableName: module_enrollments
+        - dropForeignKeyConstraint:
+            constraintName: fk_module_enrollments_on_module
+            baseTableName: module_enrollments
+        - dropForeignKeyConstraint:
+            constraintName: fk_module_enrollments_on_user
+            baseTableName: module_enrollments
+        - dropTable:
+            tableName: module_enrollments

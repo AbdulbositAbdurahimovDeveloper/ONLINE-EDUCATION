@@ -1,12 +1,10 @@
 databaseChangeLog:
-  # =====================================================================
-  # 34-QADAM: "contact_messages" JADVALINING ASOSIY STRUKTURASINI YARATISH
-  # =====================================================================
   - changeSet:
-      id: 20252007-34-create-contact-messages-table
+      id: 20252007-14-create-full-contact-message-entity
       author: Eldor04
-      comment: "Step 34: Creating the base structure of the new contact_messages table"
+      comment: "A single, atomic changeset to create the 'contact_messages' table with its constraints and indexes"
       changes:
+        # 1-QADAM: JADVALNI YARATISH
         - createTable:
             tableName: contact_messages
             columns:
@@ -54,3 +52,35 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                   remarks: "Status of the message e.g. NEW, READ, REPLIED"
+
+        # 2-QADAM: TASHQI KALITLAR
+        # Bu entity'da tashqi kalitlar mavjud emas.
+
+        # 3-QADAM: UNUMDORLIK INDEKSLARINI YARATISH
+        - createIndex:
+            indexName: idx_contact_messages_on_email
+            tableName: contact_messages
+            comment: "Adding a performance index on the email column for faster lookups"
+            columns:
+              - column:
+                  name: email
+        - createIndex:
+            indexName: idx_contact_messages_on_status
+            tableName: contact_messages
+            comment: "Adding a performance index on the status column for faster filtering"
+            columns:
+              - column:
+                  name: status
+
+      # =====================================================================
+      # BARCHA O'ZGARISHLARNI ORQAGA QAYTARISH (ROLLBACK)
+      # =====================================================================
+      rollback:
+        - dropIndex:
+            indexName: idx_contact_messages_on_status
+            tableName: contact_messages
+        - dropIndex:
+            indexName: idx_contact_messages_on_email
+            tableName: contact_messages
+        - dropTable:
+            tableName: contact_messages

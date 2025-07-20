@@ -45,5 +45,7 @@ public class UserProfile extends AbsLongEntity {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
+    private boolean deleted = false;
+
     // email uchun unique indeks shart lekin delted falselar ortasida
 }

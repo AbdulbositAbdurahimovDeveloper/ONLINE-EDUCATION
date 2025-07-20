@@ -1,0 +1,56 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20252007-08-create-full-quiz-entity
+      author: Eldor04
+      comment: "A single, atomic changeset to create the 'quizzes' table with its constraints and indexes"
+      changes:
+        # 1-QADAM: JADVALNI YARATISH
+        - createTable:
+            tableName: quizzes
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              # Bu entity'da "deleted" ustuni yo'q
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  name: title
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+
+        # 2-QADAM: TASHQI KALITLARNI QO'SHISH
+        # Bu entity'da o'zida saqlanadigan tashqi kalitlar mavjud emas.
+
+        # 3-QADAM: NOYOB CHEKLOV VA INDEKSLARNI YARATISH
+        # Mantiqan, tizimda bir xil sarlavhaga ega bo'lgan ikkita test bo'lmasligi kerak.
+        - addUniqueConstraint:
+            tableName: quizzes
+            columnNames: "title"
+            constraintName: uq_quizzes_title
+            comment: "Quiz title should be unique"
+
+      # =====================================================================
+      # BARCHA O'ZGARISHLARNI ORQAGA QAYTARISH (ROLLBACK)
+      # =====================================================================
+      rollback:
+        - dropUniqueConstraint:
+            constraintName: uq_quizzes_title
+            tableName: quizzes
+        - dropTable:
+            tableName: quizzes

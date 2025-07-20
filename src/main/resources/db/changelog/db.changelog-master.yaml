@@ -6,130 +6,51 @@ databaseChangeLog:
   - include:
       file: db/changelog/changes/20251807_03_create_user_profile_table.yaml
   - include:
-      file: db/changelog/changes/20251907_01_add_column_phone_number_user_profile.yaml
-
-  - include:
-      file: db/changelog/changes/20252007-01-create-courses-table.yaml
-  - include:
-      file: db/changelog/changes/20252007-02-add-fks-to-courses.yaml
-  - include:
-      file: db/changelog/changes/20252007-03-add-partial-unique-index-on-title.yaml
+       file: db/changelog/changes/20251907_01_add_column_phone_number_user_profile.yaml
 
 
-  # === Category Entity ===
   - include:
-      file: db/changelog/changes/20252007-04-create-category-table.yaml
+      file: db/changelog/changes/20252007-01-create-full-category-entity.yaml
   - include:
-      file: db/changelog/changes/20252007-05-create-faqs-table.yaml
+      file: db/changelog/changes/20252007-02-create-full-course-entity.yaml
   - include:
-      file: db/changelog/changes/20252007-06-add-indexes-to-category-table.yaml
+      file: db/changelog/changes/20252007-03-create-full-module-entity.yaml
 
-  # === Module Entity ===
-  - include:
-      file: db/changelog/changes/20252007-07-create-modules-table.yaml
-  - include:
-      file: db/changelog/changes/20252007-08-add-fks-to-modules-table.yaml
-  - include:
-      file: db/changelog/changes/20252007-09-add-indexes-to-modules-table.yaml
-
-  # === Lesson Entity ===
-  - include:
-      file: db/changelog/changes/20252007-10-create-lesson-table.yaml
-  - include:
-      file: db/changelog/changes/20252007-11-add-fks-to-lesson-table.yaml
-  - include:
-      file: db/changelog/changes/20252007-12-add-indexes-to-lesson-table.yaml
-
-  # === Content Inheritance Hierarchy ===
-  - include:
-      file: db/changelog/changes/20252007-13-create-contents-table.yaml
-  - include:
-      file: db/changelog/changes/20252007-14-add-fks-to-contents-table.yaml
-  - include:
-      file: db/changelog/changes/20252007-15-add-indexes-to-contents-table.yaml
-
-  # --- AttachmentContent (Child of Content) ---
-  - include:
-      file: db/changelog/changes/20252007-16-create-attachment-contents-table.yaml
-  - include:
-      file: db/changelog/changes/20252007-17-add-fks-to-attachment-contents-table.yaml
 
   - include:
-      file: db/changelog/changes/20252007-18-add-index-to-faqs-table.yaml
+      file: db/changelog/changes/20252007-04-create-full-module-enrollment-entity.yaml
 
-  # --- QuizContent (Child of Content) ---
-  - include:
-      file: db/changelog/changes/20252007-19-create-quiz-contents-table.yaml
-  - include:
-      file: db/changelog/changes/20252007-20-add-fks-to-quiz-contents-table.yaml
 
   - include:
-      file: db/changelog/changes/20252007-21-create-answer-options-table.yaml
-  # --- TextContent (Child of Content) ---
+      file: db/changelog/changes/20252007-05-create-full-lesson-entity.yaml
   - include:
-      file: db/changelog/changes/20252007-22-create-text-contents-table.yaml
+      file: db/changelog/changes/20252007-06-create-full-content-base-entity.yaml
   - include:
-      file: db/changelog/changes/20252007-23-add-fks-to-text-contents-table.yaml
+      file: db/changelog/changes/20252007-07-create-full-attachment-content-entity.yaml
+
 
   - include:
-      file: db/changelog/changes/20252007-24-add-fks-to-answer-options-table.yaml
+      file: db/changelog/changes/20252007-08-create-full-quiz-entity.yaml
+  - include:
+      file: db/changelog/changes/20252007-09-create-full-question-entity.yaml
+  - include:
+      file: db/changelog/changes/20252007-10-create-full-answer-option-entity.yaml
+  - include:
+      file: db/changelog/changes/20252007-11-create-full-quiz-content-entity.yaml
+  - include:
+      file: db/changelog/changes/20252007-12-create-full-text-content-entity.yaml
 
-  # === FAQ Entity ===
-  - include:
-      file: db/changelog/changes/20252007-25-add-indexes-to-answer-options-table.yaml
 
-  # === Question Entity ===
   - include:
-      file: db/changelog/changes/20252007-26-create-questions-table.yaml
+      file: db/changelog/changes/20252007-13-create-full-comment-entity.yaml
   - include:
-      file: db/changelog/changes/20252007-27-add-fks-to-questions-table.yaml
+      file: db/changelog/changes/20252007-14-create-full-contact-message-entity.yaml
   - include:
-      file: db/changelog/changes/20252007-28-add-indexes-to-questions-table.yaml
+      file: db/changelog/changes/20252007-15-create-full-faq-entity.yaml
+  - include:
+      file: db/changelog/changes/20252007-16-create-full-payment-entity.yaml
 
-  # === Quiz Entity ===
   - include:
-      file: db/changelog/changes/20252007-29-create-quizzes-table.yaml
-  - include:
-      file: db/changelog/changes/20252007-30-add-indexes-to-quizzes-table.yaml
+      file: db/changelog/changes/20252007-17-create-full-review-entity.yaml
 
-  # === Comment Entity ===
-  - include:
-      file: db/changelog/changes/20252007-31-create-comments-table.yaml
-  - include:
-      file: db/changelog/changes/20252007-32-add-fks-to-comments-table.yaml
-  - include:
-      file: db/changelog/changes/20252007-33-add-check-constraint-and-indexes-to-comments-table.yaml
 
-  # === ContactMessage Entity ===
-  - include:
-      file: db/changelog/changes/20252007-34-create-contact-messages-table.yaml
-  - include:
-      file: db/changelog/changes/20252007-35-add-indexes-to-contact-messages-table.yaml
-
-  # === ModuleEnrollment Entity ===
-  - include:
-      file: db/changelog/changes/20252007-36-create-module-enrollments-table.yaml
-  - include:
-      file: db/changelog/changes/20252007-37-add-fks-to-module-enrollments-table.yaml
-  - include:
-      file: db/changelog/changes/20252007-38-add-indexes-to-module-enrollments-table.yaml
-
-  # === Payment Entity ===
-  - include:
-      file: db/changelog/changes/20252007-39-create-payment-table.yaml
-  - include:
-      file: db/changelog/changes/20252007-40-add-fks-to-payment-table.yaml
-  - include:
-      file: db/changelog/changes/20252007-41-add-indexes-to-payment-table.yaml
-
-  # === Review Entity ===
-  - include:
-      file: db/changelog/changes/20252007-42-create-reviews-table.yaml
-  - include:
-      file: db/changelog/changes/20252007-43-add-fks-to-reviews-table.yaml
-  - include:
-      file: db/changelog/changes/20252007-44-add-indexes-to-reviews-table.yaml
-
-  # === Attachment Entity (Improvements) ===
-  - include:
-      file: db/changelog/changes/20252007-45-improve-attachment-table-v2.yaml

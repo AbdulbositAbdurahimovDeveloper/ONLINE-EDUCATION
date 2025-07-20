@@ -1,0 +1,107 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20252007-05-create-full-lesson-entity
+      author: Eldor04
+      comment: "A single, atomic changeset to create the 'lesson' table with all its constraints, FKs, and indexes"
+      changes:
+        # 1-QADAM: JADVALNI YARATISH
+        - createTable:
+            tableName: lesson
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              # Bu entity'da "deleted" ustuni yo'q
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  name: title
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: content
+                  type: TEXT
+              - column:
+                  name: order_index
+                  type: INTEGER
+                  remarks: "The order of the lesson within a module"
+              - column:
+                  name: is_free
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modules_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    remarks: "FK to the modules table"
+              - column:
+                  name: view_id
+                  type: BIGINT
+                  constraints:
+                    unique: true
+                    remarks: "FK to the users table for tracking progress (OneToOne)"
+
+        # 2-QADAM: TASHQI KALITLARNI QO'SHISH
+        - addForeignKeyConstraint:
+            baseTableName: lesson
+            baseColumnNames: modules_id
+            constraintName: fk_lesson_on_modules
+            referencedTableName: modules
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: lesson
+            baseColumnNames: view_id
+            constraintName: fk_lesson_on_user_view
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: SET NULL # Agar user o'chirilsa, darsni ko'rganlik belgisi shunchaki yo'qoladi
+
+        # 3-QADAM: NOYOB VA UNUMDORLIK INDEKSLARINI YARATISH
+        # Mantiqan, dars sarlavhasi modul ichida noyob bo'lishi kerak.
+        - addUniqueConstraint:
+            tableName: lesson
+            columnNames: "modules_id, title"
+            constraintName: uq_lesson_title_per_module
+            comment: "Lesson title should be unique within a module"
+        - createIndex:
+            indexName: idx_lesson_on_modules_id
+            tableName: lesson
+            comment: "Adding a performance index on the modules_id column for faster lookups"
+            columns:
+              - column:
+                  name: modules_id
+
+      # =====================================================================
+      # BARCHA O'ZGARISHLARNI ORQAGA QAYTARISH (ROLLBACK)
+      # =====================================================================
+      rollback:
+        - dropIndex:
+            indexName: idx_lesson_on_modules_id
+            tableName: lesson
+        - dropUniqueConstraint:
+            constraintName: uq_lesson_title_per_module
+            tableName: lesson
+        - dropForeignKeyConstraint:
+            constraintName: fk_lesson_on_user_view
+            baseTableName: lesson
+        - dropForeignKeyConstraint:
+            constraintName: fk_lesson_on_modules
+            baseTableName: lesson
+        - dropTable:
+            tableName: lesson

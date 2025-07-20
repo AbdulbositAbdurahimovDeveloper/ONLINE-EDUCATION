@@ -14,8 +14,6 @@ import uz.pdp.online_education.model.Attachment;
 @Entity
 @ToString
 @Table(name = "attachment_contents")
-@SQLDelete(sql = "UPDATE attachment_contents SET deleted = true WHERE id = ?")
-@SQLRestriction(value = "deleted=false")
 @DiscriminatorValue("ATTACHMENT")
 @FieldNameConstants
 public class AttachmentContent extends Content {

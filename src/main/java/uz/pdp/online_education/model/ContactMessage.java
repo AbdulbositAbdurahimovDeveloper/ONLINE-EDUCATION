@@ -37,5 +37,7 @@ public class ContactMessage extends AbsLongEntity {
     @Enumerated(EnumType.STRING)
     private MessageStatus status = MessageStatus.NEW;
 
+    private boolean deleted = false;
+
 
 }

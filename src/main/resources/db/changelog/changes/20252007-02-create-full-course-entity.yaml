@@ -1,0 +1,127 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20252007-02-create-full-course-entity
+      author: Eldor04
+      comment: "A single, atomic changeset to create the 'courses' table with all its constraints, FKs, and indexes"
+      changes:
+        # 1-QADAM: JADVALNI YARATISH
+        - createTable:
+            tableName: courses
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  name: title
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+              - column:
+                  name: slug
+                  type: VARCHAR(255)
+              - column:
+                  name: thumbnail_url_id
+                  type: BIGINT
+                  constraints:
+                    unique: true
+                    remarks: "FK to the attachment table for the course thumbnail"
+              - column:
+                  name: instructor_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    remarks: "FK to the users table for the course instructor"
+              - column:
+                  name: category_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    remarks: "FK to the category table"
+
+        # 2-QADAM: TASHQI KALITLARNI QO'SHISH
+        - addForeignKeyConstraint:
+            baseTableName: courses
+            baseColumnNames: thumbnail_url_id
+            constraintName: fk_courses_on_thumbnail_attachment
+            referencedTableName: attachment
+            referencedColumnNames: id
+            onDelete: SET NULL
+        - addForeignKeyConstraint:
+            baseTableName: courses
+            baseColumnNames: instructor_id
+            constraintName: fk_courses_on_instructor_user
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: RESTRICT # Instruktor o'chirilsa, kurslari o'chmasligi kerak
+        - addForeignKeyConstraint:
+            baseTableName: courses
+            baseColumnNames: category_id
+            constraintName: fk_courses_on_category
+            referencedTableName: category
+            referencedColumnNames: id
+            onDelete: RESTRICT # Kategoriya o'chirilsa, kurslari o'chmasligi kerak
+
+        # 3-QADAM: MAXSUS VA UNUMDORLIK INDEKSLARINI YARATISH
+        - sql:
+            dbms: "postgresql"
+            sql: |
+              CREATE UNIQUE INDEX idx_courses_title_unique_not_deleted
+              ON courses (title)
+              WHERE deleted = false;
+        - createIndex:
+            indexName: idx_courses_on_instructor_id
+            tableName: courses
+            columns:
+              - column: { name: "instructor_id" }
+        - createIndex:
+            indexName: idx_courses_on_category_id
+            tableName: courses
+            columns:
+              - column: { name: "category_id" }
+
+      # =====================================================================
+      # BARCHA O'ZGARISHLARNI ORQAGA QAYTARISH (ROLLBACK)
+      # =====================================================================
+      rollback:
+        - dropIndex:
+            indexName: idx_courses_on_category_id
+            tableName: courses
+        - dropIndex:
+            indexName: idx_courses_on_instructor_id
+            tableName: courses
+        - dropIndex:
+            indexName: idx_courses_title_unique_not_deleted
+            tableName: courses
+        - dropForeignKeyConstraint:
+            constraintName: fk_courses_on_category
+            baseTableName: courses
+        - dropForeignKeyConstraint:
+            constraintName: fk_courses_on_instructor_user
+            baseTableName: courses
+        - dropForeignKeyConstraint:
+            constraintName: fk_courses_on_thumbnail_attachment
+            baseTableName: courses
+        - dropTable:
+            tableName: courses

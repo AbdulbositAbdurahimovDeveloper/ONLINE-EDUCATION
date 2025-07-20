@@ -44,6 +44,8 @@ public class Module extends AbsLongEntity {
     @OneToMany(mappedBy = "module",fetch =  FetchType.LAZY)
     private List<ModuleEnrollment> enrollments;
 
+    private boolean deleted = false;
+
 
 
 }

@@ -42,4 +42,6 @@ public class Course extends AbsLongEntity {
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Module> modules; // coursening modullari
 
+    private boolean deleted = false;
+
 }

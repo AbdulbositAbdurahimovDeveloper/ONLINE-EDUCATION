@@ -1,0 +1,108 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20252007-16-create-full-payment-entity
+      author: Eldor04
+      comment: "A single, atomic changeset to create the 'payment' table with all its constraints, FKs, and indexes"
+      changes:
+        # 1-QADAM: JADVALNI YARATISH
+        - createTable:
+            tableName: payment
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    remarks: "FK to the users table"
+              - column:
+                  name: module_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    remarks: "FK to the modules table"
+              - column:
+                  name: amount
+                  type: BIGINT
+              - column:
+                  name: status
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: masked_card_number
+                  type: VARCHAR(4)
+              - column:
+                  name: description
+                  type: TEXT
+
+        # 2-QADAM: TASHQI KALITLARNI QO'SHISH
+        - addForeignKeyConstraint:
+            baseTableName: payment
+            baseColumnNames: user_id
+            constraintName: fk_payment_on_user
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: payment
+            baseColumnNames: module_id
+            constraintName: fk_payment_on_module
+            referencedTableName: modules
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+        # 3-QADAM: MAXSUS NOYOB INDEKS VA UNUMDORLIK INDEKSLARINI YARATISH
+        - sql:
+            dbms: "postgresql"
+            sql: |
+              CREATE UNIQUE INDEX idx_user_module_payment_unique_not_deleted
+              ON payment (user_id, module_id)
+              WHERE deleted = false;
+        - createIndex:
+            indexName: idx_payment_on_status
+            tableName: payment
+            comment: "Adding a performance index on the status column for faster filtering"
+            columns:
+              - column:
+                  name: status
+
+      # =====================================================================
+      # BARCHA O'ZGARISHLARNI ORQAGA QAYTARISH (ROLLBACK)
+      # =====================================================================
+      rollback:
+        - dropIndex:
+            indexName: idx_payment_on_status
+            tableName: payment
+        - dropIndex:
+            indexName: idx_user_module_payment_unique_not_deleted
+            tableName: payment
+        - dropForeignKeyConstraint:
+            constraintName: fk_payment_on_module
+            baseTableName: payment
+        - dropForeignKeyConstraint:
+            constraintName: fk_payment_on_user
+            baseTableName: payment
+        - dropTable:
+            tableName: payment

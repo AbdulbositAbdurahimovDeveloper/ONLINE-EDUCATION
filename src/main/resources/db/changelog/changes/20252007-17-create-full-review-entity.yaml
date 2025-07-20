@@ -1,0 +1,96 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20252007-17-create-full-review-entity
+      author: Eldor04
+      comment: "A single, atomic changeset to create the 'reviews' table with all its constraints, FKs, and indexes"
+      changes:
+        # 1-QADAM: JADVALNI YARATISH
+        - createTable:
+            tableName: reviews
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              # Bu entity'da "deleted" ustuni yo'q
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  name: rating
+                  type: INTEGER
+                  constraints:
+                    nullable: false
+              - column:
+                  name: comment
+                  type: TEXT
+              - column:
+                  name: course_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    remarks: "FK to the courses table"
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    remarks: "FK to the users table"
+
+        # 2-QADAM: TASHQI KALITLARNI QO'SHISH
+        - addForeignKeyConstraint:
+            baseTableName: reviews
+            baseColumnNames: course_id
+            constraintName: fk_reviews_on_course
+            referencedTableName: courses
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: reviews
+            baseColumnNames: user_id
+            constraintName: fk_reviews_on_user
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+        # 3-QADAM: NOYOB CHEKLOV VA UNUMDORLIK INDEKSLARINI YARATISH
+        - addUniqueConstraint:
+            tableName: reviews
+            columnNames: "user_id, course_id"
+            constraintName: uq_user_course_review
+            comment: "Implements the @UniqueConstraint to prevent duplicate reviews"
+        - createIndex:
+            indexName: idx_reviews_on_course_id
+            tableName: reviews
+            comment: "Adding a performance index on the course_id column for faster lookups"
+            columns:
+              - column:
+                  name: course_id
+
+      # =====================================================================
+      # BARCHA O'ZGARISHLARNI ORQAGA QAYTARISH (ROLLBACK)
+      # =====================================================================
+      rollback:
+        - dropIndex:
+            indexName: idx_reviews_on_course_id
+            tableName: reviews
+        - dropUniqueConstraint:
+            constraintName: uq_user_course_review
+            tableName: reviews
+        - dropForeignKeyConstraint:
+            constraintName: fk_reviews_on_user
+            baseTableName: reviews
+        - dropForeignKeyConstraint:
+            constraintName: fk_reviews_on_course
+            baseTableName: reviews
+        - dropTable:
+            tableName: reviews

@@ -8,8 +8,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldNameConstants;
+import org.hibernate.annotations.DialectOverride;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.annotations.Where;
 import uz.pdp.online_education.model.Abs.AbsLongEntity;
 
 import java.util.List;
@@ -32,5 +34,7 @@ public class Category extends AbsLongEntity {
 
     @OneToMany(mappedBy = "category")
     private List<Course> courses;
+
+    private boolean deleted = false;
 
 }
