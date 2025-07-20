@@ -1,0 +1,19 @@
+databaseChangeLog:
+  # =====================================================================
+  # 26-QADAM: "faqs" JADVALIGA UNUMDORLIK INDEKSINI QO'SHISH
+  # =====================================================================
+  - changeSet:
+      id: 20252007-18-add-index-to-faqs-table
+      author: Eldor04
+      comment: "Step 26: Adding a performance index on the display_order column"
+      changes:
+        - createIndex:
+            indexName: idx_faqs_on_display_order
+            tableName: faqs
+            columns:
+              - column:
+                  name: display_order
+      rollback:
+        - dropIndex:
+            indexName: idx_faqs_on_display_order
+            tableName: faqs

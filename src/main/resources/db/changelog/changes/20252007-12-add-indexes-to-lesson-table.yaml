@@ -1,0 +1,28 @@
+databaseChangeLog:
+  # =====================================================================
+  # 12-QADAM: "lesson" JADVALIGA MAXSUS VA UNUMDORLIK INDEKSLARINI QO'SHISH
+  # =====================================================================
+  - changeSet:
+      id: 20252007-12-add-indexes-to-lesson-table
+      author: Eldor04
+      dbms: "postgresql"
+      comment: "Step 12: Adding a composite unique index on (modules_id, title) and a performance index on modules_id"
+      changes:
+        - sql:
+            sql: |
+              CREATE UNIQUE INDEX idx_lesson_title_per_module_unique_not_deleted
+              ON lesson (modules_id, title)
+              WHERE deleted = false;
+        - createIndex:
+            indexName: idx_lesson_on_modules_id
+            tableName: lesson
+            columns:
+              - column:
+                  name: modules_id
+      rollback:
+        - dropIndex:
+            indexName: idx_lesson_title_per_module_unique_not_deleted
+            tableName: lesson
+        - dropIndex:
+            indexName: idx_lesson_on_modules_id
+            tableName: lesson

@@ -1,0 +1,19 @@
+databaseChangeLog:
+  # =====================================================================
+  # 15-QADAM: "contents" JADVALIGA MAXSUS INDEKS QO'SHISH
+  # =====================================================================
+  - changeSet:
+      id: 20252007-15-add-indexes-to-contents-table
+      author: Eldor04
+      dbms: "postgresql"
+      comment: "Step 15: Adding a composite unique index on (lesson_id, block_order) for data integrity"
+      changes:
+        - sql:
+            sql: |
+              CREATE UNIQUE INDEX idx_contents_order_per_lesson_unique_not_deleted
+              ON contents (lesson_id, block_order)
+              WHERE deleted = false;
+      rollback:
+        - dropIndex:
+            indexName: idx_contents_order_per_lesson_unique_not_deleted
+            tableName: contents

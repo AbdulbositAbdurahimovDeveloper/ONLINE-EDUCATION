@@ -2,6 +2,9 @@ package uz.pdp.online_education.model.quiz;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.FieldNameConstants;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import uz.pdp.online_education.enums.QuestionType; // Savol turini saqlash uchun
 import uz.pdp.online_education.model.Abs.AbsLongEntity;
 import java.util.ArrayList;
@@ -11,9 +14,12 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
-@ToString(exclude = "quiz") // Infinite loop'ning oldini olish uchun
+@ToString(exclude = {"quiz", "options"}) // Infinite loop'ning oldini olish uchun
 @Entity
 @Table(name = "questions")
+@SQLDelete(sql = "UPDATE questions SET deleted = true WHERE id = ?")
+@SQLRestriction(value = "deleted=false")
+@FieldNameConstants
 public class Question extends AbsLongEntity {
 
     @Column(columnDefinition = "TEXT", nullable = false)

@@ -23,6 +23,7 @@ import java.util.List;
 @FieldNameConstants
 public class Module extends AbsLongEntity {
 
+    @Column(nullable = false, unique = true)
     private String title;
 
     private String description;

@@ -3,6 +3,9 @@ package uz.pdp.online_education.model;
 import jakarta.persistence.*;
 import lombok.*;
 // ... importlar
+import lombok.experimental.FieldNameConstants;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import uz.pdp.online_education.model.Abs.AbsLongEntity;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.lesson.Lesson;
@@ -16,6 +19,9 @@ import java.util.List;
 @Setter
 @Entity
 @Table(name = "comments")
+@SQLDelete(sql = "UPDATE comments SET deleted = true WHERE id = ?")
+@SQLRestriction(value = "deleted=false")
+@FieldNameConstants
 public class Comment extends AbsLongEntity {
 
     @Column(columnDefinition = "TEXT", nullable = false)

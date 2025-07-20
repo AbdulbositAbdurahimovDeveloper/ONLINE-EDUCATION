@@ -6,6 +6,9 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import lombok.*;
+import lombok.experimental.FieldNameConstants;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import uz.pdp.online_education.enums.MessageStatus;
 import uz.pdp.online_education.model.Abs.AbsLongEntity;
 
@@ -16,6 +19,9 @@ import uz.pdp.online_education.model.Abs.AbsLongEntity;
 @ToString
 @Entity
 @Table(name = "contact_messages")
+@SQLDelete(sql = "UPDATE contact_messages SET deleted = true WHERE id = ?")
+@SQLRestriction(value = "deleted=false")
+@FieldNameConstants
 public class ContactMessage extends AbsLongEntity {
 
     @Column(nullable = false)

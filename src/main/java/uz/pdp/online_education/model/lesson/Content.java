@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.FieldNameConstants;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import uz.pdp.online_education.model.Abs.AbsLongEntity;
 
 @AllArgsConstructor
@@ -13,8 +16,11 @@ import uz.pdp.online_education.model.Abs.AbsLongEntity;
 @Setter
 @Entity
 @Table(name = "contents")
+@SQLDelete(sql = "UPDATE contents SET deleted = true WHERE id = ?")
+@SQLRestriction(value = "deleted=false")
 @Inheritance(strategy = InheritanceType.JOINED) // yoki SINGLE_TABLE, TABLE_PER_CLASS
 @DiscriminatorColumn(name = "content_type") // Faqat SINGLE_TABLE va JOINED uchun
+@FieldNameConstants
 public abstract class Content extends AbsLongEntity {
 
     @Column(nullable = false)

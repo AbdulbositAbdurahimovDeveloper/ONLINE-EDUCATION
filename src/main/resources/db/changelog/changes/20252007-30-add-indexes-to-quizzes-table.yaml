@@ -1,0 +1,19 @@
+databaseChangeLog:
+  # =====================================================================
+  # 30-QADAM: "quizzes" JADVALIGA MAXSUS INDEKS QO'SHISH
+  # =====================================================================
+  - changeSet:
+      id: 20252007-30-add-indexes-to-quizzes-table
+      author: Eldor04
+      dbms: "postgresql"
+      comment: "Step 30: Adding a partial unique index on title for data integrity and performance"
+      changes:
+        - sql:
+            sql: |
+              CREATE UNIQUE INDEX idx_quizzes_title_unique_not_deleted
+              ON quizzes (title)
+              WHERE deleted = false;
+      rollback:
+        - dropIndex:
+            indexName: idx_quizzes_title_unique_not_deleted
+            tableName: quizzes

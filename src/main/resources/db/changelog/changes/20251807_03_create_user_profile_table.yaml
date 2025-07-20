@@ -3,7 +3,7 @@ databaseChangeLog:
   # 1-QADAM: JADVALNING ASOSIY STRUKTURASINI YARATISH
   # =====================================================================
   - changeSet:
-      id: 20231028-01-create-user-profiles-table
+      id: 20251807-01-create-user-profiles-table
       author: abdulbosit
       comment: "Step 1: Creating the base structure of the new user_profiles table"
       changes:

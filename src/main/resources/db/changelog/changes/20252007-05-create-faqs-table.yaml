@@ -1,0 +1,49 @@
+databaseChangeLog:
+  # =====================================================================
+  # 25-QADAM: "faqs" JADVALINING ASOSIY STRUKTURASINI YARATISH
+  # =====================================================================
+  - changeSet:
+      id: 20252007-05-create-faqs-table
+      author: Eldor04
+      comment: "Step 25: Creating the base structure of the new faqs table"
+      changes:
+        - createTable:
+            tableName: faqs
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  name: question
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: answer
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: display_order
+                  type: INTEGER
+                  defaultValueNumeric: 0
+                  remarks: "Order for displaying FAQs"

@@ -1,0 +1,29 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20252007-02-add-fks-to-courses
+      author: Eldor04
+      comment: "Step 2: Adding foreign key constraints to the courses table"
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: courses
+            baseColumnNames: thumbnail_url_id
+            constraintName: fk_courses_on_attachment
+            referencedTableName: attachment
+            referencedColumnNames: id
+            onDelete: SET NULL
+
+        - addForeignKeyConstraint:
+            baseTableName: courses
+            baseColumnNames: instructor_id
+            constraintName: fk_courses_on_user
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: courses
+            baseColumnNames: category_id
+            constraintName: fk_courses_on_category
+            referencedTableName: category
+            referencedColumnNames: id
+            onDelete: SET NULL

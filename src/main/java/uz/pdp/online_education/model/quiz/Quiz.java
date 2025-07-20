@@ -2,6 +2,9 @@ package uz.pdp.online_education.model.quiz;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.FieldNameConstants;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import uz.pdp.online_education.model.Abs.AbsLongEntity;
 import uz.pdp.online_education.model.lesson.QuizContent; // Content bloki bilan bog'lanish uchun
 
@@ -15,6 +18,9 @@ import java.util.List;
 @ToString
 @Entity
 @Table(name = "quizzes")
+@SQLDelete(sql = "UPDATE quizzes SET deleted = true WHERE id = ?")
+@SQLRestriction(value = "deleted=false")
+@FieldNameConstants
 public class Quiz extends AbsLongEntity {
 
     @Column(nullable = false)

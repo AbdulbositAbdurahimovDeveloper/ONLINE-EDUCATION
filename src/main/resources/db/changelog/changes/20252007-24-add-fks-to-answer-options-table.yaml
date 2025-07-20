@@ -1,0 +1,16 @@
+databaseChangeLog:
+  # =====================================================================
+  # 28-QADAM: "answer_options" JADVALIGA TASHQI KALITLARNI QO'SHISH
+  # =====================================================================
+  - changeSet:
+      id: 20252007-24-add-fks-to-answer-options-table
+      author: Eldor04
+      comment: "Step 28: Adding foreign key constraint from answer_options to the question table"
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: answer_options
+            baseColumnNames: question_id
+            constraintName: fk_answer_options_on_question
+            referencedTableName: question
+            referencedColumnNames: id
+            onDelete: CASCADE

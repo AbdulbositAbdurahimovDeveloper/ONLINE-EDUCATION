@@ -1,0 +1,16 @@
+databaseChangeLog:
+  # =====================================================================
+  # 23-QADAM: "text_contents" JADVALIGA TASHQI KALITLARNI QO'SHISH
+  # =====================================================================
+  - changeSet:
+      id: 20252007-23-add-fks-to-text-contents-table
+      author: Eldor04
+      comment: "Step 23: Adding the FK to link 'text_contents' to the base 'contents' table"
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: text_contents
+            baseColumnNames: id
+            constraintName: fk_text_contents_on_contents
+            referencedTableName: contents
+            referencedColumnNames: id
+            onDelete: CASCADE

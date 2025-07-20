@@ -1,0 +1,23 @@
+databaseChangeLog:
+  # =====================================================================
+  # 43-QADAM: "reviews" JADVALIGA TASHQI KALITLARNI QO'SHISH
+  # =====================================================================
+  - changeSet:
+      id: 20252007-43-add-fks-to-reviews-table
+      author: Eldor04
+      comment: "Step 43: Adding foreign key constraints to the reviews table"
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: reviews
+            baseColumnNames: course_id
+            constraintName: fk_reviews_on_course
+            referencedTableName: course
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: reviews
+            baseColumnNames: user_id
+            constraintName: fk_reviews_on_user
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE

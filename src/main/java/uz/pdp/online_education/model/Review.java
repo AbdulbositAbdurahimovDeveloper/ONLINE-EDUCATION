@@ -2,6 +2,9 @@ package uz.pdp.online_education.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.FieldNameConstants;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import uz.pdp.online_education.model.Abs.AbsLongEntity;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.User;
@@ -16,6 +19,9 @@ import uz.pdp.online_education.model.User;
     // Bitta foydalanuvchi bitta kursga faqat bir marta sharh qoldirishi mumkin
     @UniqueConstraint(columnNames = {"user_id", "course_id"})
 })
+@SQLDelete(sql = "UPDATE reviews SET deleted = true WHERE id = ?")
+@SQLRestriction(value = "deleted=false")
+@FieldNameConstants
 public class Review extends AbsLongEntity {
 
     // Foydalanuvchi qo'ygan baho (1 dan 5 gacha)

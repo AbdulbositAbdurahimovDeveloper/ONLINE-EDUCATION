@@ -1,0 +1,71 @@
+databaseChangeLog:
+  # =====================================================================
+  # 45-QADAM: "attachment" JADVALINI YAXSHILASH (V2)
+  # =====================================================================
+  - changeSet:
+      id: 20252007-45-improve-attachment-table-v2
+      author: Eldor04
+      comment: "Step 45: Improving the existing 'attachment' table by adding NOT NULL, UNIQUE constraints and a performance index."
+      changes:
+        # 1. NOT NULL cheklovlarini qo'shish
+        - addNotNullConstraint:
+            tableName: attachment
+            columnName: original_name
+            columnDataType: TEXT
+            constraintName: nn_attachment_original_name
+        - addNotNullConstraint:
+            tableName: attachment
+            columnName: content_type
+            columnDataType: VARCHAR(255)
+            constraintName: nn_attachment_content_type
+        - addNotNullConstraint:
+            tableName: attachment
+            columnName: file_size
+            columnDataType: BIGINT
+            constraintName: nn_attachment_file_size
+        - addNotNullConstraint:
+            tableName: attachment
+            columnName: path
+            columnDataType: TEXT
+            constraintName: nn_attachment_path
+
+        # 2. UNIQUE cheklovini qo'shish
+        - addUniqueConstraint:
+            tableName: attachment
+            columnNames: path
+            constraintName: uq_attachment_path
+
+        # 3. Unumdorlik indeksini qo'shish
+        - createIndex:
+            indexName: idx_attachment_on_content_type
+            tableName: attachment
+            columns:
+              - column:
+                  name: content_type
+      rollback:
+        - dropIndex:
+            indexName: idx_attachment_on_content_type
+            tableName: attachment
+        - dropUniqueConstraint:
+            constraintName: uq_attachment_path
+            tableName: attachment
+        - dropNotNullConstraint:
+            constraintName: nn_attachment_path
+            tableName: attachment
+            columnName: path
+            columnDataType: TEXT
+        - dropNotNullConstraint:
+            constraintName: nn_attachment_file_size
+            tableName: attachment
+            columnName: file_size
+            columnDataType: BIGINT
+        - dropNotNullConstraint:
+            constraintName: nn_attachment_content_type
+            tableName: attachment
+            columnName: content_type
+            columnDataType: VARCHAR(255)
+        - dropNotNullConstraint:
+            constraintName: nn_attachment_original_name
+            tableName: attachment
+            columnName: original_name
+            columnDataType: TEXT

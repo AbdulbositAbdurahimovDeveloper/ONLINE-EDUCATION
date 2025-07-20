@@ -2,6 +2,9 @@ package uz.pdp.online_education.model.lesson;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.FieldNameConstants;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import uz.pdp.online_education.model.quiz.Quiz; // To'g'ri paketdan import
 
 @AllArgsConstructor
@@ -11,7 +14,10 @@ import uz.pdp.online_education.model.quiz.Quiz; // To'g'ri paketdan import
 @ToString
 @Entity
 @Table(name = "quiz_contents")
+@SQLDelete(sql = "UPDATE quiz_contents SET deleted = true WHERE id = ?")
+@SQLRestriction(value = "deleted=false")
 @DiscriminatorValue("QUIZ")
+@FieldNameConstants
 public class QuizContent extends Content { // 'Content' ota-klassidan meros oladi
 
     // Bitta content bloki faqat bitta quizga ishora qiladi.

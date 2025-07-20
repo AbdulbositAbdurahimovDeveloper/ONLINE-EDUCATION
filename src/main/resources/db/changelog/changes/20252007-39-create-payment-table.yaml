@@ -1,0 +1,60 @@
+databaseChangeLog:
+  # =====================================================================
+  # 39-QADAM: "payment" JADVALINING ASOSIY STRUKTURASINI YARATISH
+  # =====================================================================
+  - changeSet:
+      id: 20252007-39-create-payment-table
+      author: Eldor04
+      comment: "Step 39: Creating the base structure of the new payment table"
+      changes:
+        - createTable:
+            tableName: payment
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    remarks: "FK to the users table"
+              - column:
+                  name: module_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    remarks: "FK to the modules table"
+              - column:
+                  name: amount
+                  type: BIGINT
+              - column:
+                  name: status
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: masked_card_number
+                  type: VARCHAR(4)
+              - column:
+                  name: description
+                  type: TEXT

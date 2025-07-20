@@ -22,6 +22,7 @@ import java.util.List;
 @SQLRestriction(value = "deleted=false")
 public class Course extends AbsLongEntity {
 
+    @Column(nullable = false, unique = true)
     private String title;
 
     private String description;
