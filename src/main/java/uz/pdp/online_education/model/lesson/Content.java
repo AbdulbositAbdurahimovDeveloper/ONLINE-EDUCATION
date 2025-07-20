@@ -16,8 +16,6 @@ import uz.pdp.online_education.model.Abs.AbsLongEntity;
 @Setter
 @Entity
 @Table(name = "contents")
-@SQLDelete(sql = "UPDATE contents SET deleted = true WHERE id = ?")
-@SQLRestriction(value = "deleted=false")
 @Inheritance(strategy = InheritanceType.JOINED) // yoki SINGLE_TABLE, TABLE_PER_CLASS
 @DiscriminatorColumn(name = "content_type") // Faqat SINGLE_TABLE va JOINED uchun
 @FieldNameConstants

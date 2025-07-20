@@ -1,0 +1,57 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20252007-11-create-full-quiz-content-entity
+      author: Eldor04
+      comment: "A single, atomic changeset to create the 'quiz_contents' child table for the JOINED inheritance"
+      changes:
+        # 1-QADAM: JADVALNI YARATISH
+        - createTable:
+            tableName: quiz_contents
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    remarks: "Primary key that is also a foreign key to the base 'contents' table"
+              - column:
+                  name: quiz_id
+                  type: BIGINT
+                  constraints:
+                    unique: true
+                    nullable: false
+                    remarks: "FK to the quiz table. Unique because of @OneToOne."
+
+        # 2-QADAM: TASHQI KALITLARNI QO'SHISH
+        - addForeignKeyConstraint:
+            baseTableName: quiz_contents
+            baseColumnNames: id
+            constraintName: fk_quiz_contents_on_contents
+            referencedTableName: contents
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: quiz_contents
+            baseColumnNames: quiz_id
+            constraintName: fk_quiz_contents_on_quiz
+            referencedTableName: quizzes # quiz jadvalining nomi "quizzes"
+            referencedColumnNames: id
+            onDelete: RESTRICT # Quiz o'chirilsa, unga bog'liq content ham muammoga uchramasligi uchun cheklash
+
+        # 3-QADAM: INDEKSLAR
+        # Jadvalni yaratishda "id" (primary key) va "quiz_id" (unique)
+        # ustunlari uchun indekslar avtomatik yaratiladi. Qo'shimcha indekslar shart emas.
+
+      # =====================================================================
+      # BARCHA O'ZGARISHLARNI ORQAGA QAYTARISH (ROLLBACK)
+      # =====================================================================
+      rollback:
+        - dropForeignKeyConstraint:
+            constraintName: fk_quiz_contents_on_quiz
+            baseTableName: quiz_contents
+        - dropForeignKeyConstraint:
+            constraintName: fk_quiz_contents_on_contents
+            baseTableName: quiz_contents
+        - dropTable:
+            tableName: quiz_contents

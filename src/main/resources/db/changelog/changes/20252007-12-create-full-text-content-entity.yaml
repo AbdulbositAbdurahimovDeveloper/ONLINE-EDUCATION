@@ -1,0 +1,45 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20252007-12-create-full-text-content-entity
+      author: Eldor04
+      comment: "A single, atomic changeset to create the 'text_contents' child table for the JOINED inheritance"
+      changes:
+        # 1-QADAM: JADVALNI YARATISH
+        - createTable:
+            tableName: text_contents
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    remarks: "Primary key that is also a foreign key to the base 'contents' table"
+              - column:
+                  name: text
+                  type: TEXT
+                  remarks: "The actual text content of the block"
+
+        # 2-QADAM: TASHQI KALITLARNI QO'SHISH
+        - addForeignKeyConstraint:
+            baseTableName: text_contents
+            baseColumnNames: id
+            constraintName: fk_text_contents_on_contents
+            referencedTableName: contents
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+        # 3-QADAM: INDEKSLAR
+        # "id" (primary key) uchun indeks avtomatik yaratiladi.
+        # "text" (TEXT) ustuniga standart B-Tree indeksi qo'shish tavsiya etilmaydi.
+        # Qo'shimcha indekslar shart emas.
+
+      # =====================================================================
+      # BARCHA O'ZGARISHLARNI ORQAGA QAYTARISH (ROLLBACK)
+      # =====================================================================
+      rollback:
+        - dropForeignKeyConstraint:
+            constraintName: fk_text_contents_on_contents
+            baseTableName: text_contents
+        - dropTable:
+            tableName: text_contents

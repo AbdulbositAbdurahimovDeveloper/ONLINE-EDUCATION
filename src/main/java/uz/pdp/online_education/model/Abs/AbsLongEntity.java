@@ -16,5 +16,5 @@ public abstract class AbsLongEntity extends AbsDateEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private boolean deleted = false;
+
 }

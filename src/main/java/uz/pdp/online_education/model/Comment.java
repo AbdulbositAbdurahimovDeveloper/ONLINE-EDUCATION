@@ -19,8 +19,6 @@ import java.util.List;
 @Setter
 @Entity
 @Table(name = "comments")
-@SQLDelete(sql = "UPDATE comments SET deleted = true WHERE id = ?")
-@SQLRestriction(value = "deleted=false")
 @FieldNameConstants
 public class Comment extends AbsLongEntity {
 

@@ -20,8 +20,6 @@ import java.util.List;
 @Setter
 @Entity
 @Table(name = "lesson")
-@SQLDelete(sql = "UPDATE lesson SET deleted = true WHERE id = ?")
-@SQLRestriction(value = "deleted=false")
 @FieldNameConstants
 public class Lesson extends AbsLongEntity {
 

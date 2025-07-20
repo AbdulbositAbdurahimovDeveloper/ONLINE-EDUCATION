@@ -1,0 +1,93 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20252007-03-create-full-module-entity
+      author: Eldor04
+      comment: "A single, atomic changeset to create the 'modules' table with all its constraints, FKs, and indexes"
+      changes:
+        # 1-QADAM: JADVALNI YARATISH
+        - createTable:
+            tableName: modules
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  name: title
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+              - column:
+                  name: price
+                  type: BIGINT
+              - column:
+                  name: order_index
+                  type: INTEGER
+                  remarks: "The order of the module within a course"
+              - column:
+                  name: course_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    remarks: "FK to the course table"
+
+        # 2-QADAM: TASHQI KALITLARNI QO'SHISH
+        - addForeignKeyConstraint:
+            baseTableName: modules
+            baseColumnNames: course_id
+            constraintName: fk_modules_on_course
+            referencedTableName: courses # Jadval nomi "courses" bo'lishi kerak
+            referencedColumnNames: id
+            onDelete: CASCADE # Agar kurs o'chirilsa, uning modullari ham o'chiriladi
+
+        # 3-QADAM: MAXSUS VA UNUMDORLIK INDEKSLARINI YARATISH
+        - sql:
+            dbms: "postgresql"
+            sql: |
+              CREATE UNIQUE INDEX idx_modules_title_unique_not_deleted
+              ON modules (title)
+              WHERE deleted = false;
+        - createIndex:
+            indexName: idx_modules_on_course_id
+            tableName: modules
+            comment: "Adding a performance index on the course_id column for faster lookups"
+            columns:
+              - column:
+                  name: course_id
+
+      # =====================================================================
+      # BARCHA O'ZGARISHLARNI ORQAGA QAYTARISH (ROLLBACK)
+      # =====================================================================
+      rollback:
+        - dropIndex:
+            indexName: idx_modules_on_course_id
+            tableName: modules
+        - dropIndex:
+            indexName: idx_modules_title_unique_not_deleted
+            tableName: modules
+        - dropForeignKeyConstraint:
+            constraintName: fk_modules_on_course
+            baseTableName: modules
+        - dropTable:
+            tableName: modules

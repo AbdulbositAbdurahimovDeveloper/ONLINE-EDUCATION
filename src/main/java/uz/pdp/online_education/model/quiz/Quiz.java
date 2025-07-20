@@ -18,8 +18,6 @@ import java.util.List;
 @ToString
 @Entity
 @Table(name = "quizzes")
-@SQLDelete(sql = "UPDATE quizzes SET deleted = true WHERE id = ?")
-@SQLRestriction(value = "deleted=false")
 @FieldNameConstants
 public class Quiz extends AbsLongEntity {
 

@@ -16,13 +16,6 @@ databaseChangeLog:
                     primaryKey: true
                     nullable: false
               - column:
-                  name: deleted
-                  type: BOOLEAN
-                  defaultValueBoolean: false
-                  constraints:
-                    nullable: false
-                  remarks: "For soft delete functionality"
-              - column:
                   name: created_at
                   type: TIMESTAMP WITHOUT TIME ZONE
                   defaultValueComputed: CURRENT_TIMESTAMP

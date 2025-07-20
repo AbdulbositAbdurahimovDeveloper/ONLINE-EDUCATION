@@ -14,8 +14,6 @@ import uz.pdp.online_education.model.Abs.AbsLongEntity;
 @Setter
 @ToString
 @Entity(name = "attachment")
-@SQLDelete(sql = "UPDATE attachment SET deleted = true WHERE id = ?")
-@SQLRestriction(value = "deleted=false")
 @FieldNameConstants
 public class Attachment extends AbsLongEntity {
 

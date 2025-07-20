@@ -19,8 +19,6 @@ import uz.pdp.online_education.model.User;
     // Bitta foydalanuvchi bitta kursga faqat bir marta sharh qoldirishi mumkin
     @UniqueConstraint(columnNames = {"user_id", "course_id"})
 })
-@SQLDelete(sql = "UPDATE reviews SET deleted = true WHERE id = ?")
-@SQLRestriction(value = "deleted=false")
 @FieldNameConstants
 public class Review extends AbsLongEntity {
 

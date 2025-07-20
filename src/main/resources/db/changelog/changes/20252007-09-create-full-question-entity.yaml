@@ -1,0 +1,84 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20252007-09-create-full-question-entity
+      author: Eldor04
+      comment: "A single, atomic changeset to create the 'questions' table with its constraints, FKs, and indexes"
+      changes:
+        # 1-QADAM: JADVALNI YARATISH
+        - createTable:
+            tableName: questions
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              # Bu entity'da "deleted" ustuni yo'q
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  name: text
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                  remarks: "Question type: SINGLE_CHOICE, MULTIPLE_CHOICE etc."
+              - column:
+                  name: quiz_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    remarks: "FK to the quiz table"
+
+        # 2-QADAM: TASHQI KALITLARNI QO'SHISH
+        - addForeignKeyConstraint:
+            baseTableName: questions
+            baseColumnNames: quiz_id
+            constraintName: fk_questions_on_quiz
+            referencedTableName: quizzes
+            referencedColumnNames: id
+            onDelete: CASCADE # Agar test o'chirilsa, uning savollari ham o'chiriladi
+
+        # 3-QADAM: NOYOB CHEKLOV VA UNUMDORLIK INDEKSLARINI YARATISH
+        # Savol matni har bir test ichida noyob bo'lishi kerak.
+        - addUniqueConstraint:
+            tableName: questions
+            columnNames: "quiz_id, text"
+            constraintName: uq_question_text_per_quiz
+            comment: "Question text should be unique within a quiz"
+        - createIndex:
+            indexName: idx_questions_on_quiz_id
+            tableName: questions
+            comment: "Adding a performance index on the quiz_id column for faster lookups"
+            columns:
+              - column:
+                  name: quiz_id
+
+      # =====================================================================
+      # BARCHA O'ZGARISHLARNI ORQAGA QAYTARISH (ROLLBACK)
+      # =====================================================================
+      rollback:
+        - dropIndex:
+            indexName: idx_questions_on_quiz_id
+            tableName: questions
+        - dropUniqueConstraint:
+            constraintName: uq_question_text_per_quiz
+            tableName: questions
+        - dropForeignKeyConstraint:
+            constraintName: fk_questions_on_quiz
+            baseTableName: questions
+        - dropTable:
+            tableName: questions

@@ -17,8 +17,6 @@ import java.util.List;
 @ToString(exclude = {"quiz", "options"}) // Infinite loop'ning oldini olish uchun
 @Entity
 @Table(name = "questions")
-@SQLDelete(sql = "UPDATE questions SET deleted = true WHERE id = ?")
-@SQLRestriction(value = "deleted=false")
 @FieldNameConstants
 public class Question extends AbsLongEntity {
 
