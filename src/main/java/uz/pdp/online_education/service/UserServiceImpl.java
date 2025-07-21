@@ -11,7 +11,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import uz.pdp.online_education.config.security.JwtProperties;
+import uz.pdp.online_education.config.properties.JwtProperties;
 import uz.pdp.online_education.config.security.JwtService;
 import uz.pdp.online_education.enums.Role;
 import uz.pdp.online_education.exceptions.DataConflictException;

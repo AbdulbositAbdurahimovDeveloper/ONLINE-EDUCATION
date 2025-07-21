@@ -33,7 +33,7 @@ public class UserDTO extends RepresentationModel<UserDTO> {
     private String email;
     private String phoneNumber;
     private String bio;
-    private String profilePictureUrl; // Kelajakda Attachment uchun URL qo'shsa bo'ladi
+    private Long profilePictureId; // Kelajakda Attachment uchun URL qo'shsa bo'ladi
 
     // --- AbsDateEntity'dan (Long formatida) ---
     private Long createdAt;

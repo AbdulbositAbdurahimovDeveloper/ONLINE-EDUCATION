@@ -2,7 +2,6 @@ package uz.pdp.online_education.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.PagedModel;
@@ -54,15 +53,15 @@ public class UserController {
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or authentication.principal.id == #id")
     public ResponseEntity<ResponseDTO<UserDTO>> read(@PathVariable Long id) {
-        UserDTO userDto = userService.read(id);
+        UserDTO userDTO = userService.read(id);
 
         Link selfLink = linkTo(methodOn(UserController.class).read(id)).withSelfRel();
         Link collectionLink = linkTo(methodOn(UserController.class).read(0, 10, null)).withRel("all-users");
-        Link photoUrl = linkTo(methodOn(UserController.class).read(null, null, null)).withRel("photo");
+        Link photoUrl = linkTo(methodOn(AttachmentController.class).read(userDTO.getProfilePictureId())).withRel("photo");
 
-        userDto.add(selfLink, collectionLink, photoUrl);
+        userDTO.add(selfLink, collectionLink, photoUrl);
 
-        return ResponseEntity.ok(ResponseDTO.success(userDto));
+        return ResponseEntity.ok(ResponseDTO.success(userDTO));
     }
 
 
@@ -73,7 +72,7 @@ public class UserController {
 
         Link selfLink = linkTo(methodOn(UserController.class).read(id)).withSelfRel();
         Link collectionLink = linkTo(methodOn(UserController.class).read(null, null, null)).withRel("all-users");
-        Link photoUrl = linkTo(methodOn(UserController.class).read(null, null, null)).withRel("photo");
+        Link photoUrl = linkTo(methodOn(AttachmentController.class).read(userDTO.getProfilePictureId())).withRel("photo");
 
         userDTO.add(selfLink, collectionLink, photoUrl);
 
@@ -83,8 +82,8 @@ public class UserController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or authentication.principal.id == #id")
     public ResponseEntity<ResponseDTO<?>> delete(@PathVariable Long id) {
-         userService.delete(id);
-         return ResponseEntity.ok(ResponseDTO.success("User deleted with id: " + id));
+        userService.delete(id);
+        return ResponseEntity.ok(ResponseDTO.success("User deleted with id: " + id));
     }
 
 

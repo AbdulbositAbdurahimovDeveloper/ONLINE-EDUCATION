@@ -11,6 +11,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import uz.pdp.online_education.model.User; // Sizning User klassingiz
+import uz.pdp.online_education.config.properties.JwtProperties;
 
 import java.security.Key;
 import java.time.Duration;
