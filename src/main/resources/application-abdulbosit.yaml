@@ -41,7 +41,9 @@ spring:
 
 education:
   app:
-    base-folder: /home/abdulbosit/IdeaProjects/certificate/ONLINE-EDUCATION
+    file:
+      base-folder: /home/abdulbosit/IdeaProjects/certificate/ONLINE-EDUCATION/src/main/resources/education/files/content
+      icons: /home/abdulbosit/IdeaProjects/certificate/ONLINE-EDUCATION/src/main/resources/education/files/icons
 
 springdoc:
   swagger-ui:
@@ -71,7 +73,7 @@ application:
     # Access tokenning yashash muddati.
     # Formatlar: 's' - soniya, 'm' - daqiqa, 'h' - soat, 'd' - kun.
     # Masalan: 15 daqiqa uchun '15m', 1 soat uchun '1h'.
-    access-token-expiration: 15m
+    access-token-expiration: 90m
 
     # Refresh tokenning yashash muddati.
     # Bu odatda ancha uzoqroq bo'ladi, masalan 7 kun.

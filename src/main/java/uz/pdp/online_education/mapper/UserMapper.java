@@ -31,7 +31,7 @@ public interface UserMapper {
      * Converts a User entity to a detailed UserDTO for display (read) purposes.
      * Maps the single Role enum to a String.
      */
-    @Mapping(source = "profile.profilePicture.id", target = "profilePictureUrl")
+    @Mapping(source = "profile.profilePicture.id", target = "profilePictureId")
     @Mapping(source = "profile.firstName", target = "firstName")
     @Mapping(source = "profile.lastName", target = "lastName")
     @Mapping(source = "profile.email", target = "email")
