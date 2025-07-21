@@ -6,10 +6,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.FieldNameConstants;
 
 @Getter
 @Setter
 @MappedSuperclass
+@FieldNameConstants
 public abstract class AbsLongEntity extends AbsDateEntity {
 
     @Id

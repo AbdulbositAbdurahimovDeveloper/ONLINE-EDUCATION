@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20252107_01_add_column_users_enabled
+      author: abdulbosit
+      comment: "Adds 'enabled' column to users table for email verification status."
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: enabled
+                  type: boolean # PostgreSQL, H2 uchun. Oracle uchun "number(1)", MySQL uchun "bit(1)" yoki "boolean"
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false

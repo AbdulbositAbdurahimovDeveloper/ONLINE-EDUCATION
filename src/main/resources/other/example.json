@@ -1,0 +1,8 @@
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "name": "Introduction to Java",
+    "price": 100.0
+  }
+}

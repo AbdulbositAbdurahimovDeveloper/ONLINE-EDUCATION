@@ -1,0 +1,38 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20252107_02_create_table_verification_token
+      author: abdulbosit
+      changes:
+        - createTable:
+            tableName: verification_token
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: token
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+                    unique: true # Har bir token unikal bo'lishi shart
+                    uniqueConstraintName: uq_verification_token_token # Unikal cheklovga nom berish
+              - column:
+                  name: user_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    unique: true # Bir foydalanuvchiga faqat bitta token (OneToOne munosabati)
+                    uniqueConstraintName: uq_verification_token_user_id
+                    foreignKeyName: fk_verification_token_user
+                    references: users(id)
+                    deleteCascade: true # Agar user o'chirilsa, bu yozuv ham o'chadi
+              - column:
+                  name: expiry_date
+                  type: timestamp # LocalDateTime uchun standart SQL tipi
+                  constraints:
+                    nullable: false
+      comment: "Creates the verification_token table to store email verification tokens for users."

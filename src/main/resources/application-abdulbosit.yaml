@@ -47,15 +47,32 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
-logging:
-  level:
-    root: WARN
-    org.springframework.web: INFO
-    org.hibernate.SQL: DEBUG
-    org.hibernate.orm.jdbc.bind: TRACE
-    org.hibernate.type.descriptor.sql: TRACE
-    com.example.your.app: DEBUG
+#logging:
+#  level:
+#    root: WARN
+#    org.springframework.web: INFO
+#    org.hibernate.SQL: DEBUG
+#    org.hibernate.orm.jdbc.bind: TRACE
+#    org.hibernate.type.descriptor.sql: TRACE
+#    com.example.your.app: DEBUG
 
 recaptcha:
   site-key: ${RECAPTCHA_SITE_KEY}
   secret-key: ${RECAPTCHA_SECRET_KEY}
+
+application:
+  jwt:
+    # BU JUDA MUHIM: Bu kalit production muhiti uchun mutlaqo o'zgartirilishi kerak!
+    # U Base64 formatida kodlangan va yetarlicha uzun (kamida 256 bit) bo'lishi lozim.
+    # Onlayn generatorlardan foydalanib, xavfsiz kalit yaratishingiz mumkin.
+    # Masalan: `openssl rand -base64 32` buyrug'i yordamida.
+    secret: "ZTAyOWY4YTNiODhjMWQ1ZjdlNmE0YjJjMWQwZTlmOGEzYjJjMWQwZjllOGE3YjZjNWQ0ZTNmMmExYjBjOWQ4ZQ=="
+
+    # Access tokenning yashash muddati.
+    # Formatlar: 's' - soniya, 'm' - daqiqa, 'h' - soat, 'd' - kun.
+    # Masalan: 15 daqiqa uchun '15m', 1 soat uchun '1h'.
+    access-token-expiration: 15m
+
+    # Refresh tokenning yashash muddati.
+    # Bu odatda ancha uzoqroq bo'ladi, masalan 7 kun.
+    refresh-token-expiration: 7d
