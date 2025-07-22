@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
 
+    private static final String CATEGORY_NOT_FOUND = "Category not found with id: ";
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
 
@@ -32,14 +33,14 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryDTO read(Long id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException(CATEGORY_NOT_FOUND+ id));
         return categoryMapper.toDTO(category);
     }
 
     @Override
     public CategoryDTO update(Long id, CategoryDTO dto) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException(CATEGORY_NOT_FOUND + id));
         category.setName(dto.getName());
         category.setIcon(dto.getIcon());
         category.setSlug(dto.getSlug());
@@ -51,7 +52,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public void delete(Long id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException(CATEGORY_NOT_FOUND + id));
         categoryRepository.delete(category);
         log.info("Deleted category with id: {}", id);
     }
