@@ -12,7 +12,7 @@ import uz.pdp.online_education.payload.ReviewUpdateDTO;
 
 @Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = "spring")
 public interface ReviewMapper {
-    ReviewDTO toDto(Review review);
-    Review toEntity(ReviewCreateDTO dto, Course course, User user);
-    void updateReview(Review review, ReviewUpdateDTO dto);
+//    ReviewDTO toDto(Review review);
+//    Review toEntity(ReviewCreateDTO dto, Course course, User user);
+//    void updateReview(Review review, ReviewUpdateDTO dto);
 }

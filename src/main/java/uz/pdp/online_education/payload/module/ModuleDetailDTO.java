@@ -28,6 +28,6 @@ public class ModuleDetailDTO extends RepresentationModel<ModuleDetailDTO> {
     // Bu modulga tegishli barcha darslar ro'yxati
     private List<LessonSummaryDTO> lessons; // Lesson uchun ham SummaryDTO kerak bo'ladi
 
-    private Instant createdAt;
-    private Instant updatedAt;
+    private Long createdAt;
+    private Long updatedAt;
 }
