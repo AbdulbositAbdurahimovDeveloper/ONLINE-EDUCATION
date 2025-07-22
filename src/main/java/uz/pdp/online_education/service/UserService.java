@@ -1,20 +1,17 @@
 package uz.pdp.online_education.service;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Page;
-import org.springframework.http.ResponseEntity;
 import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.payload.ResponseDTO;
-import uz.pdp.online_education.payload.user.LoginDTO;
-import uz.pdp.online_education.payload.user.UserDTO;
-import uz.pdp.online_education.payload.user.UserRegisterRequestDTO;
-import uz.pdp.online_education.payload.user.UserRegisterResponseDTO;
+import uz.pdp.online_education.payload.user.*;
 
 public interface UserService {
     User loadUserByUsername(String username);
 
     ResponseDTO<?> login(LoginDTO loginDTO);
 
-    UserDTO register(UserRegisterRequestDTO request);
+    RegistrationResponseDTO register(UserRegisterRequestDTO request, HttpServletRequest httpServletRequest);
 
     void verifyAccount(String token);
 

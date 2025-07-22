@@ -1,5 +1,6 @@
 package uz.pdp.online_education.service;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -11,6 +12,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import uz.pdp.online_education.config.properties.JwtProperties;
 import uz.pdp.online_education.config.security.JwtService;
 import uz.pdp.online_education.enums.Role;
@@ -23,10 +25,7 @@ import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.model.UserProfile;
 import uz.pdp.online_education.model.VerificationToken;
 import uz.pdp.online_education.payload.ResponseDTO;
-import uz.pdp.online_education.payload.user.LoginDTO;
-import uz.pdp.online_education.payload.user.TokenDTO;
-import uz.pdp.online_education.payload.user.UserDTO;
-import uz.pdp.online_education.payload.user.UserRegisterRequestDTO;
+import uz.pdp.online_education.payload.user.*;
 import uz.pdp.online_education.repository.AttachmentRepository;
 import uz.pdp.online_education.repository.UserProfileRepository;
 import uz.pdp.online_education.repository.UserRepository;
@@ -34,6 +33,7 @@ import uz.pdp.online_education.repository.VerificationTokenRepository;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -49,6 +49,7 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final AttachmentRepository attachmentRepository;
     private final VerificationTokenRepository verificationTokenRepository;
+    private final EmailService emailService;
 
     @Override
     @Cacheable(value = "users", key = "#username")
@@ -115,7 +116,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDTO register(UserRegisterRequestDTO request) {
+    @Transactional
+    public RegistrationResponseDTO register(UserRegisterRequestDTO request, HttpServletRequest httpServletRequest) {
         // 1. Username yoki email bandligini tekshirish
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new DataConflictException("Username already exists!");
@@ -154,7 +156,31 @@ public class UserServiceImpl implements UserService {
         User savedUser = userRepository.save(user);
 
         // 6. Javob DTO-sini yaratib, qaytarish
-        return userMapper.toDTO(savedUser);
+//        return userMapper.toDTO(savedUser);
+
+        // 2. Verifikatsiya tokenini yaratish va saqlash
+        String token = UUID.randomUUID().toString();
+        VerificationToken verificationToken = new VerificationToken(token, savedUser);
+        verificationTokenRepository.save(verificationToken);
+
+        // 3. Tasdiqlash xabarini yuborish
+//        String confirmationUrl = "http://localhost:8080/api/auth/verify?token=" + token;
+        String confirmationUrl = getApplicationUrl(httpServletRequest);
+        emailService.sendVerificationEmail(savedUser.getProfile().getEmail(), confirmationUrl + "/api/auth/verify?token=" + token);
+
+        // 4. Javob DTO'sini shakllantirish
+        UserSummaryDTO userSummary = UserSummaryDTO.builder()
+                .id(savedUser.getId())
+                .username(savedUser.getUsername())
+                .email(savedUser.getProfile().getEmail())
+                .build();
+
+        return RegistrationResponseDTO.builder()
+                .message("Ro'yxatdan o'tish muvaffaqiyatli yakunlandi. Hisobingizni faollashtirish uchun emailingizga yuborilgan havolani bosing.")
+                .user(userSummary)
+                .build();
+
+
     }
 
     @Override
@@ -195,6 +221,7 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
+    @Transactional
     public UserDTO update(Long id, UserRegisterRequestDTO registerRequestDTO) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
@@ -223,6 +250,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void delete(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
@@ -232,6 +260,24 @@ public class UserServiceImpl implements UserService {
         userProfileRepository.deleteById(profile.getId());
         userRepository.deleteById(user.getId());
         log.info("User deleted with id: {}", id);
+    }
+
+    /**
+     * Joriy so'rovdan dasturning asosiy URL'ini (masalan, "http://localhost:8080"
+     * yoki "https://my-domain.com") oluvchi yordamchi metod.
+     */
+    private String getApplicationUrl(HttpServletRequest request) {
+        String scheme = request.getScheme();             // http
+        String serverName = request.getServerName();     // localhost
+        int serverPort = request.getServerPort();        // 8080
+        String contextPath = request.getContextPath();   // Agar bo'lsa, masalan, /my-app
+
+        // Standart portlar (80 uchun http, 443 uchun https) bo'lsa, ularni ko'rsatmaslik
+        if ((scheme.equals("http") && serverPort == 80) || (scheme.equals("https") && serverPort == 443)) {
+            return scheme + "://" + serverName + contextPath;
+        }
+
+        return scheme + "://" + serverName + ":" + serverPort + contextPath;
     }
 
 }

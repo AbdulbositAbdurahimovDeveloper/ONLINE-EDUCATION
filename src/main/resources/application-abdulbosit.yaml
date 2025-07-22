@@ -1,5 +1,9 @@
 server:
   port: 8080
+  # Server URLs for Swagger documentation
+  url:
+    development: http://localhost:8080
+    production: https://api.online-education.com
 
 spring:
   application:
@@ -30,8 +34,10 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    #    username: ${MAIL_USERNAME}
+    #    password: ${MAIL_PASSWORD}
+    username: abdulbositAbdurahimov70@gmail.com
+    password: 'cphf yxno yydk sufr'
     properties:
       mail:
         smtp:
