@@ -8,13 +8,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import uz.pdp.online_education.assembler.CourseModelAssembler;
+import uz.pdp.online_education.assembler.ModuleAssembler;
 import uz.pdp.online_education.model.Course;
+import uz.pdp.online_education.model.Module;
 import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.payload.ResponseDTO;
 import uz.pdp.online_education.payload.course.CourseCreateDTO;
 import uz.pdp.online_education.payload.course.CourseDetailDTO;
 import uz.pdp.online_education.payload.course.CourseUpdateDTO;
+import uz.pdp.online_education.payload.module.ModuleDetailDTO;
 import uz.pdp.online_education.service.CourseService;
+import uz.pdp.online_education.service.ModuleService;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -23,6 +27,8 @@ public class CourseController {
 
     private final CourseService courseService;
     private final CourseModelAssembler courseModelAssembler;
+    private final ModuleService moduleService;
+    private final ModuleAssembler moduleAssembler;
 
     @GetMapping("/open/courses")
     public ResponseEntity<ResponseDTO<PagedModel<CourseDetailDTO>>> read(@RequestParam(defaultValue = "0") Integer page,
@@ -39,6 +45,17 @@ public class CourseController {
     public ResponseEntity<ResponseDTO<CourseDetailDTO>> read(@PathVariable Long id) {
         CourseDetailDTO courseDetailDTO = courseService.read(id);
         return ResponseEntity.ok(ResponseDTO.success(courseDetailDTO));
+    }
+
+    @GetMapping("/{courseId}/modules")
+    public ResponseEntity<ResponseDTO<PagedModel<ModuleDetailDTO>>> read(@PathVariable Long courseId,
+                                                                         @RequestParam(defaultValue = "0") Integer page,
+                                                                         @RequestParam(defaultValue = "10") Integer size,
+                                                                         PagedResourcesAssembler<uz.pdp.online_education.model.Module> assembler) {
+        Page<Module> modulePage = moduleService.read(courseId, page, size);
+
+        PagedModel<ModuleDetailDTO> model = assembler.toModel(modulePage, moduleAssembler);
+        return ResponseEntity.ok(ResponseDTO.success(model));
     }
 
     @PostMapping("/courses")
