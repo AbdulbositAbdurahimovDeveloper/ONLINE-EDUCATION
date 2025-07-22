@@ -1,14 +1,13 @@
 package uz.pdp.online_education.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import uz.pdp.online_education.model.VerificationToken;
 import uz.pdp.online_education.payload.ResponseDTO;
-import uz.pdp.online_education.payload.user.LoginDTO;
-import uz.pdp.online_education.payload.user.UserDTO;
-import uz.pdp.online_education.payload.user.UserRegisterRequestDTO;
-import uz.pdp.online_education.payload.user.UserRegisterResponseDTO;
+import uz.pdp.online_education.payload.user.*;
 import uz.pdp.online_education.service.UserService;
 
 @RestController
@@ -25,9 +24,10 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<ResponseDTO<UserDTO>> register(@RequestBody @Valid UserRegisterRequestDTO responseDTO) {
-        UserDTO userDTO = userService.register(responseDTO);
-        return ResponseEntity.ok(ResponseDTO.success(userDTO));
+    public ResponseEntity<ResponseDTO<?>> register(@RequestBody @Valid UserRegisterRequestDTO responseDTO,
+                                                   HttpServletRequest httpServletRequest) {
+        RegistrationResponseDTO register = userService.register(responseDTO,httpServletRequest);
+        return ResponseEntity.ok(ResponseDTO.success(register));
     }
 
     @GetMapping("/verify")

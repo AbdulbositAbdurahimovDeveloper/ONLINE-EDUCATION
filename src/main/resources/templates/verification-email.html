@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Hisobni Tasdiqlash</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background-color: #4A90E2;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .content {
+            padding: 30px;
+            text-align: center;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .button {
+            display: inline-block;
+            background-color: #4A90E2;
+            color: #ffffff;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Xush kelibsiz!</h1>
+    </div>
+    <div class="content">
+        <p>Salom, <strong th:text="${username}">Foydalanuvchi</strong>!</p>
+        <p>Bizning platformamizga ro'yxatdan o'tganingiz uchun tashakkur. Hisobingizni faollashtirish uchun quyidagi
+            tugmani bosing:</p>
+        <a th:href="${confirmationUrl}" class="button">Hisobni Faollashtirish</a>
+        <p>Agar tugma ishlamasa, quyidagi havolani nusxalab, brauzeringizga joylashtiring:</p>
+        <p><a th:href="${confirmationUrl}" th:text="${confirmationUrl}"></a></p>
+        <p>Bu havola 24 soat davomida amal qiladi.</p>
+    </div>
+    <div class="footer">
+        <p>© 2023 Online Education Platform. Barcha huquqlar himoyalangan.</p>
+    </div>
+</div>
+</body>
+</html>

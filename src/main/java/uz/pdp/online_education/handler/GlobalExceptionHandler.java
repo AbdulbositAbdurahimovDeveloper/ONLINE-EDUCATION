@@ -1,6 +1,8 @@
 package uz.pdp.online_education.handler;
 
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.MalformedJwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,7 @@ import uz.pdp.online_education.payload.ResponseDTO;
 import uz.pdp.online_education.payload.errors.ErrorDTO;
 import uz.pdp.online_education.payload.errors.FieldErrorDTO;
 
+import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,13 +32,37 @@ import java.util.List;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ExpiredJwtException.class)
-    public ResponseEntity<?> handleExpiredJwtException(ExpiredJwtException ex) {
-        log.warn("Data authorized: {}", ex.getMessage());
-        ErrorDTO error = new ErrorDTO(HttpStatus.UNAUTHORIZED.value(), ex.getMessage());
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(ResponseDTO.error(error));
+    public ResponseEntity<ResponseDTO<Object>> handleExpiredJwtException(ExpiredJwtException e) {
+        // ErrorDTO'ni yaratamiz
+        ErrorDTO error = new ErrorDTO(401, "Tokenning yashash muddati tugagan. Iltimos, qayta tizimga kiring.");
+
+        // ResponseDTO.error() static metodi orqali javobni yaratamiz
+        ResponseDTO<Object> response = ResponseDTO.error(error);
+
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
+
+    @ExceptionHandler(SignatureException.class)
+    public ResponseEntity<ResponseDTO<Object>> handleSignatureException(SignatureException e) {
+        ErrorDTO error = new ErrorDTO(401, "Yaroqsiz JWT imzosi. Token buzilgan yoki o'zgartirilgan bo'lishi mumkin.");
+        ResponseDTO<Object> response = ResponseDTO.error(error);
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(MalformedJwtException.class)
+    public ResponseEntity<ResponseDTO<Object>> handleMalformedJwtException(MalformedJwtException e) {
+        ErrorDTO error = new ErrorDTO(401, "Noto'g'ri formatdagi JWT token.");
+        ResponseDTO<Object> response = ResponseDTO.error(error);
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<ResponseDTO<Object>> handleJwtException(JwtException e) {
+        ErrorDTO error = new ErrorDTO(401, "JWT token bilan bog'liq xatolik: " + e.getMessage());
+        ResponseDTO<Object> response = ResponseDTO.error(error);
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+
 
     /**
      * Handles cases where the request body is missing or malformed (not readable).

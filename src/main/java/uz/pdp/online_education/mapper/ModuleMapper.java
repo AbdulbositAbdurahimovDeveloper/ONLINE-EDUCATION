@@ -3,26 +3,24 @@ package uz.pdp.online_education.mapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
-import uz.pdp.online_education.model.Course;
-import uz.pdp.online_education.payload.course.CourseDetailDTO;
+import org.mapstruct.ReportingPolicy;
+import uz.pdp.online_education.model.Module;
+import uz.pdp.online_education.payload.module.ModuleDetailDTO;
 
 import java.sql.Timestamp;
 
-@Mapper(componentModel = "spring")
-public interface CourseMapper {
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE,componentModel = "spring")
+public interface ModuleMapper {
 
-    @Mapping(target = "thumbnailUrl", source = "thumbnailUrl.id")
-    @Mapping(target = "category")
-    @Mapping(target = "instructor")
-    @Mapping(target = "modules")
+    @Mapping(target = "orderIndex")
+    @Mapping(target = "course",ignore = true)
+    @Mapping(target = "lessons")
     @Mapping(source = "createdAt", target = "createdAt", qualifiedByName = "timestampToLong")
     @Mapping(source = "updatedAt", target = "updatedAt", qualifiedByName = "timestampToLong")
-    CourseDetailDTO courseToCourseDetailDTO(Course course);
+    ModuleDetailDTO toModuleDetailsDTO(Module entity);
 
     @Named("timestampToLong")
     default Long timestampToLong(Timestamp timestamp) {
         return timestamp != null ? timestamp.getTime() : null;
     }
-
-
 }

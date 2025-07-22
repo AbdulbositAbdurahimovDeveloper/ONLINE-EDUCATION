@@ -1,116 +1,129 @@
 package uz.pdp.online_education.service;
 
+import com.github.slugify.Slugify;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import uz.pdp.online_education.exceptions.EntityNotFoundException;
 import uz.pdp.online_education.mapper.CourseMapper;
 import uz.pdp.online_education.model.Attachment;
 import uz.pdp.online_education.model.Category;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.User;
-import uz.pdp.online_education.payload.CourseRequestDTO;
-import uz.pdp.online_education.payload.CourseResponseDTO;
+import uz.pdp.online_education.payload.course.CourseCreateDTO;
+import uz.pdp.online_education.payload.course.CourseDetailDTO;
+import uz.pdp.online_education.payload.course.CourseUpdateDTO;
 import uz.pdp.online_education.repository.AttachmentRepository;
 import uz.pdp.online_education.repository.CategoryRepository;
 import uz.pdp.online_education.repository.CourseRepository;
-import uz.pdp.online_education.repository.UserRepository;
-
-import java.util.List;
-import java.util.stream.Collectors;
+import uz.pdp.online_education.repository.ModuleRepository;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class CourseServiceImpl implements CourseService {
 
     private final CourseRepository courseRepository;
-    private final CategoryRepository categoryRepository;
-    private final UserRepository userRepository;
-    private final AttachmentRepository attachmentRepository;
     private final CourseMapper courseMapper;
+    private final Slugify slugify = Slugify.builder().build();
+    private final AttachmentRepository attachmentRepository;
+    private final CategoryRepository categoryRepository;
+    private final ModuleRepository moduleRepository;
 
+    /**
+     * @param page default:0
+     * @param size default:10
+     * @return page
+     */
     @Override
-    public CourseResponseDTO create(CourseRequestDTO dto) {
-        Course course = new Course();
-        courseMapper.updateCourseFromDto(dto, course);
-        course.setInstructor(getUser(dto.getInstructorId()));
-        course.setCategory(getCategory(dto.getCategoryId()));
-        course.setThumbnailUrl(getAttachment(dto.getThumbnailId()));
-
-        Course saved = courseRepository.save(course);
-        log.info("Created Course with id={}", saved.getId());
-        return courseMapper.toDto(saved);
+    public Page<Course> read(Integer page, Integer size) {
+        PageRequest pageRequest = PageRequest.of(page, size);
+        return courseRepository.findAllOrderByAverageRatingDesc(pageRequest);
     }
 
+    /**
+     * @param id
+     * @return
+     */
     @Override
-    public CourseResponseDTO update(Long id, CourseRequestDTO dto) {
-        Course course = getCourse(id);
-        courseMapper.updateCourseFromDto(dto, course);
-        course.setInstructor(getUser(dto.getInstructorId()));
-        course.setCategory(getCategory(dto.getCategoryId()));
-        course.setThumbnailUrl(getAttachment(dto.getThumbnailId()));
-
-        Course updated = courseRepository.save(course);
-        log.info("Updated Course id={}", updated.getId());
-        return courseMapper.toDto(updated);
-    }
-
-    @Override
-    public void delete(Long id) {
-        Course course = getCourse(id);
-        courseRepository.delete(course);
-        log.warn("Deleted Course id={}", id);
-    }
-
-    @Override
-    public CourseResponseDTO getById(Long id) {
-        Course course = getCourse(id);
-        return courseMapper.toDto(course);
-    }
-
-    @Override
-    public List<CourseResponseDTO> getAll() {
-        return courseRepository.findAll()
-                .stream()
-                .map(courseMapper::toDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<CourseResponseDTO> getByCategoryId(Long categoryId) {
-        return courseRepository.findAllByCategoryId(categoryId)
-                .stream()
-                .map(courseMapper::toDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<CourseResponseDTO> getByInstructorId(Long instructorId) {
-        return courseRepository.findAllByInstructorId(instructorId)
-                .stream()
-                .map(courseMapper::toDto)
-                .collect(Collectors.toList());
-    }
-
-    // ========== PRIVATE HELPERS ==========
-    private Course getCourse(Long id) {
-        return courseRepository.findById(id)
+    public CourseDetailDTO read(Long id) {
+        Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Course not found with id: " + id));
+
+        return courseMapper.courseToCourseDetailDTO(course);
     }
 
-    private User getUser(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
+    /**
+     * @param courseCreateDTO courseCreateDTO
+     * @param instructor
+     * @return courseDetailDTO
+     */
+    @Override
+    @Transactional
+    public CourseDetailDTO create(CourseCreateDTO courseCreateDTO, User instructor) {
+
+        String baseSlug = slugify.slugify(courseCreateDTO.getTitle());
+
+        Attachment attachment = attachmentRepository.findById(courseCreateDTO.getThumbnailId())
+                .orElseThrow(() -> new EntityNotFoundException("Instructor not found with id: " + courseCreateDTO.getThumbnailId()));
+
+        Category category = categoryRepository.findById(courseCreateDTO.getCategoryId())
+                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + courseCreateDTO.getCategoryId()));
+
+
+        Course course = new Course();
+        course.setTitle(courseCreateDTO.getTitle());
+        course.setDescription(courseCreateDTO.getDescription());
+        course.setSlug(baseSlug);
+        course.setThumbnailUrl(attachment);
+        course.setInstructor(instructor);
+        course.setCategory(category);
+
+        courseRepository.save(course);
+        return courseMapper.courseToCourseDetailDTO(course);
     }
 
-    private Category getCategory(Long id) {
-        return categoryRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + id));
+    /**
+     * @param id              Long
+     * @param courseUpdateDTO CourseUpdateDTO
+     * @param instructor      User
+     * @return courseDetailDTO
+     */
+    @Override
+    @Transactional
+    public CourseDetailDTO update(Long id, CourseUpdateDTO courseUpdateDTO, User instructor) {
+        Course course = courseRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Course not found with id: " + id));
+
+        Category category = categoryRepository.findById(courseUpdateDTO.getCategoryId())
+                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + courseUpdateDTO.getCategoryId()));
+
+        String baseSlug = slugify.slugify(courseUpdateDTO.getTitle());
+
+        course.setTitle(courseUpdateDTO.getTitle());
+        course.setSlug(baseSlug);
+        course.setDescription(courseUpdateDTO.getDescription());
+        course.setInstructor(instructor);
+        course.setCategory(category);
+
+        courseRepository.save(course);
+        return courseMapper.courseToCourseDetailDTO(course);
     }
 
-    private Attachment getAttachment(Long id) {
-        return attachmentRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Attachment not found with id: " + id));
+    /**
+     * @param id Long
+     */
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        Course course = courseRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Course not found with id: " + id));
+
+        if (course.getModules() != null) {
+            moduleRepository.deleteAll(course.getModules());
+        }
+
+        courseRepository.delete(course);
     }
 }
