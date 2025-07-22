@@ -1,38 +1,18 @@
 package uz.pdp.online_education.mapper;
 
-import uz.pdp.online_education.payload.*;
-import uz.pdp.online_education.model.*;
-
-public class ReviewMapper {
-
-    public static ReviewDTO toDto(Review review) {
-
-        return ReviewDTO.builder()
-                .id(review.getId())
-                .rating(review.getRating())
-                .comment(review.getComment())
-                .courseId(review.getCourse().getId())
-                .userId(review.getUser().getId())
-                .build();
-    }
-
-    public static Review toEntity(ReviewCreateDTO dto, Course course, User user) {
-
-        Review review = new Review();
-        review.setRating(dto.getRating());
-        review.setComment(dto.getComment());
-        review.setCourse(course);
-        review.setUser(user);
+import org.mapstruct.Mapper;
+import org.mapstruct.ReportingPolicy;
+import uz.pdp.online_education.model.Course;
+import uz.pdp.online_education.model.Review;
+import uz.pdp.online_education.model.User;
+import uz.pdp.online_education.payload.ReviewCreateDTO;
+import uz.pdp.online_education.payload.ReviewDTO;
+import uz.pdp.online_education.payload.ReviewUpdateDTO;
 
 
-        return review;
-    }
-
-    public static void updateReview(Review review, ReviewUpdateDTO dto) {
-        review.setRating(dto.getRating());
-
-        review.setComment(dto.getComment());
-
-    }
-
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = "spring")
+public interface ReviewMapper {
+    ReviewDTO toDto(Review review);
+    Review toEntity(ReviewCreateDTO dto, Course course, User user);
+    void updateReview(Review review, ReviewUpdateDTO dto);
 }

@@ -20,7 +20,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final ReviewRepository reviewRepository;
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
-
+    private final ReviewMapper reviewMapper;
 
     @Override
     public ReviewDTO create(ReviewCreateDTO dto) {
@@ -29,23 +29,23 @@ public class ReviewServiceImpl implements ReviewService {
         User user = userRepository.findById(dto.getUserId())
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-        Review review = ReviewMapper.toEntity(dto, course, user);
+        Review review = reviewMapper.toEntity(dto, course, user);
         Review saved = reviewRepository.save(review);
         log.info("Review created with id: {}", saved.getId());
-        return ReviewMapper.toDto(saved);
+        return reviewMapper.toDto(saved);
     }
 
     @Override
     public ReviewDTO getById(Long id) {
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Review not found"));
-        return ReviewMapper.toDto(review);
+        return reviewMapper.toDto(review);
     }
 
     @Override
     public List<ReviewDTO> getAll() {
         return reviewRepository.findAll().stream()
-                .map(ReviewMapper::toDto)
+                .map(reviewMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -53,10 +53,10 @@ public class ReviewServiceImpl implements ReviewService {
     public ReviewDTO update(Long id, ReviewUpdateDTO dto) {
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Review not found"));
-        ReviewMapper.updateReview(review, dto);
+        reviewMapper.updateReview(review, dto);
         Review updated = reviewRepository.save(review);
         log.info("Review updated with id: {}", updated.getId());
-        return ReviewMapper.toDto(updated);
+        return reviewMapper.toDto(updated);
     }
 
     @Override
