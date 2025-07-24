@@ -21,13 +21,9 @@ public class ModuleDetailDTO extends RepresentationModel<ModuleDetailDTO> {
     private String description;
     private Long price;
     private Integer orderIndex;
-    
-    // Modul qaysi kursga tegishli ekanligi haqida qisqa ma'lumot
-    private CourseSummaryDTO course;
-    
-    // Bu modulga tegishli barcha darslar ro'yxati
-    private List<LessonSummaryDTO> lessons; // Lesson uchun ham SummaryDTO kerak bo'ladi
-
+    private Long courseId;
+    private Integer lessonCount;
+    private Integer moduleEnrollmentsCount;
     private Long createdAt;
     private Long updatedAt;
 }

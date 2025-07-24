@@ -31,7 +31,7 @@ public class ModuleAssembler extends RepresentationModelAssemblerSupport<Module,
         ModuleDetailDTO moduleDetailDTO = moduleMapper.toModuleDetailsDTO(entity);
 
         moduleDetailDTO.add(linkTo(methodOn(ModuleController.class)
-                .read(moduleDetailDTO.getCourse().getSlug()))
+                .read(moduleDetailDTO.getCourseId()))
                 .withSelfRel());
 
         return moduleDetailDTO;

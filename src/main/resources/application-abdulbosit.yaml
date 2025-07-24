@@ -34,10 +34,10 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    #    username: ${MAIL_USERNAME}
-    #    password: ${MAIL_PASSWORD}
-    username: abdulbositAbdurahimov70@gmail.com
-    password: 'cphf yxno yydk sufr'
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+#    username: abdulbositAbdurahimov70@gmail.com
+#    password: 'cphf yxno yydk sufr'
     properties:
       mail:
         smtp:
@@ -79,7 +79,7 @@ application:
     # Access tokenning yashash muddati.
     # Formatlar: 's' - soniya, 'm' - daqiqa, 'h' - soat, 'd' - kun.
     # Masalan: 15 daqiqa uchun '15m', 1 soat uchun '1h'.
-    access-token-expiration: 90m
+    access-token-expiration: 30d
 
     # Refresh tokenning yashash muddati.
     # Bu odatda ancha uzoqroq bo'ladi, masalan 7 kun.
