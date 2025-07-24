@@ -4,12 +4,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import uz.pdp.online_education.assembler.ModuleAssembler;
 import uz.pdp.online_education.payload.ResponseDTO;
 import uz.pdp.online_education.payload.module.ModuleCreateDTO;
 import uz.pdp.online_education.payload.module.ModuleDetailDTO;
 import uz.pdp.online_education.payload.module.ModuleUpdateDTO;
-import uz.pdp.online_education.service.ModuleService;
+
 import uz.pdp.online_education.service.interfaces.ModuleService;
 
 @RestController
