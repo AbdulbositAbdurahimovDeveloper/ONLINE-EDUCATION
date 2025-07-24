@@ -11,6 +11,7 @@ import uz.pdp.online_education.mapper.ModuleMapper;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.Module;
 import uz.pdp.online_education.model.Payment;
+import uz.pdp.online_education.payload.PageDTO;
 import uz.pdp.online_education.payload.module.ModuleCreateDTO;
 import uz.pdp.online_education.payload.module.ModuleDetailDTO;
 import uz.pdp.online_education.payload.module.ModuleUpdateDTO;
@@ -35,10 +36,24 @@ public class ModuleServiceImpl implements ModuleService {
      * @return Page
      */
     @Override
-    public Page<Module> read(Long courseId, Integer page, Integer size) {
+    public PageDTO<ModuleDetailDTO> read(Long courseId, Integer page, Integer size) {
         Sort sort = Sort.by(Sort.Direction.ASC, Module.Fields.orderIndex);
         PageRequest pageRequest = PageRequest.of(page, size, sort);
-        return moduleRepository.findByCourseId(courseId, pageRequest);
+
+        Page<Module> byCourseId = moduleRepository.findByCourseId(courseId, pageRequest);
+
+        return new PageDTO<>(
+                byCourseId.getContent().stream().map(moduleMapper::toModuleDetailsDTO).toList(),
+                byCourseId.getNumber(),
+                byCourseId.getSize(),
+                byCourseId.getTotalElements(),
+                byCourseId.getTotalPages(),
+                byCourseId.isLast(),
+                byCourseId.isFirst(),
+                byCourseId.getNumberOfElements(),
+                byCourseId.isEmpty()
+        );
+
     }
 
     /**
