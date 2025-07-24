@@ -1,0 +1,156 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20252407-01-refactor-lesson-table
+      author: abdulbosit
+      comment: "Refactors the 'lesson' table: removes view_id, adds soft-delete, and adjusts constraints"
+      changes:
+        # 1-QADAM: Keraksiz cheklov va ustunni olib tashlash
+        - dropForeignKeyConstraint:
+            baseTableName: lesson
+            constraintName: fk_lesson_on_user_view
+
+        # `uq_lesson_title_per_module` ni olib tashlash (agar bu cheklov o'rniga order_index bo'yicha unikalik kerak bo'lsa)
+        - dropUniqueConstraint:
+            constraintName: uq_lesson_title_per_module
+            tableName: lesson
+
+        - dropColumn:
+            tableName: lesson
+            columnName: view_id
+
+        # 2-QADAM: Soft-delete uchun 'deleted' ustunini qo'shish
+        - addColumn:
+            tableName: lesson
+            columns:
+              - column:
+                  name: deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+        # 3-QADAM: To'g'ri unikal cheklovni qo'shish (tartib raqami modul ichida unikal bo'lishi kerak)
+        - addUniqueConstraint:
+            tableName: lesson
+            columnNames: "modules_id, order_index"
+            constraintName: uq_lesson_order_per_module
+            comment: "Lesson order_index should be unique within a single module"
+
+      # =====================================================================
+      # ROLLBACK: O'zgarishlarni orqaga qaytarish
+      # =====================================================================
+      rollback:
+        - dropUniqueConstraint:
+            constraintName: uq_lesson_order_per_module
+            tableName: lesson
+
+        - dropColumn:
+            tableName: lesson
+            columnName: deleted
+
+        - addColumn:
+            tableName: lesson
+            columns:
+              - column:
+                  name: view_id
+                  type: BIGINT
+                  constraints:
+                    unique: true
+                    remarks: "FK to the users table for tracking progress (OneToOne)"
+
+        # O'chirilgan unikal cheklovni qayta tiklash
+        - addUniqueConstraint:
+            tableName: lesson
+            columnNames: "modules_id, title"
+            constraintName: uq_lesson_title_per_module
+
+        # O'chirilgan tashqi kalitni qayta tiklash
+        - addForeignKeyConstraint:
+            baseTableName: lesson
+            baseColumnNames: view_id
+            constraintName: fk_lesson_on_user_view
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: SET NULL
+  - changeSet:
+      id: 20252007-07-create-lesson-completions-table
+      author: abdulbosit
+      comment: "Creates the 'lesson_completions' table to track user progress on lessons"
+      changes:
+        # 1-QADAM: Jadvalni yaratish
+        - createTable:
+            tableName: lesson_completions
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    remarks: "FK to the users table"
+              - column:
+                  name: lesson_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    remarks: "FK to the lesson table"
+              # Qo'shimcha ma'lumotlar uchun ustunlar (ixtiyoriy)
+              # - column:
+              #     name: completed_at
+              #     type: TIMESTAMP WITHOUT TIME ZONE
+
+        # 2-QADAM: Tashqi kalitlarni qo'shish
+        - addForeignKeyConstraint:
+            baseTableName: lesson_completions
+            baseColumnNames: user_id
+            constraintName: fk_completion_on_user
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE # Agar user o'chirilsa, uning progressi ham o'chiriladi
+
+        - addForeignKeyConstraint:
+            baseTableName: lesson_completions
+            baseColumnNames: lesson_id
+            constraintName: fk_completion_on_lesson
+            referencedTableName: lesson
+            referencedColumnNames: id
+            onDelete: CASCADE # Agar dars o'chirilsa, uning progressi ham o'chiriladi
+
+        # 3-QADAM: Unikal cheklov (bitta user bitta darsni faqat bir marta tugatishi mumkin)
+        - addUniqueConstraint:
+            tableName: lesson_completions
+            columnNames: "user_id, lesson_id"
+            constraintName: uq_user_lesson_completion
+
+        # 4-QADAM: Unumdorlik uchun indekslar
+        - createIndex:
+            indexName: idx_completion_on_user_id
+            tableName: lesson_completions
+            columns:
+              - column:
+                  name: user_id
+        - createIndex:
+            indexName: idx_completion_on_lesson_id
+            tableName: lesson_completions
+            columns:
+              - column:
+                  name: lesson_id
+
+      # =====================================================================
+      # ROLLBACK: O'zgarishlarni orqaga qaytarish
+      # =====================================================================
+      rollback:
+        - dropTable:
+            tableName: lesson_completions # Jadvalni, uning barcha cheklovlari va indekslari bilan birga o'chiradi
