@@ -17,8 +17,8 @@ import uz.pdp.online_education.payload.course.CourseCreateDTO;
 import uz.pdp.online_education.payload.course.CourseDetailDTO;
 import uz.pdp.online_education.payload.course.CourseUpdateDTO;
 import uz.pdp.online_education.payload.module.ModuleDetailDTO;
-import uz.pdp.online_education.service.CourseService;
-import uz.pdp.online_education.service.ModuleService;
+import uz.pdp.online_education.service.interfaces.CourseService;
+import uz.pdp.online_education.service.interfaces.ModuleService;
 
 @RestController
 @RequestMapping("/api/v1")

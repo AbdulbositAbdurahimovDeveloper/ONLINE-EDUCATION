@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import uz.pdp.online_education.assembler.ModuleAssembler;
 import uz.pdp.online_education.payload.ResponseDTO;
 import uz.pdp.online_education.payload.module.ModuleDetailDTO;
-import uz.pdp.online_education.service.ModuleService;
+import uz.pdp.online_education.service.interfaces.ModuleService;
 
 @RestController
 @RequestMapping("/api/v1/modules")

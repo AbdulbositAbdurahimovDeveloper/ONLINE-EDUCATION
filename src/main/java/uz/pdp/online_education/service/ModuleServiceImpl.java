@@ -7,6 +7,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import uz.pdp.online_education.model.Module;
 import uz.pdp.online_education.repository.ModuleRepository;
+import uz.pdp.online_education.service.interfaces.ModuleService;
 
 @Service
 @RequiredArgsConstructor

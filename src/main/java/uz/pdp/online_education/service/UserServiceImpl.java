@@ -30,6 +30,8 @@ import uz.pdp.online_education.repository.AttachmentRepository;
 import uz.pdp.online_education.repository.UserProfileRepository;
 import uz.pdp.online_education.repository.UserRepository;
 import uz.pdp.online_education.repository.VerificationTokenRepository;
+import uz.pdp.online_education.service.interfaces.EmailService;
+import uz.pdp.online_education.service.interfaces.UserService;
 
 import java.time.LocalDateTime;
 import java.util.Objects;

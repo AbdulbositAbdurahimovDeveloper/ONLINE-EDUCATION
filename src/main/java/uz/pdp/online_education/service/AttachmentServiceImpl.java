@@ -1,26 +1,21 @@
 package uz.pdp.online_education.service;
 
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
-import org.springframework.hateoas.Link;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import uz.pdp.online_education.config.properties.FileStorageProperties;
-import uz.pdp.online_education.controller.AttachmentController;
 import uz.pdp.online_education.exceptions.AttachmentSaveException;
 import uz.pdp.online_education.exceptions.EntityNotFoundException;
 import uz.pdp.online_education.exceptions.FileStorageException;
 import uz.pdp.online_education.mapper.AttachmentMapper;
 import uz.pdp.online_education.model.Attachment;
-import uz.pdp.online_education.model.lesson.AttachmentContent;
 import uz.pdp.online_education.payload.AttachmentDTO;
 import uz.pdp.online_education.repository.AttachmentRepository;
+import uz.pdp.online_education.service.interfaces.AttachmentService;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -33,7 +28,6 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @Slf4j
 @Service

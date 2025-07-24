@@ -1,4 +1,4 @@
-package uz.pdp.online_education.service;
+package uz.pdp.online_education.service.interfaces;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Page;

@@ -5,10 +5,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import uz.pdp.online_education.model.VerificationToken;
 import uz.pdp.online_education.payload.ResponseDTO;
 import uz.pdp.online_education.payload.user.*;
-import uz.pdp.online_education.service.UserService;
+import uz.pdp.online_education.service.interfaces.UserService;
 
 @RestController
 @RequestMapping("/api/auth")

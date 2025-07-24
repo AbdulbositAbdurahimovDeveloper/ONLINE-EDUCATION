@@ -19,6 +19,7 @@ import uz.pdp.online_education.repository.AttachmentRepository;
 import uz.pdp.online_education.repository.CategoryRepository;
 import uz.pdp.online_education.repository.CourseRepository;
 import uz.pdp.online_education.repository.ModuleRepository;
+import uz.pdp.online_education.service.interfaces.CourseService;
 
 @Service
 @RequiredArgsConstructor

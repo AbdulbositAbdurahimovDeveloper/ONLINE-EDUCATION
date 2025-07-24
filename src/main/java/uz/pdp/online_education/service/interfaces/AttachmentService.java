@@ -1,4 +1,4 @@
-package uz.pdp.online_education.service;
+package uz.pdp.online_education.service.interfaces;
 
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
