@@ -3,11 +3,7 @@ package uz.pdp.online_education.payload.course;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import org.springframework.hateoas.RepresentationModel;
-import uz.pdp.online_education.payload.category.CategorySummaryDTO;
-import uz.pdp.online_education.payload.user.UserSummaryDTO;
-
-import java.time.Instant;
-import java.util.List;
+import uz.pdp.online_education.payload.review.ReviewSummaryDTO;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -18,15 +14,13 @@ import java.util.List;
 public class CourseDetailDTO extends RepresentationModel<CourseDetailDTO> {
     private Long id;
     private String title;
-    private String slug;
     private String description;
-    private Long thumbnailUrl;
-
-    private CategorySummaryDTO category; // Batafsilroq ma'lumot uchun ichki DTO
-    private UserSummaryDTO instructor; // Batafsilroq ma'lumot uchun ichki DTO
-
-    private List<ModuleSummaryDTO> modules; // Modullarning qisqa ro'yxati
-
+    private String slug;
+    private String thumbnailUrl; // Attachment obyektini emas, uning URL'ini qaytaramiz
+    private Long instructorId;
+    private Long categoryId;
+    private Long modulesCount;
+    private ReviewSummaryDTO reviewSummary;
     private Long createdAt;
     private Long updatedAt;
 }
