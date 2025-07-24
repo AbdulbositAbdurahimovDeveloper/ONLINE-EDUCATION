@@ -1,65 +1,81 @@
 package uz.pdp.online_education.controller;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import uz.pdp.online_education.payload.CourseRequestDTO;
-import uz.pdp.online_education.payload.CourseResponseDTO;
+import uz.pdp.online_education.assembler.CourseModelAssembler;
+import uz.pdp.online_education.assembler.ModuleAssembler;
+import uz.pdp.online_education.model.Course;
+import uz.pdp.online_education.model.Module;
+import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.payload.ResponseDTO;
+import uz.pdp.online_education.payload.course.CourseCreateDTO;
+import uz.pdp.online_education.payload.course.CourseDetailDTO;
+import uz.pdp.online_education.payload.course.CourseUpdateDTO;
+import uz.pdp.online_education.payload.module.ModuleDetailDTO;
 import uz.pdp.online_education.service.CourseService;
-
-import java.util.List;
+import uz.pdp.online_education.service.ModuleService;
 
 @RestController
-@RequestMapping("/api/courses")
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
-@Slf4j
 public class CourseController {
 
     private final CourseService courseService;
+    private final CourseModelAssembler courseModelAssembler;
+    private final ModuleService moduleService;
+    private final ModuleAssembler moduleAssembler;
 
-    @PostMapping
-    public ResponseEntity<ResponseDTO<CourseResponseDTO>> create(@RequestBody CourseRequestDTO dto) {
-        log.info("Creating course: {}", dto.getTitle());
-        return ResponseEntity.ok(ResponseDTO.success(courseService.create(dto)));
+    @GetMapping("/open/courses")
+    public ResponseEntity<ResponseDTO<PagedModel<CourseDetailDTO>>> read(@RequestParam(defaultValue = "0") Integer page,
+                                                                         @RequestParam(defaultValue = "10") Integer size,
+                                                                         PagedResourcesAssembler<Course> assembler) {
+        Page<Course> courseDetailDTO = courseService.read(page, size);
+
+        PagedModel<CourseDetailDTO> courseDetailDTOS = assembler.toModel(courseDetailDTO, courseModelAssembler);
+
+        return ResponseEntity.ok(ResponseDTO.success(courseDetailDTOS));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ResponseDTO<CourseResponseDTO>> update(@PathVariable Long id,
-                                                                 @RequestBody CourseRequestDTO dto) {
-        log.info("Updating course id={}", id);
-        return ResponseEntity.ok(ResponseDTO.success(courseService.update(id, dto)));
+    @GetMapping("/open/courses/{id}")
+    public ResponseEntity<ResponseDTO<CourseDetailDTO>> read(@PathVariable Long id) {
+        CourseDetailDTO courseDetailDTO = courseService.read(id);
+        return ResponseEntity.ok(ResponseDTO.success(courseDetailDTO));
     }
 
-    @DeleteMapping("/{id}")
+    @GetMapping("/{courseId}/modules")
+    public ResponseEntity<ResponseDTO<PagedModel<ModuleDetailDTO>>> read(@PathVariable Long courseId,
+                                                                         @RequestParam(defaultValue = "0") Integer page,
+                                                                         @RequestParam(defaultValue = "10") Integer size,
+                                                                         PagedResourcesAssembler<uz.pdp.online_education.model.Module> assembler) {
+        Page<Module> modulePage = moduleService.read(courseId, page, size);
+
+        PagedModel<ModuleDetailDTO> model = assembler.toModel(modulePage, moduleAssembler);
+        return ResponseEntity.ok(ResponseDTO.success(model));
+    }
+
+    @PostMapping("/courses")
+    public ResponseEntity<ResponseDTO<CourseDetailDTO>> create(@RequestBody CourseCreateDTO courseCreateDTO,
+                                                               @AuthenticationPrincipal User instructor) {
+        CourseDetailDTO courseDetailDTO = courseService.create(courseCreateDTO, instructor);
+        return ResponseEntity.ok(ResponseDTO.success(courseDetailDTO));
+    }
+
+    @PutMapping("/courses/{id}")
+    public ResponseEntity<ResponseDTO<CourseDetailDTO>> update(@PathVariable Long id,
+                                                               @RequestBody CourseUpdateDTO courseUpdateDTO,
+                                                               @AuthenticationPrincipal User instructor) {
+        CourseDetailDTO courseDetailDTO = courseService.update(id, courseUpdateDTO, instructor);
+        return ResponseEntity.ok(ResponseDTO.success(courseDetailDTO));
+    }
+
+    @DeleteMapping("/courses/{id}")
     public ResponseEntity<ResponseDTO<String>> delete(@PathVariable Long id) {
-        log.warn("Deleting course id={}", id);
         courseService.delete(id);
-        return ResponseEntity.ok(ResponseDTO.success("Course deleted successfully"));
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<ResponseDTO<CourseResponseDTO>> getById(@PathVariable Long id) {
-        log.info("Getting course id={}", id);
-        return ResponseEntity.ok(ResponseDTO.success(courseService.getById(id)));
-    }
-
-    @GetMapping
-    public ResponseEntity<ResponseDTO<List<CourseResponseDTO>>> getAll() {
-        log.info("Getting all courses");
-        return ResponseEntity.ok(ResponseDTO.success(courseService.getAll()));
-    }
-
-    @GetMapping("/category/{categoryId}")
-    public ResponseEntity<ResponseDTO<List<CourseResponseDTO>>> getByCategory(@PathVariable Long categoryId) {
-        log.info("Getting courses by category id={}", categoryId);
-        return ResponseEntity.ok(ResponseDTO.success(courseService.getByCategoryId(categoryId)));
-    }
-
-    @GetMapping("/instructor/{instructorId}")
-    public ResponseEntity<ResponseDTO<List<CourseResponseDTO>>> getByInstructor(@PathVariable Long instructorId) {
-        log.info("Getting courses by instructor id={}", instructorId);
-        return ResponseEntity.ok(ResponseDTO.success(courseService.getByInstructorId(instructorId)));
+        return ResponseEntity.ok(ResponseDTO.success("Courses deleted"));
     }
 }
