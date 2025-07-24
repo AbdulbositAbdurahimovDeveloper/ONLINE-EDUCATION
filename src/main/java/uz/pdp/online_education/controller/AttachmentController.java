@@ -8,10 +8,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import uz.pdp.online_education.payload.AttachmentDTO;
 import uz.pdp.online_education.payload.ResponseDTO;
-import uz.pdp.online_education.service.AttachmentService;
+import uz.pdp.online_education.service.interfaces.AttachmentService;
 
 import java.io.IOException;
 

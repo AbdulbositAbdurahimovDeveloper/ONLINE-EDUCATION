@@ -5,7 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import uz.pdp.online_education.payload.FaqDTO;
 import uz.pdp.online_education.payload.FaqRequestDTO;
-import uz.pdp.online_education.service.FaqService;
+import uz.pdp.online_education.service.interfaces.FaqService;
 
 import java.util.List;
 

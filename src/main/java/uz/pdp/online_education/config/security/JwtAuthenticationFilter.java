@@ -12,7 +12,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
-import uz.pdp.online_education.service.UserService;
+import uz.pdp.online_education.service.interfaces.UserService;
 
 import java.io.IOException;
 

@@ -1,4 +1,4 @@
-package uz.pdp.online_education.service;
+package uz.pdp.online_education.service.interfaces;
 
 import uz.pdp.online_education.payload.FaqDTO;
 import uz.pdp.online_education.payload.FaqRequestDTO;

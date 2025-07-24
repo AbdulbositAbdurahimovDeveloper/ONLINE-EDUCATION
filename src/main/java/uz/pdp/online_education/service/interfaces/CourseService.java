@@ -1,4 +1,4 @@
-package uz.pdp.online_education.service;
+package uz.pdp.online_education.service.interfaces;
 
 import org.springframework.data.domain.Page;
 import uz.pdp.online_education.model.Course;
@@ -8,6 +8,7 @@ import uz.pdp.online_education.payload.course.CourseDetailDTO;
 import uz.pdp.online_education.payload.course.CourseUpdateDTO;
 
 public interface CourseService {
+
     Page<Course> read(Integer page, Integer size);
 
     CourseDetailDTO read(Long id);

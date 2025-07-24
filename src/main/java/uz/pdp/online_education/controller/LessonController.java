@@ -1,21 +1,58 @@
 package uz.pdp.online_education.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import uz.pdp.online_education.payload.ResponseDTO;
+import org.springframework.web.bind.annotation.*;
+import uz.pdp.online_education.payload.lesson.LessonCreatDTO;
+import uz.pdp.online_education.payload.lesson.LessonOrderUpdateDTO;
+import uz.pdp.online_education.payload.lesson.LessonResponseDTO;
+import uz.pdp.online_education.payload.lesson.LessonUpdateDTO;
+import uz.pdp.online_education.service.interfaces.LessonService;
+
+import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/lessons")
+@RequestMapping("/api/v1/lesson")
 @RequiredArgsConstructor
 public class LessonController {
 
-    @GetMapping("/{lessonId}")
-    public ResponseEntity<ResponseDTO<?>> read(@PathVariable Long lessonId) {
+    private final LessonService lessonService;
 
-        return ResponseEntity.ok(ResponseDTO.success(""));
+    @GetMapping
+    public Page<LessonResponseDTO> read(@RequestParam(defaultValue = "0") Integer page,
+                                        @RequestParam(defaultValue = "10") Integer size
+    ) {
+        return lessonService.read(page, size);
+    }
+
+    @GetMapping("/{id}")
+    public LessonResponseDTO read(@PathVariable("id") Long id) {
+        return lessonService.read(id);
+    }
+
+    @PostMapping
+    public LessonResponseDTO create(@RequestBody LessonCreatDTO lessonCreatDTO) {
+        return lessonService.create(lessonCreatDTO);
+    }
+
+    @PutMapping("/{id}")
+    public LessonResponseDTO update(@PathVariable("id") Long id,
+                                    @RequestBody LessonUpdateDTO lessonUpdateDTO) {
+        return lessonService.update(id, lessonUpdateDTO);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> delete(@PathVariable("id") Long id) {
+        lessonService.delete(id);
+        return ResponseEntity.ok("Lesson deleted successfully");
+    }
+
+    @PatchMapping("/order/{moduleId}")
+    public ResponseEntity<?> updateLessonOrder(
+            @PathVariable Long moduleId,
+            @RequestBody List<LessonOrderUpdateDTO> newOrderList) {
+        lessonService.updateOrder(moduleId, newOrderList);
+        return ResponseEntity.ok("Update orderIndex");
     }
 }

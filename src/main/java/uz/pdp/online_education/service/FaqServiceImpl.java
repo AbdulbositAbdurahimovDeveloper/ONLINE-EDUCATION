@@ -9,6 +9,7 @@ import uz.pdp.online_education.model.Faq;
 import uz.pdp.online_education.payload.FaqDTO;
 import uz.pdp.online_education.payload.FaqRequestDTO;
 import uz.pdp.online_education.repository.FaqRepository;
+import uz.pdp.online_education.service.interfaces.FaqService;
 
 import java.util.List;
 

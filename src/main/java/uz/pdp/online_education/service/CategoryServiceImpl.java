@@ -8,6 +8,8 @@ import uz.pdp.online_education.mapper.CategoryMapper;
 import uz.pdp.online_education.model.Category;
 import uz.pdp.online_education.payload.CategoryDTO;
 import uz.pdp.online_education.repository.CategoryRepository;
+import uz.pdp.online_education.service.interfaces.CategoryService;
+
 import java.util.List;
 
 

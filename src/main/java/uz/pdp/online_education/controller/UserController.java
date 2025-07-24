@@ -13,7 +13,7 @@ import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.payload.ResponseDTO;
 import uz.pdp.online_education.payload.user.UserDTO;
 import uz.pdp.online_education.payload.user.UserRegisterRequestDTO;
-import uz.pdp.online_education.service.UserService;
+import uz.pdp.online_education.service.interfaces.UserService;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;

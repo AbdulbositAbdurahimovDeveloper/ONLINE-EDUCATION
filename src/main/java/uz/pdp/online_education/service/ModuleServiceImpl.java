@@ -16,6 +16,7 @@ import uz.pdp.online_education.payload.module.ModuleDetailDTO;
 import uz.pdp.online_education.payload.module.ModuleUpdateDTO;
 import uz.pdp.online_education.repository.CourseRepository;
 import uz.pdp.online_education.repository.ModuleRepository;
+import uz.pdp.online_education.service.interfaces.ModuleService;
 
 import java.util.Optional;
 

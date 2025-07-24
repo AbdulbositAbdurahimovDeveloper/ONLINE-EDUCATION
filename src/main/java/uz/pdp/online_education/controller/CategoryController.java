@@ -5,7 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import uz.pdp.online_education.payload.CategoryDTO;
 import uz.pdp.online_education.payload.ResponseDTO;
-import uz.pdp.online_education.service.CategoryService;
+import uz.pdp.online_education.service.interfaces.CategoryService;
 
 
 

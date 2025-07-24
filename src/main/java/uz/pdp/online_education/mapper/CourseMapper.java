@@ -24,7 +24,7 @@ public interface CourseMapper {
     CourseDetailDTO courseToCourseDetailDTO(Course course);
 
     @Named("timestampToLong")
-    default Long timestampToLong(Timestamp timestamp) {
+    default Long timestampToLong(Timestamp timestamp)    {
         return timestamp != null ? timestamp.getTime() : null;
     }
 
