@@ -20,5 +20,5 @@ public interface LessonService {
 
     void delete(Long id);
 
-    void updateOrder(Long moduleId, List<LessonOrderUpdateDTO> newOrderList);
+    void updateOrder(Long moduleId, List<Long> orderedLessonIds);
 }

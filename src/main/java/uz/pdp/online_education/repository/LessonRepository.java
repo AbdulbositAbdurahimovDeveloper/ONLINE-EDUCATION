@@ -9,6 +9,6 @@ import java.util.Set;
 
 public interface LessonRepository extends JpaRepository<Lesson, Long> {
 
-    @Query("SELECT l FROM Lesson l WHERE l.module.id =: moduleId AND l.id IN :lessonIds")
-    List<Lesson> findAllModuleIdAndIdIn(Long moduleId, Set<Long> lessonIds);
+
+    List<Lesson> findAllByModuleId(Long moduleId);
 }

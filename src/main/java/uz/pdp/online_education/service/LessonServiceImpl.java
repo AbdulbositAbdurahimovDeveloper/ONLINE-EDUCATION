@@ -18,6 +18,7 @@ import uz.pdp.online_education.repository.LessonRepository;
 import uz.pdp.online_education.repository.ModuleRepository;
 import uz.pdp.online_education.service.interfaces.LessonService;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -92,36 +93,35 @@ public class LessonServiceImpl implements LessonService {
     }
 
     @Override
-    public void updateOrder(Long moduleId, List<LessonOrderUpdateDTO> newOrderList) {
+    @Transactional
+    public void updateOrder(Long moduleId, List<Long> orderedLessonIds) {
+        // 1. Modulga tegishli barcha darslarni bazadan bitta so'rov bilan olamiz.
+        List<Lesson> lessonsInDb = lessonRepository.findAllByModuleId(moduleId);
 
-        // 1. DTO'dan kelgan barcha lessonId'larni yig'ib olamiz
-        Set<Long> lessonIdsFromDto = newOrderList.stream()
-                .map(LessonOrderUpdateDTO::getId)
-                .collect(Collectors.toSet());
-
-        // 2. O'sha ID'dagi barcha darslarni bazadan bitta so'rov bilan olamiz
-        // Bu N+1 muammosining oldini oladi
-        List<Lesson> lessonsToUpdate = lessonRepository.findAllModuleIdAndIdIn(moduleId, lessonIdsFromDto);
-
-        // 3. Xavfsizlik tekshiruvi: DTO'da kelgan barcha darslar bazada topildimi
-        // va ular haqiqatan ham shu modulga tegishlimi?
-        if (lessonsToUpdate.size() != lessonIdsFromDto.size()) {
-            throw new IllegalStateException("Some lessons do not exist or do not belong to the specified module.");
+        // 2. O'lchamlar mosligini tekshiramiz. Bu frontend xatosining oldini oladi.
+        if (orderedLessonIds.size() != lessonsInDb.size()) {
+            throw new IllegalStateException("The number of sent IDs does not match the number of lessons in the module.");
         }
 
-        // 4. Qidiruvni tezlashtirish uchun darslarni Map'ga o'girib olamiz (ID -> Lesson)
-        Map<Long, Lesson> lessonMap = lessonsToUpdate.stream()
+        // 3. Darslarni tezkor qidirish uchun Map'ga o'tkazamiz (ID -> Lesson).
+        Map<Long, Lesson> lessonMap = lessonsInDb.stream()
                 .collect(Collectors.toMap(Lesson::getId, Function.identity()));
 
-        // 5. Har bir darsning orderIndex'ini yangi qiymat bilan yangilab chiqamiz
-        newOrderList.forEach(dto -> {
-            Lesson lesson = lessonMap.get(dto.getId());
-            if (lesson != null) {
-                lesson.setOrderIndex(dto.getOrderIndex());
-            }
-        });
+        // 4. Ma'lumotlar yaxlitligini tekshiramiz: Kelgan ID'lar to'plami
+        //    bazadagi ID'lar to'plamiga to'liq mos kelishini tekshiramiz.
+        //    Bu takrorlangan yoki begona ID'lar yuborilishidan himoya qiladi.
+        if (!lessonMap.keySet().equals(new HashSet<>(orderedLessonIds))) {
+            throw new IllegalStateException("The provided lesson IDs are invalid or do not match the module's lessons.");
+        }
 
-        // Tranzaksiya tugaganda, Hibernate barcha o'zgartirilgan darslarni avtomatik ravishda
-        // bitta `batch update` so'rovida bazaga yozadi. .save() chaqirish shart emas.
+        // 5. Yangi tartib raqamlarini serverda, xavfsiz tarzda generatsiya qilamiz.
+        for (int i = 0; i < orderedLessonIds.size(); i++) {
+            Long lessonId = orderedLessonIds.get(i);
+            Lesson lessonToUpdate = lessonMap.get(lessonId);
+            lessonToUpdate.setOrderIndex(i); // Yangi tartib raqami = ro'yxatdagi o'rni
+        }
+
+        // @Transactional tufayli o'zgartirilgan barcha lesson'lar tranzaksiya
+        // yakunida avtomatik ravishda bazaga saqlanadi.
     }
 }

@@ -1,5 +1,6 @@
 package uz.pdp.online_education.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -49,10 +50,12 @@ public class LessonController {
     }
 
     @PatchMapping("/order/{moduleId}")
-    public ResponseEntity<?> updateLessonOrder(
+    public ResponseEntity<Void> updateLessonOrder(
             @PathVariable Long moduleId,
-            @RequestBody List<LessonOrderUpdateDTO> newOrderList) {
-        lessonService.updateOrder(moduleId, newOrderList);
-        return ResponseEntity.ok("Update orderIndex");
+            @Valid @RequestBody LessonOrderUpdateDTO request) { // Endi DTO qabul qilamiz
+
+        // Servisga DTO'ning ichidagi ro'yxatni uzatamiz
+        lessonService.updateOrder(moduleId, request.getOrderedIds());
+        return ResponseEntity.ok().build();
     }
 }
