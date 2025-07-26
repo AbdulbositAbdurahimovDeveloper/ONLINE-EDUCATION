@@ -47,7 +47,7 @@ spring:
 
 education:
   app:
-    base-folder: C:\PDP\ONLINE-EDUCATION
+    base-folder: /home/abdulbosit/IdeaProjects/certificate/ONLINE-EDUCATION
 
 springdoc:
   swagger-ui:
