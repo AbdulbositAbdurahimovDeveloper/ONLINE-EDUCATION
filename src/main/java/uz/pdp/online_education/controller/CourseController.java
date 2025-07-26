@@ -1,17 +1,13 @@
 package uz.pdp.online_education.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.web.PagedResourcesAssembler;
-import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import uz.pdp.online_education.assembler.CourseModelAssembler;
-import uz.pdp.online_education.assembler.ModuleAssembler;
 import uz.pdp.online_education.model.Course;
-import uz.pdp.online_education.model.Module;
 import uz.pdp.online_education.model.User;
+import uz.pdp.online_education.payload.PageDTO;
 import uz.pdp.online_education.payload.ResponseDTO;
 import uz.pdp.online_education.payload.course.CourseCreateDTO;
 import uz.pdp.online_education.payload.course.CourseDetailDTO;
@@ -26,19 +22,14 @@ import uz.pdp.online_education.service.interfaces.ModuleService;
 public class CourseController {
 
     private final CourseService courseService;
-    private final CourseModelAssembler courseModelAssembler;
     private final ModuleService moduleService;
-    private final ModuleAssembler moduleAssembler;
 
     @GetMapping("/open/courses")
-    public ResponseEntity<ResponseDTO<PagedModel<CourseDetailDTO>>> read(@RequestParam(defaultValue = "0") Integer page,
+    public ResponseEntity<ResponseDTO<PageDTO<CourseDetailDTO>>> read(@RequestParam(defaultValue = "0") Integer page,
                                                                          @RequestParam(defaultValue = "10") Integer size,
                                                                          PagedResourcesAssembler<Course> assembler) {
-        Page<Course> courseDetailDTO = courseService.read(page, size);
-
-        PagedModel<CourseDetailDTO> courseDetailDTOS = assembler.toModel(courseDetailDTO, courseModelAssembler);
-
-        return ResponseEntity.ok(ResponseDTO.success(courseDetailDTOS));
+        PageDTO<CourseDetailDTO> courseDetailDTO = courseService.read(page, size);
+        return ResponseEntity.ok(ResponseDTO.success(courseDetailDTO));
     }
 
     @GetMapping("/open/courses/{id}")
@@ -48,14 +39,13 @@ public class CourseController {
     }
 
     @GetMapping("/{courseId}/modules")
-    public ResponseEntity<ResponseDTO<PagedModel<ModuleDetailDTO>>> read(@PathVariable Long courseId,
+    public ResponseEntity<ResponseDTO<PageDTO<ModuleDetailDTO>>> read(@PathVariable Long courseId,
                                                                          @RequestParam(defaultValue = "0") Integer page,
                                                                          @RequestParam(defaultValue = "10") Integer size,
                                                                          PagedResourcesAssembler<uz.pdp.online_education.model.Module> assembler) {
-        Page<Module> modulePage = moduleService.read(courseId, page, size);
+        PageDTO<ModuleDetailDTO> modulePage = moduleService.read(courseId, page, size);
 
-        PagedModel<ModuleDetailDTO> model = assembler.toModel(modulePage, moduleAssembler);
-        return ResponseEntity.ok(ResponseDTO.success(model));
+        return ResponseEntity.ok(ResponseDTO.success(modulePage));
     }
 
     @PostMapping("/courses")

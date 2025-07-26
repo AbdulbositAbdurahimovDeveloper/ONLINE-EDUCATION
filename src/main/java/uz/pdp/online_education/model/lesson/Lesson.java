@@ -20,10 +20,10 @@ import java.util.List;
 @Entity
 @Table(name = "lesson", uniqueConstraints = {
         // Bitta modul ichida darslarning tartib raqami unikal bo'lishi kerak
-        @UniqueConstraint(columnNames = {"module_id", "orderIndex"})
+        @UniqueConstraint(columnNames = {"modules_id", "order_index"})
 })
-@SQLDelete(sql = "UPDATE lesson SET deleted = true WHERE id = ?")
-@SQLRestriction(value = "deleted=false")
+//@SQLDelete(sql = "UPDATE lesson SET deleted = true WHERE id = ?")
+//@SQLRestriction(value = "deleted=false")
 @FieldNameConstants
 public class Lesson extends AbsLongEntity {
 
@@ -39,11 +39,11 @@ public class Lesson extends AbsLongEntity {
     @Column(nullable = false)
     private boolean isFree = false;
 
-    @Column(nullable = false)
-    private boolean deleted = false;
+//    @Column(nullable = false)
+//    private boolean deleted = false;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "module_id", nullable = false) // Liquibase'da `modules_id`, lekin JPA konvensiyasi bo'yicha `module_id`
+    @JoinColumn(name = "modules_id", nullable = false) // Liquibase'da `modules_id`, lekin JPA konvensiyasi bo'yicha `module_id`
     private Module module;
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)

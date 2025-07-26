@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20252507_01_changed_column_maskedCardNumber_size_payment_to_16 # yoki unikal ID, masalan: alter-payment-masked-card-number-length-1
+      author: abdulbosit # O'zgartirish kiritayotgan dasturchi nomi
+      comment: "Change masked_card_number column length from 4 to 16"
+      changes:
+        - modifyDataType:
+            tableName: payment
+            columnName: masked_card_number
+            newDataType: VARCHAR(16)

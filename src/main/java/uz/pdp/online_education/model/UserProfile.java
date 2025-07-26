@@ -1,5 +1,6 @@
 package uz.pdp.online_education.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -43,6 +44,7 @@ public class UserProfile extends AbsLongEntity {
     // Har bir profil faqat bitta User'ga tegishli bo'ladi
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @JsonBackReference
     private User user;
 
     private boolean deleted = false;
