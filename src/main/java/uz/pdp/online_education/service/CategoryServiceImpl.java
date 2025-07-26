@@ -1,60 +1,59 @@
+// CategoryServiceImpl.java
 package uz.pdp.online_education.service;
 
+import com.github.slugify.Slugify;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import uz.pdp.online_education.exceptions.EntityNotFoundException;
 import uz.pdp.online_education.mapper.CategoryMapper;
 import uz.pdp.online_education.model.Category;
-import uz.pdp.online_education.payload.CategoryDTO;
+import uz.pdp.online_education.payload.category.*;
 import uz.pdp.online_education.repository.CategoryRepository;
+
 import java.util.List;
-
-
 import java.util.stream.Collectors;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
 
-    private static final String CATEGORY_NOT_FOUND = "Category not found with id: ";
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
+    private final Slugify slugify = Slugify.builder().build();
 
     @Override
-    public CategoryDTO create(CategoryDTO dto) {
+    @Transactional
+    public CategoryDTO create(CategoryCreateDTO dto) {
         Category category = categoryMapper.toEntity(dto);
-        Category saved = categoryRepository.save(category);
-        log.info("Created category with id: {}", saved.getId());
-        return categoryMapper.toDTO(saved);
+        category.setSlug(slugify.slugify(dto.getName()));
+        categoryRepository.save(category);
+        return categoryMapper.toDTO(category);
     }
 
     @Override
     public CategoryDTO read(Long id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(CATEGORY_NOT_FOUND+ id));
+                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + id));
         return categoryMapper.toDTO(category);
     }
 
     @Override
-    public CategoryDTO update(Long id, CategoryDTO dto) {
+    @Transactional
+    public CategoryDTO update(Long id, CategoryUpdateDTO dto) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(CATEGORY_NOT_FOUND + id));
-        category.setName(dto.getName());
-        category.setIcon(dto.getIcon());
-        category.setSlug(dto.getSlug());
-        Category updated = categoryRepository.save(category);
-        log.info("Updated category with id: {}", id);
-        return categoryMapper.toDTO(updated);
+                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + id));
+        categoryMapper.update(category,dto);
+        category.setSlug(slugify.slugify(dto.getName()));
+        return categoryMapper.toDTO(category);
     }
 
     @Override
+    @Transactional
     public void delete(Long id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(CATEGORY_NOT_FOUND + id));
+                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + id));
         categoryRepository.delete(category);
-        log.info("Deleted category with id: {}", id);
     }
 
     @Override
@@ -64,4 +63,5 @@ public class CategoryServiceImpl implements CategoryService {
                 .map(categoryMapper::toDTO)
                 .collect(Collectors.toList());
     }
+//endi bu servicni ozgartirib ber qanday misol 0dan 5 gacha orderdisplayli faqlar bor ularni ichidan 2 ni ochirib yuborsak 3da gi desplayorder 2 ga 4 dagi 3 ga 5 dagi 4 ga tushisin faq chegaralanmagan yani kop qoshila veradi shuni inobatga olib qoy
 }

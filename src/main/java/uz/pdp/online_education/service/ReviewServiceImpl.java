@@ -3,13 +3,17 @@ package uz.pdp.online_education.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import uz.pdp.online_education.exceptions.EntityNotFoundException;
-import uz.pdp.online_education.payload.*;
 import uz.pdp.online_education.mapper.ReviewMapper;
 import uz.pdp.online_education.model.*;
+import uz.pdp.online_education.payload.review.ReviewCreateDTO;
+import uz.pdp.online_education.payload.review.ReviewDTO;
+import uz.pdp.online_education.payload.review.ReviewUpdateDTO;
 import uz.pdp.online_education.repository.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -23,16 +27,33 @@ public class ReviewServiceImpl implements ReviewService {
     private final ReviewMapper reviewMapper;
 
     @Override
-    public ReviewDTO create(ReviewCreateDTO dto) {
+    @Transactional
+    public ReviewDTO create(ReviewCreateDTO dto, User currentUser) {
         Course course = courseRepository.findById(dto.getCourseId())
                 .orElseThrow(() -> new EntityNotFoundException("Course not found"));
-        User user = userRepository.findById(dto.getUserId())
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-        Review review = reviewMapper.toEntity(dto, course, user);
-        Review saved = reviewRepository.save(review);
-        log.info("Review created with id: {}", saved.getId());
-        return reviewMapper.toDto(saved);
+        Optional<Review> optionalReview = reviewRepository.findByCourseIdAndUserId(course.getId(), currentUser.getId());
+
+        Review review;
+
+        if (optionalReview.isPresent()) {
+            // Review mavjud, update qilamiz
+            review = optionalReview.get();
+            review.setRating(dto.getRating());
+            review.setComment(dto.getComment());
+            log.info("Review updated with id: {}", review.getId());
+        } else {
+            // Review mavjud emas, yangi yaratamiz
+            review = new Review(dto.getRating(),
+                    dto.getComment(),
+                    course,
+                    currentUser
+            );
+            review = reviewRepository.save(review);
+            log.info("Review created with id: {}", review.getId());
+        }
+
+        return reviewMapper.toDto(review);
     }
 
     @Override
@@ -50,6 +71,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    @Transactional
     public ReviewDTO update(Long id, ReviewUpdateDTO dto) {
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Review not found"));
@@ -60,6 +82,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    @Transactional
     public void delete(Long id) {
         if (!reviewRepository.existsById(id)) {
             throw new EntityNotFoundException("Review not found");

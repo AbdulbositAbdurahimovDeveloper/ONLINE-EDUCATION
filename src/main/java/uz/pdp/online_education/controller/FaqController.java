@@ -3,15 +3,15 @@ package uz.pdp.online_education.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import uz.pdp.online_education.payload.FaqDTO;
-import uz.pdp.online_education.payload.FaqRequestDTO;
+import uz.pdp.online_education.payload.faq.FaqDTO;
+import uz.pdp.online_education.payload.faq.FaqRequestDTO;
 import uz.pdp.online_education.payload.ResponseDTO;
 import uz.pdp.online_education.service.FaqService;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/faqs")
+@RequestMapping("/api/v1/faqs")
 @RequiredArgsConstructor
 public class FaqController {
 
@@ -42,4 +42,12 @@ public class FaqController {
         faqService.delete(id);
         return ResponseEntity.ok(ResponseDTO.success("Faq deleted"));
     }
+    @PatchMapping("/swap-order")
+    public ResponseEntity<ResponseDTO<String>> swapDisplayOrder(@RequestParam Long faqId,
+                                                                @RequestParam int newDisplayOrder) {
+        faqService.swapDisplayOrder(faqId, newDisplayOrder);
+        return ResponseEntity.ok(ResponseDTO.success("Display orders swapped successfully"));
+    }
+
+
 }

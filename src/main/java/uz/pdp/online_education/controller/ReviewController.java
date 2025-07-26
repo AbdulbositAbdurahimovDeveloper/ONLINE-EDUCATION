@@ -2,22 +2,27 @@ package uz.pdp.online_education.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import uz.pdp.online_education.payload.*;
+import uz.pdp.online_education.model.User;
+import uz.pdp.online_education.payload.review.ReviewCreateDTO;
+import uz.pdp.online_education.payload.review.ReviewDTO;
+import uz.pdp.online_education.payload.review.ReviewUpdateDTO;
 import uz.pdp.online_education.service.ReviewService;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/reviews")
+@RequestMapping("/api/v1/reviews")
 @RequiredArgsConstructor
 public class ReviewController {
 
     private final ReviewService reviewService;
 
     @PostMapping
-    public ResponseEntity<ReviewDTO> create(@RequestBody ReviewCreateDTO dto) {
-        ReviewDTO reviewDTO = reviewService.create(dto);
+    public ResponseEntity<ReviewDTO> create(@RequestBody ReviewCreateDTO dto,
+                                            @AuthenticationPrincipal User currentUser) {
+        ReviewDTO reviewDTO = reviewService.create(dto,currentUser);
         return ResponseEntity.ok(reviewDTO);
     }
 

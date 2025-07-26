@@ -1,19 +1,21 @@
 package uz.pdp.online_education.service;
 
-import uz.pdp.online_education.payload.CategoryDTO;
+import uz.pdp.online_education.payload.category.CategoryCreateDTO;
+import uz.pdp.online_education.payload.category.CategoryUpdateDTO;
+import uz.pdp.online_education.payload.category.CategoryDTO;
 
 import java.util.List;
 
 public interface CategoryService {
-    CategoryDTO create(CategoryDTO dto);
+
+    CategoryDTO create(CategoryCreateDTO dto);
 
     CategoryDTO read(Long id);
 
-    CategoryDTO update(Long id, CategoryDTO dto);
+    CategoryDTO update(Long id, CategoryUpdateDTO dto);
 
     void delete(Long id);
 
     List<CategoryDTO> getAll();
-
 
 }
