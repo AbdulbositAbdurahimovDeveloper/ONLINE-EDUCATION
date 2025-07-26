@@ -1,5 +1,4 @@
-// ReviewCreateDto.java
-package uz.pdp.online_education.payload;
+package uz.pdp.online_education.payload.review;
 
 import lombok.*;
 
@@ -8,7 +7,9 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ReviewCreateDTO {
+public class ReviewDTO {
+
+    private Long id;
 
     private int rating;
 
@@ -17,5 +18,4 @@ public class ReviewCreateDTO {
     private Long courseId;
 
     private Long userId;
-
 }

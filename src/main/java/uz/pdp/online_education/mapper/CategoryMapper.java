@@ -1,17 +1,26 @@
 package uz.pdp.online_education.mapper;
 
-
-
-import org.mapstruct.Mapper;
-import org.mapstruct.ReportingPolicy;
+import org.mapstruct.*;
 import uz.pdp.online_education.model.Category;
-import uz.pdp.online_education.payload.CategoryDTO;
+import uz.pdp.online_education.payload.category.CategoryCreateDTO;
+import uz.pdp.online_education.payload.category.CategoryDTO;
+import uz.pdp.online_education.payload.category.CategoryUpdateDTO;
 
-@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = "spring")
+import java.sql.Timestamp;
+
+@Mapper(componentModel = "spring")
 public interface CategoryMapper {
 
+    Category toEntity(CategoryCreateDTO dto);
+
+    @Mapping(source = "createdAt", target = "createdAt", qualifiedByName = "timestampToMillis")
+    @Mapping(source = "updatedAt", target = "updatedAt", qualifiedByName = "timestampToMillis")
     CategoryDTO toDTO(Category category);
 
-    Category toEntity(CategoryDTO dto);
+    void update(@MappingTarget Category category, CategoryUpdateDTO dto);
 
+    @Named("timestampToMillis")
+    static Long mapTimestampToMillis(Timestamp timestamp) {
+        return timestamp != null ? timestamp.getTime() : null;
+    }
 }
