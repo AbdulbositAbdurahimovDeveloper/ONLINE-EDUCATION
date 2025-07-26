@@ -1,6 +1,7 @@
 package uz.pdp.online_education.payload.module;
 
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,6 +21,4 @@ public class ModuleUpdateDTO {
     @Min(value = 0, message = "Narx manfiy bo'lishi mumkin emas")
     private Long price;
 
-    @Min(value = 1, message = "Tartib raqami 1 dan boshlanishi kerak")
-    private Integer orderIndex;
 }

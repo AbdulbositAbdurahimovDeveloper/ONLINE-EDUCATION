@@ -10,4 +10,6 @@ import java.util.List;
 
 public interface ModuleRepository extends JpaRepository<Module, Long> {
     Page<Module> findByCourseId(Long courseId, Pageable pageable);
+
+    List<Module> findAllByCourse_Id(Long courseId);
 }

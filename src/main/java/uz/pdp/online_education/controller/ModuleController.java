@@ -11,6 +11,8 @@ import uz.pdp.online_education.payload.module.ModuleUpdateDTO;
 
 import uz.pdp.online_education.service.interfaces.ModuleService;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/modules")
 @RequiredArgsConstructor
@@ -28,17 +30,23 @@ public class ModuleController {
     @PostMapping
     public ResponseEntity<ResponseDTO<ModuleDetailDTO>> create(@RequestBody ModuleCreateDTO moduleCreateDTO) {
         ModuleDetailDTO moduleDetailDTO = moduleService.create(moduleCreateDTO);
-        return  ResponseEntity.ok(ResponseDTO.success(moduleDetailDTO));
+        return ResponseEntity.ok(ResponseDTO.success(moduleDetailDTO));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ResponseDTO<ModuleDetailDTO>> update(@PathVariable Long id, @RequestBody ModuleUpdateDTO moduleUpdateDTO) {
-        ModuleDetailDTO moduleDetailDTO = moduleService.update(id,moduleUpdateDTO);
-        return  ResponseEntity.ok(ResponseDTO.success(moduleDetailDTO));
+        ModuleDetailDTO moduleDetailDTO = moduleService.update(id, moduleUpdateDTO);
+        return ResponseEntity.ok(ResponseDTO.success(moduleDetailDTO));
+    }
+
+    @PutMapping("/{courseId}/reorder")
+    public ResponseEntity<ResponseDTO<?>> reorder(@PathVariable Long courseId, List<Long> moduleOrderDTOS) {
+        moduleService.updateModuleOrderIndex(courseId,moduleOrderDTOS);
+        return ResponseEntity.ok(ResponseDTO.success("successful"));
     }
 
     @DeleteMapping("/{id}")
-    public  ResponseEntity<ResponseDTO<String>> delete(@PathVariable Long id) {
+    public ResponseEntity<ResponseDTO<String>> delete(@PathVariable Long id) {
         moduleService.delete(id);
         return ResponseEntity.ok(ResponseDTO.success("Module deleted"));
     }
