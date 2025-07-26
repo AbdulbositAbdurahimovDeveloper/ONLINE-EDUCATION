@@ -24,12 +24,15 @@ import uz.pdp.online_education.model.Attachment;
 import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.model.UserProfile;
 import uz.pdp.online_education.model.VerificationToken;
+import uz.pdp.online_education.payload.PageDTO;
 import uz.pdp.online_education.payload.ResponseDTO;
 import uz.pdp.online_education.payload.user.*;
 import uz.pdp.online_education.repository.AttachmentRepository;
 import uz.pdp.online_education.repository.UserProfileRepository;
 import uz.pdp.online_education.repository.UserRepository;
 import uz.pdp.online_education.repository.VerificationTokenRepository;
+import uz.pdp.online_education.service.interfaces.EmailService;
+import uz.pdp.online_education.service.interfaces.UserService;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -203,11 +206,22 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Page<User> read(Integer page, Integer size) {
-        Sort sort = Sort.by(Sort.Direction.DESC, AbsLongEntity.Fields.id);
+    public PageDTO<UserDTO> read(Integer page, Integer size) {
+        Sort sort = Sort.by(Sort.Direction.ASC, AbsLongEntity.Fields.id);
         PageRequest pageRequest = PageRequest.of(page, size, sort);
 
-        return userRepository.findAll(pageRequest);
+        Page<User> users = userRepository.findAll(pageRequest);
+        return new PageDTO<>(
+                users.stream().map(userMapper::toDTO).toList(),
+                users.getNumber(),
+                users.getSize(),
+                users.getTotalElements(),
+                users.getTotalPages(),
+                users.isLast(),
+                users.isFirst(),
+                users.getNumberOfElements(),
+                users.isEmpty()
+        );
     }
 
 

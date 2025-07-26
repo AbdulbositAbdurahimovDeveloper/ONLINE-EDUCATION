@@ -12,6 +12,7 @@ import uz.pdp.online_education.model.Attachment;
 import uz.pdp.online_education.model.Category;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.User;
+import uz.pdp.online_education.payload.PageDTO;
 import uz.pdp.online_education.payload.course.CourseCreateDTO;
 import uz.pdp.online_education.payload.course.CourseDetailDTO;
 import uz.pdp.online_education.payload.course.CourseUpdateDTO;
@@ -19,6 +20,7 @@ import uz.pdp.online_education.repository.AttachmentRepository;
 import uz.pdp.online_education.repository.CategoryRepository;
 import uz.pdp.online_education.repository.CourseRepository;
 import uz.pdp.online_education.repository.ModuleRepository;
+import uz.pdp.online_education.service.interfaces.CourseService;
 
 @Service
 @RequiredArgsConstructor
@@ -37,9 +39,21 @@ public class CourseServiceImpl implements CourseService {
      * @return page
      */
     @Override
-    public Page<Course> read(Integer page, Integer size) {
+    public PageDTO<CourseDetailDTO> read(Integer page, Integer size) {
         PageRequest pageRequest = PageRequest.of(page, size);
-        return courseRepository.findAllOrderByAverageRatingDesc(pageRequest);
+        Page<Course> courses = courseRepository.findAllOrderByAverageRatingDesc(pageRequest);
+
+        return new PageDTO<>(
+                courses.getContent().stream().map(courseMapper::courseToCourseDetailDTO).toList(),
+                courses.getNumber(),
+                courses.getSize(),
+                courses.getTotalElements(),
+                courses.getTotalPages(),
+                courses.isLast(),
+                courses.isFirst(),
+                courses.getNumberOfElements(),
+                courses.isEmpty()
+        );
     }
 
     /**

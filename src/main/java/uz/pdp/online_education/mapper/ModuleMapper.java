@@ -8,13 +8,14 @@ import uz.pdp.online_education.model.Module;
 import uz.pdp.online_education.payload.module.ModuleDetailDTO;
 
 import java.sql.Timestamp;
+import java.util.List;
 
-@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE,componentModel = "spring")
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = "spring")
 public interface ModuleMapper {
 
-    @Mapping(target = "orderIndex")
-    @Mapping(target = "course",ignore = true)
-    @Mapping(target = "lessons")
+    @Mapping(target = "courseId", source = "course.id")
+    @Mapping(target = "lessonCount", source = "lessons", qualifiedByName = "count")
+    @Mapping(target = "moduleEnrollmentsCount",source = "enrollments",qualifiedByName = "count")
     @Mapping(source = "createdAt", target = "createdAt", qualifiedByName = "timestampToLong")
     @Mapping(source = "updatedAt", target = "updatedAt", qualifiedByName = "timestampToLong")
     ModuleDetailDTO toModuleDetailsDTO(Module entity);
@@ -23,4 +24,11 @@ public interface ModuleMapper {
     default Long timestampToLong(Timestamp timestamp) {
         return timestamp != null ? timestamp.getTime() : null;
     }
+
+    @Named("count")
+    default Integer lessonsCount(List<?> l) {
+        return l.size();
+    }
+
+
 }

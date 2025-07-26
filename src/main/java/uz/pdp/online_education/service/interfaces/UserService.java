@@ -1,8 +1,9 @@
-package uz.pdp.online_education.service;
+package uz.pdp.online_education.service.interfaces;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Page;
 import uz.pdp.online_education.model.User;
+import uz.pdp.online_education.payload.PageDTO;
 import uz.pdp.online_education.payload.ResponseDTO;
 import uz.pdp.online_education.payload.user.*;
 
@@ -15,7 +16,7 @@ public interface UserService {
 
     void verifyAccount(String token);
 
-    Page<User> read(Integer page, Integer size);
+    PageDTO<UserDTO> read(Integer page, Integer size);
 
     UserDTO read(Long id);
 

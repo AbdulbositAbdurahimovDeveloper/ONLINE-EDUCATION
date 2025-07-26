@@ -57,5 +57,7 @@ databaseChangeLog:
       file: db/changelog/changes/20252107_01_add_column_users_enabled.yaml
   - include:
       file: db/changelog/changes/20252107_02_create_table_verification_token.yaml
+  - include:
+      file: db/changelog/changes/20252507_01_changed_column_maskedCardNumber_size_payment_to_16.yaml
 
 

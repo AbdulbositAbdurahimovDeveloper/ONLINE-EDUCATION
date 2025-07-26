@@ -10,7 +10,6 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import uz.pdp.online_education.model.Abs.AbsLongEntity;
 import uz.pdp.online_education.model.Module;
-import uz.pdp.online_education.model.User;
 
 import java.util.List;
 
@@ -19,32 +18,41 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-@Table(name = "lesson")
+@Table(name = "lesson", uniqueConstraints = {
+        // Bitta modul ichida darslarning tartib raqami unikal bo'lishi kerak
+        @UniqueConstraint(columnNames = {"modules_id", "order_index"})
+})
+//@SQLDelete(sql = "UPDATE lesson SET deleted = true WHERE id = ?")
+//@SQLRestriction(value = "deleted=false")
 @FieldNameConstants
 public class Lesson extends AbsLongEntity {
 
     @Column(nullable = false)
     private String title;
 
+    @Lob // Katta hajmdagi matnlar uchun
     private String content;
 
-    private Integer orderIndex; // bu moduldagi nechanchi lessonligini aytib turadi
+    @Column(name = "order_index", nullable = false)
+    private Integer orderIndex;
 
     @Column(nullable = false)
     private boolean isFree = false;
 
-    @ManyToOne
-    @JoinColumn(name = "modules_id")
-    private Module module; // bu qaysi modulga tegishliligini aytadi
+//    @Column(nullable = false)
+//    private boolean deleted = false;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "modules_id", nullable = false) // Liquibase'da `modules_id`, lekin JPA konvensiyasi bo'yicha `module_id`
+    private Module module;
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("blockOrder ASC")
+    @OrderBy("blockOrder ASC") // `Content` entitisida `blockOrder` maydoni bo'lishi kerak
     private List<Content> contents;
 
-    @OneToOne
-    private User view; // ushbu lesson ni qaysi userlar korgani uchun kerak progress uchun
-    /// bu yerga quiz ham qoshamizmi?
+    // `view` maydoni butunlay olib tashlandi.
 
-
-
+    // `lesson_completions` bilan bog'liqlik bu yerda bo'lmaydi.
+    // Chunki Lesson o'zini kimlar ko'rganini bilishi shart emas.
+    // Bu ma'lumotni LessonCompletionRepository orqali olamiz.
 }

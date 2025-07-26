@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import uz.pdp.online_education.repository.UserProfileRepository;
 import uz.pdp.online_education.repository.UserRepository;
+import uz.pdp.online_education.service.interfaces.ValidationService;
 
 @Service
 @RequiredArgsConstructor

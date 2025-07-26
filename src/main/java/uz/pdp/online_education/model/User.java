@@ -1,5 +1,6 @@
 package uz.pdp.online_education.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -35,11 +36,13 @@ public class User extends AbsLongEntity implements UserDetails {
     private Role role;
 
     @OneToOne(mappedBy = "user", orphanRemoval = true,cascade = CascadeType.ALL)
+    @JsonManagedReference
     private UserProfile profile;
 
     private boolean deleted = false;
 
     private boolean enabled = false;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));

@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import uz.pdp.online_education.payload.AvailabilityDTO;
-import uz.pdp.online_education.service.ValidationService;
+import uz.pdp.online_education.service.interfaces.ValidationService;
 
 @RestController
 @RequestMapping("/api/open/v1/validation")

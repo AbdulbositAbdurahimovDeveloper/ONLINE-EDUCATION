@@ -11,6 +11,7 @@ import uz.pdp.online_education.model.Faq;
 import uz.pdp.online_education.payload.faq.FaqDTO;
 import uz.pdp.online_education.payload.faq.FaqRequestDTO;
 import uz.pdp.online_education.repository.FaqRepository;
+import uz.pdp.online_education.service.interfaces.FaqService;
 
 import java.util.List;
 
