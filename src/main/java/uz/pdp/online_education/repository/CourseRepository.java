@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import uz.pdp.online_education.model.Course;
 
 import java.util.List;
@@ -20,4 +21,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             countQuery = "SELECT COUNT(c) FROM courses c" // @SQLRestriction (deleted=false) avtomatik hisobga olinadi
     )
     Page<Course> findAllOrderByAverageRatingDesc(Pageable pageable);
+
+
 }
