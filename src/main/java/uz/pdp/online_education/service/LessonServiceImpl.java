@@ -42,7 +42,7 @@ public class LessonServiceImpl implements LessonService {
 //        Page<Lesson> lessons = lessonRepository.findAllByModule_Id(moduleId,pageRequest);
 //
 //        return new PageDTO<>(
-//                lessons.getContent().stream().map(lessonMapper::toDTO).toList(),
+//                lessons.getContent().stream().map(lessonMapper::toDto).toList(),
 //                lessons.getNumber(),
 //                lessons.getSize(),
 //                lessons.getTotalElements(),
