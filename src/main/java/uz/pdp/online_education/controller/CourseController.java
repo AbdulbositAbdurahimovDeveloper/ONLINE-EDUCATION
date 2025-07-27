@@ -26,8 +26,7 @@ public class CourseController {
 
     @GetMapping("/open/courses")
     public ResponseEntity<ResponseDTO<PageDTO<CourseDetailDTO>>> read(@RequestParam(defaultValue = "0") Integer page,
-                                                                         @RequestParam(defaultValue = "10") Integer size,
-                                                                         PagedResourcesAssembler<Course> assembler) {
+                                                                      @RequestParam(defaultValue = "10") Integer size) {
         PageDTO<CourseDetailDTO> courseDetailDTO = courseService.read(page, size);
         return ResponseEntity.ok(ResponseDTO.success(courseDetailDTO));
     }
@@ -38,11 +37,11 @@ public class CourseController {
         return ResponseEntity.ok(ResponseDTO.success(courseDetailDTO));
     }
 
-    @GetMapping("/{courseId}/modules")
+    @GetMapping("courses/{courseId}/modules")
     public ResponseEntity<ResponseDTO<PageDTO<ModuleDetailDTO>>> read(@PathVariable Long courseId,
-                                                                         @RequestParam(defaultValue = "0") Integer page,
-                                                                         @RequestParam(defaultValue = "10") Integer size,
-                                                                         PagedResourcesAssembler<uz.pdp.online_education.model.Module> assembler) {
+                                                                      @RequestParam(defaultValue = "0") Integer page,
+                                                                      @RequestParam(defaultValue = "10") Integer size,
+                                                                      PagedResourcesAssembler<uz.pdp.online_education.model.Module> assembler) {
         PageDTO<ModuleDetailDTO> modulePage = moduleService.read(courseId, page, size);
 
         return ResponseEntity.ok(ResponseDTO.success(modulePage));
@@ -61,6 +60,12 @@ public class CourseController {
                                                                @AuthenticationPrincipal User instructor) {
         CourseDetailDTO courseDetailDTO = courseService.update(id, courseUpdateDTO, instructor);
         return ResponseEntity.ok(ResponseDTO.success(courseDetailDTO));
+    }
+
+    @PatchMapping("/courses/{id}")
+    public ResponseEntity<ResponseDTO<?>> patch(@PathVariable Long id) {
+        courseService.updateSuccess(id);
+        return ResponseEntity.ok(ResponseDTO.success("update"));
     }
 
     @DeleteMapping("/courses/{id}")

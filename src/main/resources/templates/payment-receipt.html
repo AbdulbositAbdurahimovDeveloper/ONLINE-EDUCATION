@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>To'lov Cheki</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #333; line-height: 1.5; }
+        .container { width: 90%; max-width: 600px; margin: 20px auto; border: 1px solid #e0e0e0; border-radius: 8px; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .header { text-align: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 20px; margin-bottom: 20px; }
+        .header h2 { margin: 0; color: #1a73e8; }
+        .details-table { width: 100%; border-collapse: collapse; }
+        .details-table td { padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+        .details-table .label { font-weight: 600; color: #5f6368; }
+        .details-table .value { text-align: right; }
+        .total .value { font-weight: bold; font-size: 1.1em; }
+        .footer { text-align: center; margin-top: 30px; font-size: 0.85em; color: #777; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h2>To'lov Cheki</h2>
+    </div>
+    <p>Hurmatli <span th:text="${recipientName}">Foydalanuvchi</span>,</p>
+    <p>Sizning <strong><span th:text="${moduleTitle}">Kurs Moduli</span></strong> uchun to'lovingiz muvaffaqiyatli amalga oshirildi. Quyida to'lov tafsilotlari keltirilgan:</p>
+
+    <table class="details-table">
+        <tr>
+            <td class="label">To'lov ID:</td>
+            <td class="value" th:text="'#' + ${paymentId}">#12345</td>
+        </tr>
+        <tr>
+            <td class="label">To'lov Sanasi:</td>
+            <td class="value" th:text="${paymentDate}">27.10.2023, 15:30</td>
+        </tr>
+        <tr>
+            <td class="label">To'lov Usuli:</td>
+            <td class="value" th:text="${maskedCard}">**** **** **** 1234</td>
+        </tr>
+        <tr class="total">
+            <td class="label">Jami Summa:</td>
+            <td class="value" th:text="${formattedAmount}">150 000,00 so'm</td>
+        </tr>
+    </table>
+
+    <div class="footer">
+        <p>© <span th:text="${currentYear}">2023</span> Online Education Platform. Barcha huquqlar himoyalangan.</p>
+    </div>
+</div>
+</body>
+</html>

@@ -1,6 +1,9 @@
 package uz.pdp.online_education.config;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
+import io.minio.BucketExistsArgs;
+import io.minio.MakeBucketArgs;
+import io.minio.MinioClient;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
@@ -14,6 +17,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import uz.pdp.online_education.config.properties.MinioProperties;
 import uz.pdp.online_education.enums.CacheType;
 
 import java.util.Arrays;
@@ -25,10 +29,12 @@ import java.util.stream.Collectors;
 public class WebMvcConfig implements WebMvcConfigurer {
 
     private final LoggingInterceptor loggingInterceptor;
+    private final MinioProperties minio;
 
     @Autowired
-    public WebMvcConfig(LoggingInterceptor loggingInterceptor) {
+    public WebMvcConfig(LoggingInterceptor loggingInterceptor, MinioProperties minioProperties) {
         this.loggingInterceptor = loggingInterceptor;
+        this.minio = minioProperties;
     }
 
     @Override
@@ -73,6 +79,25 @@ public class WebMvcConfig implements WebMvcConfigurer {
         SimpleCacheManager cacheManager = new SimpleCacheManager();
         cacheManager.setCaches(caches);
         return cacheManager;
+    }
+
+    @Bean
+    public MinioClient minioClient() throws Exception {
+        MinioClient client = MinioClient.builder()
+                .endpoint(minio.getEndpoint())
+                .credentials(minio.getAccessKey(), minio.getSecretKey())
+                .build();
+
+        for (String bucket : minio.getBuckets()) {
+
+            BucketExistsArgs imaExistsArgs = BucketExistsArgs.builder().bucket(bucket).build();
+            if (!client.bucketExists(imaExistsArgs)) {
+                client.makeBucket(MakeBucketArgs.builder()
+                        .bucket(bucket)
+                        .build());
+            }
+        }
+        return client;
     }
 
     @Override

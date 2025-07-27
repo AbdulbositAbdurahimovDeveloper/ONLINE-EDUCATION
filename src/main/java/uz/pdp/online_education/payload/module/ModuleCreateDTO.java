@@ -24,9 +24,6 @@ public class ModuleCreateDTO {
     @Min(value = 0, message = "Narx manfiy bo'lishi mumkin emas")
     private Long price;
 
-    @NotNull(message = "Tartib raqami ko'rsatilishi shart")
-    @Min(value = 1, message = "Tartib raqami 1 dan boshlanishi kerak")
-    private Integer orderIndex;
 
     @NotNull(message = "Kurs ID'si ko'rsatilishi shart")
     private Long courseId;

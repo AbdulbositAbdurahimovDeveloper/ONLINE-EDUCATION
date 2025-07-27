@@ -52,18 +52,18 @@
             <artifactId>liquibase-core</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <scope>runtime</scope>
-            <optional>true</optional>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-devtools</artifactId>-->
+<!--            <scope>runtime</scope>-->
+<!--            <optional>true</optional>-->
+<!--        </dependency>-->
 
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>runtime</scope>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.h2database</groupId>-->
+<!--            <artifactId>h2</artifactId>-->
+<!--            <scope>runtime</scope>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -83,12 +83,12 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- This dependency allows Spring to read variables from a .env file -->
-        <dependency>
-            <groupId>me.paulschwarz</groupId>
-            <artifactId>spring-dotenv</artifactId>
-            <version>4.0.0</version> <!-- Maven Central'dan eng so'nggi versiyani tekshiring -->
-        </dependency>
+<!--        &lt;!&ndash; This dependency allows Spring to read variables from a .env file &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>me.paulschwarz</groupId>-->
+<!--            <artifactId>spring-dotenv</artifactId>-->
+<!--            <version>4.0.0</version> &lt;!&ndash; Maven Central'dan eng so'nggi versiyani tekshiring &ndash;&gt;-->
+<!--        </dependency>-->
 
         <!-- JWT support -->
         <dependency>
@@ -131,6 +131,12 @@
             <groupId>com.github.javafaker</groupId>
             <artifactId>javafaker</artifactId>
             <version>1.0.2</version> <!-- Eng so'nggi versiyani tekshiring -->
+        </dependency>
+
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>8.5.17</version> <!-- Eng so'nggi versiyani tekshiring -->
         </dependency>
 
         <dependency>

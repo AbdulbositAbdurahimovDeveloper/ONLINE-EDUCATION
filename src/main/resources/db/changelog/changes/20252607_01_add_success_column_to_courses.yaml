@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20252607_01-add-success-column-to-courses # O'zgarishlar to'plamining unikal ID'si
+      author: abdulbosit # O'zgarish muallifi
+      # Izoh: Bu changeset 'courses' jadvaliga kursning muvaffaqiyatli
+      # yakunlanganini yoki nashr etilganini bildirish uchun 'success' ustunini qo'shadi.
+      changes:
+        - addColumn:
+            tableName: courses # @Entity(name = "courses") annotatsiyasiga mos jadval nomi
+            columns:
+              - column:
+                  name: success # Yangi ustunning nomi
+                  type: BOOLEAN   # Ustunning tipi
+
+                  # Eng muhim qism: Standart qiymat.
+                  # Bu ustun qo'shilganda, jadvaldagi mavjud barcha qatorlar uchun
+                  # 'success' maydoni 'false' qiymatini oladi.
+                  defaultValueBoolean: false
+
+                  # Yaxshi amaliyot: Standart qiymati bor boolean maydonlar odatda bo'sh bo'lmasligi kerak.
+                  constraints:
+                    nullable: false
+
+                  # Ma'lumotlar bazasi darajasida izoh qo'shish (professional yondashuv)
+                  remarks: "Flag to indicate if the course is successfully published or considered a success"
