@@ -20,6 +20,7 @@ import uz.pdp.online_education.payload.lesson.LessonResponseDTO;
 import uz.pdp.online_education.payload.module.ModuleCreateDTO;
 import uz.pdp.online_education.payload.module.ModuleDetailDTO;
 import uz.pdp.online_education.payload.module.ModuleUpdateDTO;
+import uz.pdp.online_education.repository.AttachmentContentRepository;
 import uz.pdp.online_education.repository.CourseRepository;
 import uz.pdp.online_education.repository.LessonRepository;
 import uz.pdp.online_education.repository.ModuleRepository;
@@ -28,6 +29,7 @@ import uz.pdp.online_education.service.interfaces.ModuleService;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -40,6 +42,7 @@ public class ModuleServiceImpl implements ModuleService {
     private final CourseRepository courseRepository;
     private final LessonRepository lessonRepository;
     private final LessonMapper lessonMapper;
+    private final AttachmentContentRepository attachmentContentRepository;
 
     /**
      * @param courseId Long
@@ -90,7 +93,7 @@ public class ModuleServiceImpl implements ModuleService {
     public PageDTO<LessonResponseDTO> readLessons(Long id, Integer page, Integer size) {
 
         Sort sort = Sort.by(Sort.Direction.ASC, Lesson.Fields.orderIndex);
-        PageRequest pageRequest = PageRequest.of(page,size,sort);
+        PageRequest pageRequest = PageRequest.of(page, size, sort);
         Page<Lesson> lessons = lessonRepository.findByModule_Id(id, pageRequest);
 
         return new PageDTO<>(
@@ -147,7 +150,7 @@ public class ModuleServiceImpl implements ModuleService {
     }
 
     /**
-     * @param courseId         Long
+     * @param courseId          Long
      * @param orderedModuleDtos List
      */
     @Override
@@ -243,6 +246,18 @@ public class ModuleServiceImpl implements ModuleService {
                 .filter(payment -> payment.getUser().getUsername().equals(username)
                 ).findFirst().orElseThrow(() -> new BadCredentialsException("Siz ushbu moduleni korishingiz uchun avval tolov qiling"));
 
+        return true;
+    }
+
+    @Override
+    public boolean isUserModuleBought(String username, Long attachmentContentId) {
+
+        Module module = attachmentContentRepository.findModuleByAttachmentId(attachmentContentId)
+                .orElseThrow(() -> new EntityNotFoundException("Attachment not found with id: " + attachmentContentId));
+
+        module.getPayments().stream().filter(Payment -> Payment.getUser().getUsername().equals(username))
+                .findFirst()
+                .orElseThrow(() -> new BadCredentialsException("Siz ushbu videoni korishingiz uchun avval tolov qiling"));
         return true;
     }
 }

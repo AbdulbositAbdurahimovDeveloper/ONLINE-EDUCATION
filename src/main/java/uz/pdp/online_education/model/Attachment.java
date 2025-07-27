@@ -4,8 +4,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
-import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.SQLRestriction;
 import uz.pdp.online_education.model.Abs.AbsLongEntity;
 
 @AllArgsConstructor
@@ -24,7 +22,10 @@ public class Attachment extends AbsLongEntity {
 
     private Long fileSize;
 
-    @Column(columnDefinition = "text")
-    private String path;
+    @Column(name = "minio_key", columnDefinition = "text")
+    private String minioKey;
+
+    @Column(name = "bucket_name", nullable = false)
+    private String bucketName;
 
 }

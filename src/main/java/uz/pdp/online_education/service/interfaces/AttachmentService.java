@@ -1,8 +1,8 @@
 package uz.pdp.online_education.service.interfaces;
 
-import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
-import uz.pdp.online_education.payload.AttachmentDTO;
+import uz.pdp.online_education.payload.content.attachmentContent.AttachmentDTO;
 
 public interface AttachmentService {
     AttachmentDTO read(Long id);
@@ -11,7 +11,7 @@ public interface AttachmentService {
 
     AttachmentDTO saveIcon(MultipartFile multipartFile);
 
-    Resource loadIconAsResource(String filename);
+    ResponseEntity<?> tempLink(Long id, Integer minute);
 
     void delete(Long id);
 }

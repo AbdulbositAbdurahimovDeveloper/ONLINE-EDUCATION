@@ -1,4 +1,4 @@
-package uz.pdp.online_education.payload;
+package uz.pdp.online_education.payload.content.attachmentContent;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,7 +18,6 @@ public class AttachmentDTO implements Serializable {
     private String originalName;
     private String contentType;
     private Long fileSize;
-    private String path;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 }
