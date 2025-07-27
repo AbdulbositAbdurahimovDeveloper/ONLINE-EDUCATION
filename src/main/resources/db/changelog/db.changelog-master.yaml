@@ -62,6 +62,8 @@ databaseChangeLog:
   - include:
       file: db/changelog/changes/20252707-01-make-content-order-constraint-deferrable.yaml
   - include:
+      file: db/changelog/changes/20252707-02-make-module-order-constraint-deferrable.yaml
+  - include:
       file: db/changelog/changes/20252707-03-make-lesson-order-constraint-deferrable.yaml
 
 
