@@ -84,7 +84,7 @@ public class CourseServiceImpl implements CourseService {
         String baseSlug = slugify.slugify(courseCreateDTO.getTitle());
 
         Attachment attachment = attachmentRepository.findById(courseCreateDTO.getThumbnailId())
-                .orElseThrow(() -> new EntityNotFoundException("Instructor not found with id: " + courseCreateDTO.getThumbnailId()));
+                .orElseThrow(() -> new EntityNotFoundException("Attachment not found with id: " + courseCreateDTO.getThumbnailId()));
 
         Category category = categoryRepository.findById(courseCreateDTO.getCategoryId())
                 .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + courseCreateDTO.getCategoryId()));

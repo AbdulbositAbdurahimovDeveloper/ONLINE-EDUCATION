@@ -1,18 +1,11 @@
-package uz.pdp.online_education.payload;
+package uz.pdp.online_education.payload.faq;
 
-import lombok.*;
+import lombok.Data;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Data
 public class FaqDTO {
     private Long id;
-
     private String question;
-
     private String answer;
-    
     private int displayOrder;
 }

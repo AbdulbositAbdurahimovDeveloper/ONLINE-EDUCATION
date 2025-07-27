@@ -1,21 +1,21 @@
 package uz.pdp.online_education.mapper;
 
 import org.mapstruct.*;
-import uz.pdp.online_education.payload.FaqDTO;
-import uz.pdp.online_education.payload.FaqRequestDTO;
 import uz.pdp.online_education.model.Faq;
+import uz.pdp.online_education.payload.faq.FaqDTO;
+import uz.pdp.online_education.payload.faq.FaqRequestDTO;
 
 import java.util.List;
 
-@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = "spring")
+@Mapper(componentModel = "spring")
 public interface FaqMapper {
 
-    FaqDTO toDto(Faq faq);
-
-    Faq toEntity(FaqRequestDTO faqRequestDto);
+    Faq toEntity(FaqRequestDTO dto);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateFaqFromDto(FaqRequestDTO dto, @MappingTarget Faq faq);
 
-    List<FaqDTO> toDtoList(List<Faq> faqList);
+    FaqDTO toDto(Faq faq);
+
+    List<FaqDTO> toDtoList(List<Faq> faqs);
 }
