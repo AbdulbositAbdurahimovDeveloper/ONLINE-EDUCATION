@@ -159,7 +159,7 @@ public class UserServiceImpl implements UserService {
         User savedUser = userRepository.save(user);
 
         // 6. Javob DTO-sini yaratib, qaytarish
-//        return userMapper.toDTO(savedUser);
+//        return userMapper.toDto(savedUser);
 
         // 2. Verifikatsiya tokenini yaratish va saqlash
         String token = UUID.randomUUID().toString();

@@ -1,9 +1,6 @@
 package uz.pdp.online_education.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uz.pdp.online_education.exceptions.DataConflictException;
@@ -11,9 +8,7 @@ import uz.pdp.online_education.exceptions.EntityNotFoundException;
 import uz.pdp.online_education.mapper.LessonMapper;
 import uz.pdp.online_education.model.Module;
 import uz.pdp.online_education.model.lesson.Lesson;
-import uz.pdp.online_education.payload.PageDTO;
 import uz.pdp.online_education.payload.lesson.LessonCreatDTO;
-import uz.pdp.online_education.payload.lesson.LessonOrderUpdateDTO;
 import uz.pdp.online_education.payload.lesson.LessonResponseDTO;
 import uz.pdp.online_education.payload.lesson.LessonUpdateDTO;
 import uz.pdp.online_education.repository.LessonRepository;
@@ -23,7 +18,6 @@ import uz.pdp.online_education.service.interfaces.LessonService;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -42,7 +36,7 @@ public class LessonServiceImpl implements LessonService {
 //        Page<Lesson> lessons = lessonRepository.findAllByModule_Id(moduleId,pageRequest);
 //
 //        return new PageDTO<>(
-//                lessons.getContent().stream().map(lessonMapper::toDTO).toList(),
+//                lessons.getContent().stream().map(lessonMapper::toDto).toList(),
 //                lessons.getNumber(),
 //                lessons.getSize(),
 //                lessons.getTotalElements(),
