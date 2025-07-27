@@ -13,7 +13,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/faqs")
 @RequiredArgsConstructor
-public class FaqController {
+public class FaqsController {
 
     private final FaqService faqService;
 

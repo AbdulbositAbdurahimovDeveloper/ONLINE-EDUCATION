@@ -15,20 +15,14 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class PaymentCreateDTO implements Serializable {
 
-    private Long id;
-
-    @NotNull
-    private Long userId;
-
     @NotNull
     private Long moduleId;
 
     @PositiveOrZero
-    private Long amount;
+    private Double amount;
 
     @Size(min = 16, max = 16)
     private String maskedCardNumber;
-
 
     private String description;
 

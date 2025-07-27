@@ -14,9 +14,11 @@ import uz.pdp.online_education.repository.CategoryRepository;
 import uz.pdp.online_education.repository.CourseRepository;
 import uz.pdp.online_education.repository.UserRepository;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 @RequiredArgsConstructor
@@ -56,7 +58,10 @@ public class GenerateService {
                 Module module = new Module();
                 module.setTitle("Module " + (j + 1) + ": " + faker.lorem().sentence(3));
                 module.setDescription(faker.lorem().paragraph(2));
-                module.setPrice(faker.number().numberBetween(50_000L, 500_000L));
+//                double randomDouble = ThreadLocalRandom.current().nextDouble(5_000_000.0, 3_500_000.0);
+                double fakeDouble = faker.number().randomDouble(2, 500_000, 1_500_000);
+                BigDecimal amountInSomFromDto = BigDecimal.valueOf(fakeDouble);
+                module.setPrice(amountInSomFromDto.longValue());
                 module.setOrderIndex(j);
                 
                 // Eng muhim qadam: Modulni kursga bog'lash

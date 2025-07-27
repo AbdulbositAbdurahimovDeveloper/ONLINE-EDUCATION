@@ -20,8 +20,6 @@ import java.util.List;
         // Bitta modul ichida darslarning tartib raqami unikal bo'lishi kerak
         @UniqueConstraint(columnNames = {"modules_id", "order_index"})
 })
-//@SQLDelete(sql = "UPDATE lesson SET deleted = true WHERE id = ?")
-//@SQLRestriction(value = "deleted=false")
 @FieldNameConstants
 public class Lesson extends AbsLongEntity {
 
@@ -37,8 +35,6 @@ public class Lesson extends AbsLongEntity {
     @Column(nullable = false)
     private boolean isFree = false;
 
-//    @Column(nullable = false)
-//    private boolean deleted = false;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "modules_id", nullable = false)
@@ -50,9 +46,4 @@ public class Lesson extends AbsLongEntity {
     @ToString.Exclude // `Content` entitisida `blockOrder` maydoni bo'lishi kerak
     private List<Content> contents;
 
-    // `view` maydoni butunlay olib tashlandi.
-
-    // `lesson_completions` bilan bog'liqlik bu yerda bo'lmaydi.
-    // Chunki Lesson o'zini kimlar ko'rganini bilishi shart emas.
-    // Bu ma'lumotni LessonCompletionRepository orqali olamiz.
 }

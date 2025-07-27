@@ -20,6 +20,7 @@ public class CourseDetailDTO extends RepresentationModel<CourseDetailDTO> {
     private Long instructorId;
     private Long categoryId;
     private Long modulesCount;
+    private boolean success;
     private ReviewSummaryDTO reviewSummary;
     private Long createdAt;
     private Long updatedAt;

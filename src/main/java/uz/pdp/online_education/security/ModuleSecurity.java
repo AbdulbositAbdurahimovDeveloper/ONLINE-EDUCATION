@@ -16,5 +16,6 @@ public class ModuleSecurity {
     public boolean isUserEnrolled(Authentication authentication, Long courseId) {
         String username = authentication.getName(); // yoki userId ni JWTdan oling
         return moduleService.isUserEnrolled(username, courseId);
+//        return true;
     }
 }

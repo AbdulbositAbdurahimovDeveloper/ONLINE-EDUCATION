@@ -13,6 +13,10 @@ import java.util.Set;
 
 public interface LessonRepository extends JpaRepository<Lesson, Long> {
 
+    @Query("SELECT l FROM Lesson l WHERE l.module.id =: moduleId AND l.id IN :lessonIds")
+    List<Lesson> findAllModuleIdAndIdIn(Long moduleId, Set<Long> lessonIds);
+
+    Page<Lesson> findByModule_Id(Long moduleId, Pageable pageable);
     List<Lesson> findAllByModuleId(Long moduleId);
 
     boolean existsByTitleAndModuleId(String title, Long moduleId);

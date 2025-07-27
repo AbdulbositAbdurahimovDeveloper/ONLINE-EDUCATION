@@ -9,14 +9,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uz.pdp.online_education.exceptions.DataConflictException;
 import uz.pdp.online_education.exceptions.EntityNotFoundException;
+import uz.pdp.online_education.mapper.LessonMapper;
 import uz.pdp.online_education.mapper.ModuleMapper;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.Module;
+import uz.pdp.online_education.model.lesson.Lesson;
+import uz.pdp.online_education.payload.ModuleOrderIndexDTO;
 import uz.pdp.online_education.payload.PageDTO;
+import uz.pdp.online_education.payload.lesson.LessonResponseDTO;
 import uz.pdp.online_education.payload.module.ModuleCreateDTO;
 import uz.pdp.online_education.payload.module.ModuleDetailDTO;
 import uz.pdp.online_education.payload.module.ModuleUpdateDTO;
 import uz.pdp.online_education.repository.CourseRepository;
+import uz.pdp.online_education.repository.LessonRepository;
 import uz.pdp.online_education.repository.ModuleRepository;
 import uz.pdp.online_education.service.interfaces.ModuleService;
 
@@ -33,6 +38,8 @@ public class ModuleServiceImpl implements ModuleService {
     private final ModuleRepository moduleRepository;
     private final ModuleMapper moduleMapper;
     private final CourseRepository courseRepository;
+    private final LessonRepository lessonRepository;
+    private final LessonMapper lessonMapper;
 
     /**
      * @param courseId Long
@@ -74,6 +81,32 @@ public class ModuleServiceImpl implements ModuleService {
     }
 
     /**
+     * @param id
+     * @param page
+     * @param size
+     * @return
+     */
+    @Override
+    public PageDTO<LessonResponseDTO> readLessons(Long id, Integer page, Integer size) {
+
+        Sort sort = Sort.by(Sort.Direction.ASC, Lesson.Fields.orderIndex);
+        PageRequest pageRequest = PageRequest.of(page,size,sort);
+        Page<Lesson> lessons = lessonRepository.findByModule_Id(id, pageRequest);
+
+        return new PageDTO<>(
+                lessons.getContent().stream().map(lessonMapper::toDTO).toList(),
+                lessons.getNumber(),
+                lessons.getSize(),
+                lessons.getTotalElements(),
+                lessons.getTotalPages(),
+                lessons.isLast(),
+                lessons.isFirst(),
+                lessons.getNumberOfElements(),
+                lessons.isEmpty()
+        );
+    }
+
+    /**
      * @param moduleCreateDTO Module
      * @return moduleDetailsDTO
      */
@@ -87,7 +120,7 @@ public class ModuleServiceImpl implements ModuleService {
         module.setTitle(moduleCreateDTO.getTitle());
         module.setDescription(moduleCreateDTO.getDescription());
         module.setPrice(moduleCreateDTO.getPrice());
-        module.setOrderIndex(module.getOrderIndex());
+        module.setOrderIndex(course.getModules().size());
         module.setCourse(course);
 
         moduleRepository.save(module);
@@ -115,52 +148,43 @@ public class ModuleServiceImpl implements ModuleService {
 
     /**
      * @param courseId         Long
-     * @param orderedModuleIds List
+     * @param orderedModuleDtos List
      */
     @Override
-    @Transactional // Bu annotatsiya juda muhim! Operatsiya atomar bo'lishini ta'minlaydi.
-    public void updateModuleOrderIndex(Long courseId, List<Long> orderedModuleIds) {
+    @Transactional
+    public void updateModuleOrderIndex(Long courseId, List<ModuleOrderIndexDTO> orderedModuleDtos) {
 
         // 1. Kursga tegishli barcha modullarni bazadan olamiz.
-        // Sizning kodingiz:
         List<Module> modulesInDb = moduleRepository.findAllByCourse_Id(courseId);
 
+        // --- O'ZGARISH: DTO listidan ID listini ajratib olamiz ---
+        List<Long> orderedModuleIds = orderedModuleDtos.stream()
+                .map(ModuleOrderIndexDTO::getModuleId)
+                .toList();
+
         // 2. O'lchamlar mosligini tekshiramiz.
-        // Sizning kodingiz:
         if (orderedModuleIds.size() != modulesInDb.size()) {
-            // DataConflictException o'rniga BadRequestException to'g'riroq keladi,
-            // chunki bu klientning noto'g'ri ma'lumot yuborganini bildiradi.
             throw new DataConflictException("The number of module IDs sent does not match the number of modules in the course.");
         }
 
-        // --- KODNING DAVOMI (ENG MUHIM QISMLAR) ---
-
         // 3. Modullarni tez topish uchun Map'ga joylashtiramiz.
-        // Kalit - modulning IDsi, qiymat - modulning o'zi.
         Map<Long, Module> moduleMap = modulesInDb.stream()
                 .collect(Collectors.toMap(Module::getId, Function.identity()));
 
-        // 4. Ma'lumotlar yaxlitligini tekshiramiz: Frontend yuborgan barcha IDlar haqiqatdan ham
-        // shu kursga tegishlimi va takrorlanmasmi?
-        // Bu bazadan olingan IDlar to'plami bilan Frontend yuborgan IDlar to'plami bir xil ekanligini
-        // tekshirish orqali oson amalga oshiriladi.
+        // 4. Ma'lumotlar yaxlitligini tekshiramiz.
+        // Endi ajratib olingan `orderedModuleIds` ro'yxatini ishlatamiz.
         if (!moduleMap.keySet().equals(new HashSet<>(orderedModuleIds))) {
             throw new DataConflictException("The provided module IDs are invalid, do not match the course's modules, or contain duplicates.");
         }
 
-        // 5. Yangi tartib raqamlarini ('orderIndex') o'rnatamiz.
-        // Bu eng sodda va xavfsiz qism. Indekslar serverda, tsikl yordamida generatsiya qilinadi.
+        // 5. Yangi tartib raqamlarini o'rnatamiz.
         for (int i = 0; i < orderedModuleIds.size(); i++) {
             Long moduleId = orderedModuleIds.get(i);
             Module moduleToUpdate = moduleMap.get(moduleId);
-
-            // moduleToUpdate hech qachon null bo'lmaydi, chunki yuqorida tekshirdik.
-            moduleToUpdate.setOrderIndex(i); // Yangi tartib raqami = tsikldagi o'rin (0, 1, 2, ...)
+            moduleToUpdate.setOrderIndex(i);
         }
 
         // 6. O'zgarishlarni ma'lumotlar bazasiga saqlaymiz.
-        // JPA/Hibernate aqlli ishlaydi va odatda faqat o'zgargan (dirty) entity'lar
-        // uchun UPDATE so'rovlarini generatsiya qiladi.
         moduleRepository.saveAll(modulesInDb);
     }
 //    @Override
@@ -180,12 +204,30 @@ public class ModuleServiceImpl implements ModuleService {
      * @param id Long
      */
     @Override
+    @Transactional // Bu operatsiya bir nechta qadamdan iborat, shuning uchun atomar bo'lishi shart!
     public void delete(Long id) {
-        Module module = moduleRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Module nor found with id: " + id));
+        // 1. O'chiriladigan modulni topamiz
+        Module moduleToDelete = moduleRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Module not found with id: " + id));
 
-        moduleRepository.delete(module);
+        // 2. Kerakli ma'lumotlarni (kurs va o'chirilayotgan indeks) olib qolamiz
+        Course course = moduleToDelete.getCourse();
+        Integer deletedOrderIndex = moduleToDelete.getOrderIndex();
+
+        // 3. Ommaviy yangilashni chaqiramiz: o'chirilgan moduldan keyingi barcha modullarning
+        //    indeksini bittaga kamaytiramiz.
+        moduleRepository.shiftOrderIndexesAfterDelete(course, deletedOrderIndex);
+
+        // 4. Va nihoyat, modulni o'zini o'chiramiz (soft delete).
+        moduleRepository.delete(moduleToDelete);
     }
+//    @Override
+//    public void delete(Long id) {
+//        Module module = moduleRepository.findById(id)
+//                .orElseThrow(() -> new EntityNotFoundException("Module nor found with id: " + id));
+//
+//        moduleRepository.delete(module);
+//    }
 
     /**
      * @param username String
