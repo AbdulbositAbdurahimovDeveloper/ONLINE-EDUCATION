@@ -1,10 +1,7 @@
 package uz.pdp.online_education.model.lesson;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.FieldNameConstants;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
@@ -18,6 +15,7 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
+@ToString
 @Table(name = "lesson", uniqueConstraints = {
         // Bitta modul ichida darslarning tartib raqami unikal bo'lishi kerak
         @UniqueConstraint(columnNames = {"modules_id", "order_index"})
@@ -43,11 +41,13 @@ public class Lesson extends AbsLongEntity {
 //    private boolean deleted = false;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "modules_id", nullable = false) // Liquibase'da `modules_id`, lekin JPA konvensiyasi bo'yicha `module_id`
+    @JoinColumn(name = "modules_id", nullable = false)
+    @ToString.Exclude // Liquibase'da `modules_id`, lekin JPA konvensiyasi bo'yicha `module_id`
     private Module module;
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("blockOrder ASC") // `Content` entitisida `blockOrder` maydoni bo'lishi kerak
+    @OrderBy("blockOrder ASC")
+    @ToString.Exclude // `Content` entitisida `blockOrder` maydoni bo'lishi kerak
     private List<Content> contents;
 
     // `view` maydoni butunlay olib tashlandi.

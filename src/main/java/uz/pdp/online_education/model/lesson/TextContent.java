@@ -4,10 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.FieldNameConstants;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
@@ -18,10 +15,12 @@ import org.hibernate.annotations.SQLRestriction;
 @FieldNameConstants
 @Getter
 @Setter
+@ToString
 @AllArgsConstructor
 @NoArgsConstructor
 public class TextContent extends Content {
 
     @Column(columnDefinition = "TEXT")
     private String text;
+
 }
