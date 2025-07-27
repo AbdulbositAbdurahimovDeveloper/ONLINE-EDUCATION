@@ -47,4 +47,6 @@ public class Course extends AbsLongEntity {
 
     private boolean deleted = false;
 
+    private boolean success = false;
+
 }

@@ -36,8 +36,6 @@ spring:
     port: 587
     username: ${MAIL_USERNAME}
     password: ${MAIL_PASSWORD}
-#    username: abdulbositAbdurahimov70@gmail.com
-#    password: 'cphf yxno yydk sufr'
     properties:
       mail:
         smtp:
@@ -74,13 +72,22 @@ application:
     # U Base64 formatida kodlangan va yetarlicha uzun (kamida 256 bit) bo'lishi lozim.
     # Onlayn generatorlardan foydalanib, xavfsiz kalit yaratishingiz mumkin.
     # Masalan: `openssl rand -base64 32` buyrug'i yordamida.
-    secret: "ZTAyOWY4YTNiODhjMWQ1ZjdlNmE0YjJjMWQwZTlmOGEzYjJjMWQwZjllOGE3YjZjNWQ0ZTNmMmExYjBjOWQ4ZQ=="
+    secret: ${JWT_SECRET_KEY}
 
     # Access tokenning yashash muddati.
     # Formatlar: 's' - soniya, 'm' - daqiqa, 'h' - soat, 'd' - kun.
     # Masalan: 15 daqiqa uchun '15m', 1 soat uchun '1h'.
-    access-token-expiration: 30d
+    access-token-expiration: ${ACCESS_TOKEN_EXPIRATION}
 
     # Refresh tokenning yashash muddati.
     # Bu odatda ancha uzoqroq bo'ladi, masalan 7 kun.
-    refresh-token-expiration: 7d
+    refresh-token-expiration: ${REFRESH_TOKEN_EXPIRATION}
+
+  minio:
+    endpoint: ${MINION_ENDPOINT}
+    access-key: ${MINIO_ACCESS_KEY}
+    secret-key: ${MINIO_SECRET_KEY}
+    buckets:
+      - images
+      - other
+

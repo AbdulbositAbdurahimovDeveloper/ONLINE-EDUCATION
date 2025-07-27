@@ -19,5 +19,10 @@
       "name": "springdoc.swagger-ui.path",
       "type": "java.lang.String",
       "description": "Description for springdoc.swagger-ui.path."
+    },
+    {
+      "name": "application.minio.buckets",
+      "type": "java.lang.String",
+      "description": "Description for application.minio.buckets."
     }
   ] }

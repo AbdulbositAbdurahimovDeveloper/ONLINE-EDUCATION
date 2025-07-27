@@ -59,5 +59,13 @@ databaseChangeLog:
       file: db/changelog/changes/20252107_02_create_table_verification_token.yaml
   - include:
       file: db/changelog/changes/20252507_01_changed_column_maskedCardNumber_size_payment_to_16.yaml
+  - include:
+      file: db/changelog/changes/20252607_01_add_success_column_to_courses.yaml
+  - include:
+      file: db/changelog/changes/20252707-01-make-content-order-constraint-deferrable.yaml
+  - include:
+      file: db/changelog/changes/20252707-02-make-module-order-constraint-deferrable.yaml
+  - include:
+      file: db/changelog/changes/20252707-03-make-lesson-order-constraint-deferrable.yaml
 
 

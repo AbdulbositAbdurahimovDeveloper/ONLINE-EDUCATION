@@ -1,5 +1,6 @@
 package uz.pdp.online_education.payload.lesson;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -23,10 +24,9 @@ public class LessonUpdateDTO implements Serializable {
 
     @NotBlank
     @Size(min = 5, max = 1000)
+    @JsonProperty("description")
     private String content;
 
-    @NotNull
-    private Integer orderIndex;
 
     @NotNull
     private boolean isFree = false;

@@ -1,0 +1,24 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20252707-02-make-module-order-constraint-deferrable
+      author: Eldor04
+      comment: "Adds a DEFERRABLE unique constraint on (course_id, order_index) to the 'modules' table to allow for reordering"
+      changes:
+        # 1-QADAM: Yangi "yumshoq" (DEFERRABLE) cheklovni qo'shish
+        - sql:
+            dbms: "postgresql"
+            comment: "Creating the new, DEFERRABLE unique constraint to enable flexible reordering of modules"
+            sql: |
+              ALTER TABLE modules
+              ADD CONSTRAINT uq_module_order_per_course
+              UNIQUE (course_id, order_index)
+              DEFERRABLE INITIALLY DEFERRED;
+
+      # =====================================================================
+      # BU O'ZGARISHNI ORQAGA QAYTARISH (ROLLBACK)
+      # Rollback jarayoni shunchaki shu cheklovni o'chirib tashlaydi.
+      # =====================================================================
+      rollback:
+        - sql:
+            dbms: "postgresql"
+            sql: ALTER TABLE modules DROP CONSTRAINT IF EXISTS uq_module_order_per_course;
