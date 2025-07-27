@@ -3,6 +3,7 @@ package uz.pdp.online_education.payload.text;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import uz.pdp.online_education.payload.content.ContentDTO;
 
 import java.io.Serializable;
 
@@ -12,7 +13,7 @@ import java.io.Serializable;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TextContentResponseDTO implements Serializable {
+public class TextContentResponseDTO implements Serializable, ContentDTO {
 
     private Long id;
 
@@ -21,4 +22,7 @@ public class TextContentResponseDTO implements Serializable {
     private Long lessonId;
 
     private String text;
+
+    private String contentType;
+
 }

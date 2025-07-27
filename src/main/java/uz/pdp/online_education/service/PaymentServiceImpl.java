@@ -142,7 +142,9 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setModule(module);
         payment.setAmount(module.getPrice());
         payment.setStatus(TransactionStatus.SUCCESS);
-        payment.setMaskedCardNumber(paymentCreateDTO.getMaskedCardNumber());
+        String card = paymentCreateDTO.getMaskedCardNumber();
+        String masked = card.substring(0, 4) + "******" + card.substring(card.length() - 6);
+        payment.setMaskedCardNumber(masked);
         payment.setDescription(paymentCreateDTO.getDescription());
 
         paymentRepository.save(payment);

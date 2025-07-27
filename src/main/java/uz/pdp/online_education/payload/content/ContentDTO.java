@@ -18,6 +18,6 @@ import uz.pdp.online_education.payload.text.TextContentSummaryDTO;
 })
 public interface ContentDTO  {
      Long getId();
-     int getBlockOrder();
+     Integer getBlockOrder();
      String getContentType();
 }

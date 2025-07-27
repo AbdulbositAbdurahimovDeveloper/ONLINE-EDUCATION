@@ -29,7 +29,13 @@ public class AttachmentContentController {
 
     @PostMapping
     public ResponseEntity<ResponseDTO<?>> create(@RequestBody AttachmentContentCreateDTO attachmentContentCreateDTO){
-        return null;
+        AttachmentContentDTO attachmentContentDTO = attachmentContentService.create(attachmentContentCreateDTO);
+        return ResponseEntity.ok(ResponseDTO.success(attachmentContentDTO));
+    }
 
+    @DeleteMapping("/{id}")
+    public  ResponseEntity<ResponseDTO<?>> delete(@PathVariable Long id) {
+        attachmentContentService.delete(id);
+        return  ResponseEntity.ok(ResponseDTO.success("content deleted"));
     }
 }

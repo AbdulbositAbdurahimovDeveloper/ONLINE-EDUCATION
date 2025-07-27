@@ -57,11 +57,10 @@ public class GenerateService {
             for (int j = 0; j < 5; j++) {
                 Module module = new Module();
                 module.setTitle("Module " + (j + 1) + ": " + faker.lorem().sentence(3));
-                module.setDescription(faker.lorem().paragraph(2));
-//                double randomDouble = ThreadLocalRandom.current().nextDouble(5_000_000.0, 3_500_000.0);
-                double fakeDouble = faker.number().randomDouble(2, 500_000, 1_500_000);
-                BigDecimal amountInSomFromDto = BigDecimal.valueOf(fakeDouble);
-                module.setPrice(amountInSomFromDto.longValue());
+                module.setDescription(faker.lorem().paragraph(2));long priceInSom = faker.number().numberBetween(500_000L, 1_500_000L);
+                long priceInTiyin = priceInSom * 100;
+                module.setPrice(priceInTiyin); // Agar price tiyinda saqlansa
+
                 module.setOrderIndex(j);
                 
                 // Eng muhim qadam: Modulni kursga bog'lash

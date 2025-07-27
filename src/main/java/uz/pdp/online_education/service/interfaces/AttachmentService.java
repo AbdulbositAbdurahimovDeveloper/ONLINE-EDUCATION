@@ -11,7 +11,7 @@ public interface AttachmentService {
 
     AttachmentDTO saveIcon(MultipartFile multipartFile);
 
-    ResponseEntity<?> tempLink(Long id, Integer minute);
+    String tempLink(Long id, Integer minute);
 
     void delete(Long id);
 }
