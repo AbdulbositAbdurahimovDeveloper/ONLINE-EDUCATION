@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20252707_04_rename-path-column_attachment_table
+      author: abdulbosit
+      changes:
+        - renameColumn:
+            tableName: attachment
+            oldColumnName: path
+            newColumnName: minio_key
+            columnDataType: varchar(255) # yoki sizning real data type'ingiz
+
+        - addColumn:
+            tableName: attachment
+            columns:
+              - column:
+                  name: bucket_name
+                  type: varchar
+                  constraints:
+                    nullable: false
+
+      rollback:
+        - renameColumn:
+            tableName: attachment
+            oldColumnName: minio_key
+            newColumnName: path
+            columnDataType: varchar(255)

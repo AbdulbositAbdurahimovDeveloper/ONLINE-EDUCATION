@@ -6,7 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import uz.pdp.online_education.exceptions.EntityNotFoundException;
 import uz.pdp.online_education.model.lesson.Lesson;
 import uz.pdp.online_education.model.lesson.TextContent;
-import uz.pdp.online_education.model.lesson.TextContentMapper;
+import uz.pdp.online_education.mapper.TextContentMapper;
 import uz.pdp.online_education.payload.text.TextContentCreateDTO;
 import uz.pdp.online_education.payload.text.TextContentResponseDTO;
 import uz.pdp.online_education.payload.text.TextContentUpdateDTO;

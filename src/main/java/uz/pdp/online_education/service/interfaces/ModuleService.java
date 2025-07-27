@@ -25,4 +25,7 @@ public interface ModuleService {
     void delete(Long id);
 
     boolean isUserEnrolled(String username, Long moduleId);
+
+    boolean isUserModuleBought(String username, Long attachmentContentId);
+
 }
