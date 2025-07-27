@@ -3,16 +3,12 @@ package uz.pdp.online_education.controller;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import uz.pdp.online_education.payload.AttachmentDTO;
+import uz.pdp.online_education.payload.content.attachmentContent.AttachmentDTO;
 import uz.pdp.online_education.payload.ResponseDTO;
 import uz.pdp.online_education.service.interfaces.AttachmentService;
-
-import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/attachment")
@@ -41,23 +37,14 @@ public class AttachmentController {
 
     @GetMapping("/open/file/icons/{filename:.+}")
     public ResponseEntity<Resource> getIcon(@PathVariable String filename, HttpServletRequest request) {
-        Resource resource = attachmentService.loadIconAsResource(filename);
 
-        String contentType = null;
-        try {
-            contentType = request.getServletContext().getMimeType(resource.getFile().getAbsolutePath());
-        } catch (IOException ex) {
-            // log error
-        }
+        return null;
+    }
 
-        if (contentType == null) {
-            contentType = "application/octet-stream";
-        }
-
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"") // inline -> brauzerda ochadi
-                .body(resource);
+    @GetMapping("/temp-link/{id}")
+    public ResponseEntity<?> tempLink(@PathVariable Long id,
+                                      @RequestParam(defaultValue = "1") Integer minute) {
+       return attachmentService.tempLink(id, minute);
     }
 
     @DeleteMapping("/{id}")

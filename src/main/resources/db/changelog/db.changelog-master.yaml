@@ -67,5 +67,7 @@ databaseChangeLog:
       file: db/changelog/changes/20252707-02-make-module-order-constraint-deferrable.yaml
   - include:
       file: db/changelog/changes/20252707-03-make-lesson-order-constraint-deferrable.yaml
+  - include:
+      file: db/changelog/changes/20252707_04_rename-path-column_attachment_table.yaml
 
 

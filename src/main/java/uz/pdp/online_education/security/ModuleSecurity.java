@@ -18,4 +18,10 @@ public class ModuleSecurity {
         return moduleService.isUserEnrolled(username, courseId);
 //        return true;
     }
+
+    public boolean isUserModuleBought(Authentication authentication, Long attachmentContentId) {
+        String username = authentication.getName();
+        return moduleService.isUserModuleBought(username,attachmentContentId);
+//        return true;
+    }
 }
