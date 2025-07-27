@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import uz.pdp.online_education.payload.ContactMessageRequestDTO;
 import uz.pdp.online_education.payload.ContactMessageResponseDTO;
+import uz.pdp.online_education.payload.ResponseDTO;
 import uz.pdp.online_education.service.interfaces.ContactMessageService;
 
 import java.util.List;
@@ -16,45 +17,47 @@ public class ContactMessageController {
 
     private final ContactMessageService contactMessageService;
 
-    // Xabar yuborish
+    // ✅ Xabar yuborish
     @PostMapping
-    public ResponseEntity<Void> create(@RequestBody ContactMessageRequestDTO dto) {
+    public ResponseEntity<ResponseDTO<String>> create(@RequestBody ContactMessageRequestDTO dto) {
         contactMessageService.create(dto);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(ResponseDTO.success("Xabar muvaffaqiyatli yuborildi!"));
     }
 
-    // Replied bo'lmagan barcha xabarlarni olish
+    // ✅ Replied bo'lmagan barcha xabarlarni olish
     @GetMapping("/unreplied")
-    public ResponseEntity<List<ContactMessageResponseDTO>> getAllExceptReplied() {
-        return ResponseEntity.ok(contactMessageService.getAllExceptReplied());
+    public ResponseEntity<ResponseDTO<List<ContactMessageResponseDTO>>> getAllExceptReplied() {
+        List<ContactMessageResponseDTO> result = contactMessageService.getAllExceptReplied();
+        return ResponseEntity.ok(ResponseDTO.success(result));
     }
 
-    // Barcha xabarlarni olish
+    // ✅ Barcha xabarlarni olish
     @GetMapping
-    public ResponseEntity<List<ContactMessageResponseDTO>> getAll() {
-        return ResponseEntity.ok(contactMessageService.getAll());
+    public ResponseEntity<ResponseDTO<List<ContactMessageResponseDTO>>> getAll() {
+        List<ContactMessageResponseDTO> result = contactMessageService.getAll();
+        return ResponseEntity.ok(ResponseDTO.success(result));
     }
 
-    // ID bo‘yicha xabarni olish va uni ko‘rilgan deb belgilash
+    // ✅ ID bo‘yicha xabarni olish va ko‘rilgan deb belgilash
     @GetMapping("/{id}")
-    public ResponseEntity<ContactMessageResponseDTO> getByIdAndMarkRead(@PathVariable Long id) {
-        return ResponseEntity.ok(contactMessageService.getByIdAndMarkRead(id));
+    public ResponseEntity<ResponseDTO<ContactMessageResponseDTO>> getByIdAndMarkRead(@PathVariable Long id) {
+        ContactMessageResponseDTO dto = contactMessageService.getByIdAndMarkRead(id);
+        return ResponseEntity.ok(ResponseDTO.success(dto));
     }
 
-    // Xabarga javob yozish
+    // ✅ Xabarga javob yozish
     @PostMapping("/{id}/reply")
-    public ResponseEntity<String> replyToMessage(@PathVariable Long id, @RequestBody String replyText) {
-        String htmlContent = contactMessageService.replyToMessage(id, replyText);
-        return ResponseEntity.ok(htmlContent); // HTML qaytadi
+    public ResponseEntity<ResponseDTO<String>> replyToMessage(@PathVariable Long id,
+                                                              @RequestBody String replyText) {
+        contactMessageService.replyToMessage(id, replyText);
+        return ResponseEntity.ok(ResponseDTO.success("Javob muvaffaqiyatli yuborildi!"));
     }
 
-    // Xabarni tahrirlash (faqat egasi va REPLIED bo'lmagan bo'lsa)
+    // ✅ Xabarni tahrirlash (faqat egasi va REPLIED bo'lmagan bo'lsa)
     @PutMapping("/{id}")
-    public ResponseEntity<Void> edit(@PathVariable Long id,
-                                     @RequestParam String requesterEmail,
-                                     @RequestBody ContactMessageRequestDTO dto) {
-        contactMessageService.edit(id, requesterEmail, dto);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<ResponseDTO<String>> edit(@PathVariable Long id,
+                                                    @RequestBody ContactMessageRequestDTO dto) {
+        contactMessageService.edit(id, dto);
+        return ResponseEntity.ok(ResponseDTO.success("Xabar tahrirlandi"));
     }
-
 }

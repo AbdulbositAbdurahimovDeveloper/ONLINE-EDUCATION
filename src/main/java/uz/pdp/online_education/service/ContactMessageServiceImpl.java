@@ -12,12 +12,14 @@ import uz.pdp.online_education.enums.MessageStatus;
 import uz.pdp.online_education.exceptions.EntityNotFoundException;
 import uz.pdp.online_education.mapper.ContactMessageMapper;
 import uz.pdp.online_education.model.ContactMessage;
+import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.payload.ContactMessageRequestDTO;
 import uz.pdp.online_education.payload.ContactMessageResponseDTO;
 import uz.pdp.online_education.repository.ContactMessageRepository;
 import uz.pdp.online_education.service.interfaces.ContactMessageService;
 
 import org.thymeleaf.context.Context;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -63,12 +65,10 @@ public class ContactMessageServiceImpl implements ContactMessageService {
     }
 
     @Override
-    public void edit(Long id, String requesterEmail, ContactMessageRequestDTO dto) {
+    public void edit(Long id, ContactMessageRequestDTO dto){
         ContactMessage message = contactMessageRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("ContactMessage not found"));
 
-        if (!message.getEmail().equals(requesterEmail))
-            throw new RuntimeException("You can only edit your own messages");
 
         if (message.getStatus() == MessageStatus.REPLIED)
             throw new RuntimeException("Cannot edit a replied message");
@@ -97,40 +97,36 @@ public class ContactMessageServiceImpl implements ContactMessageService {
 
 
     @Override
-    public String replyToMessage(Long id, String replyText) {
+    public void replyToMessage(Long id, String replyText) {
         ContactMessage message = contactMessageRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("ContactMessage not found"));
-
-        // Email body uchun Thymeleaf context
+        try {
         Context context = new Context();
         context.setVariable("fullName", message.getFullName());
         context.setVariable("userMessage", message.getMessage());
-        context.setVariable("replyText", replyText);
+        context.setVariable("reply  Text", replyText);
 
-        // contact_reply.html faylni render qilish
         String htmlContent = templateEngine.process("contact_reply", context);
 
-        // Email yuborish
-        try {
+
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
-            helper.setTo(message.getEmail()); // User email
+            helper.setTo(message.getEmail());
             helper.setSubject("Javobingiz - Online Education Support");
-            helper.setText(htmlContent, true); // true = HTML
+            helper.setText(htmlContent, true);
+            helper.setFrom("noreply@online-education.com");
 
             mailSender.send(mimeMessage);
 
-            // Email yuborilgandan so‘ng statusni REPLIED ga o‘zgartirish
             message.setStatus(MessageStatus.REPLIED);
             contactMessageRepository.save(message);
 
         } catch (MessagingException e) {
-            throw new RuntimeException("Email yuborishda xatolik yuz berdi", e);
+            throw new IllegalStateException("Email yuborishda xatolik yuz berdi", e);
         }
-
-        return "Javob muvaffaqiyatli yuborildi!";
     }
+
 
 
 }

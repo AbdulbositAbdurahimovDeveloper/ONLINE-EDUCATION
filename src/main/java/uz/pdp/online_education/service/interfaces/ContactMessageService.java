@@ -1,5 +1,6 @@
 package uz.pdp.online_education.service.interfaces;
 
+import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.payload.ContactMessageRequestDTO;
 import uz.pdp.online_education.payload.ContactMessageResponseDTO;
 
@@ -14,10 +15,10 @@ public interface ContactMessageService {
 
     ContactMessageResponseDTO getByIdAndMarkRead(Long id);
 
-    void edit(Long id, String requesterEmail, ContactMessageRequestDTO dto);
+    void edit(Long id,  ContactMessageRequestDTO dto);
 
 
-    public String replyToMessage(Long id, String replyText);
+    public void replyToMessage(Long id, String replyText);
 
     void delete(Long id, String requesterEmail);
 
