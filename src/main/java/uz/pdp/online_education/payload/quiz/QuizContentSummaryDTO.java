@@ -15,7 +15,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class QuizContentSummaryDTO implements Serializable, ContentDTO {
     private Long id;
-    private int blockOrder;
+    private Integer blockOrder;
     private String contentType;
     private Long quizId;
     private String quizTitle;

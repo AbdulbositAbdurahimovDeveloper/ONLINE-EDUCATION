@@ -3,6 +3,7 @@ package uz.pdp.online_education.controller;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -44,7 +45,8 @@ public class AttachmentController {
     @GetMapping("/temp-link/{id}")
     public ResponseEntity<?> tempLink(@PathVariable Long id,
                                       @RequestParam(defaultValue = "1") Integer minute) {
-       return attachmentService.tempLink(id, minute);
+       String presignedObjectUrl = attachmentService.tempLink(id, minute);
+        return new ResponseEntity<>(presignedObjectUrl, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")

@@ -2,6 +2,8 @@ package uz.pdp.online_education.mapper;
 
 import org.mapstruct.*;
 import uz.pdp.online_education.model.lesson.AttachmentContent;
+import uz.pdp.online_education.payload.attachment.AttachmentContentSummaryDTO;
+import uz.pdp.online_education.payload.content.ContentDTO;
 import uz.pdp.online_education.payload.lesson.AttachmentContentDTO;
 
 import java.sql.Timestamp;
@@ -20,5 +22,10 @@ public interface AttachmentContentMapper {
     default Long timestampToLong(Timestamp timestamp)    {
         return timestamp != null ? timestamp.getTime() : null;
     }
+
+    @Mapping(target = "contentType", expression = "java(\"ATTACHMENT\")")
+    @Mapping(source = "attachment.id", target = "attachmentId")
+    @Mapping(source = "attachment.originalName", target = "attachmentOriginalName")
+    AttachmentContentSummaryDTO toAttachmentContentDTO(AttachmentContent ac);
 
 }

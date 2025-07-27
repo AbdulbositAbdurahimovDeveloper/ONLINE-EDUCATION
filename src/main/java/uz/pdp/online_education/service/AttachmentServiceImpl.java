@@ -99,7 +99,7 @@ public class AttachmentServiceImpl implements AttachmentService {
     }
 
     @Override
-    public ResponseEntity<?> tempLink(Long id, Integer minute) {
+    public String tempLink(Long id, Integer minute) {
         Attachment attachment = attachmentRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Attachment not found with id: " + id));
 
@@ -107,7 +107,7 @@ public class AttachmentServiceImpl implements AttachmentService {
 
         try {
 
-            String presignedObjectUrl = minioClient.getPresignedObjectUrl(
+            return minioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .bucket(attachment.getBucketName())
                             .object(minioKey)
@@ -115,8 +115,7 @@ public class AttachmentServiceImpl implements AttachmentService {
                             .expiry(minute, TimeUnit.MINUTES)
                             .build()
             );
-
-            return new ResponseEntity<>(presignedObjectUrl, HttpStatus.OK);
+//            return new ResponseEntity<>(presignedObjectUrl, HttpStatus.OK);
 
 
         } catch (Exception e) {

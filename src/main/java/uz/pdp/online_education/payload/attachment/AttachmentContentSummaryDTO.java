@@ -15,8 +15,9 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class AttachmentContentSummaryDTO implements Serializable, ContentDTO {
     private Long id;
-    private int blockOrder;
+    private Integer blockOrder;
     private String contentType;
     private Long attachmentId;
     private String attachmentOriginalName;
+    private String attachmentUrl;
 }
