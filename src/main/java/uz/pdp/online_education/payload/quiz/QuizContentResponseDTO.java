@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import uz.pdp.online_education.enums.QuestionType;
+import uz.pdp.online_education.payload.content.ContentDTO;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class QuizContentResponseDTO implements Serializable {
+public class QuizContentResponseDTO implements Serializable , ContentDTO {
     private Long id;
     private Integer blockOrder;
     private String contentType;

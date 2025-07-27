@@ -6,6 +6,7 @@ import uz.pdp.online_education.model.lesson.*;
 import uz.pdp.online_education.payload.attachment.AttachmentContentSummaryDTO;
 import uz.pdp.online_education.payload.content.ContentDTO;
 import uz.pdp.online_education.payload.lesson.LessonResponseDTO;
+import uz.pdp.online_education.payload.quiz.QuizContentResponseDTO;
 import uz.pdp.online_education.payload.text.TextContentResponseDTO;
 import uz.pdp.online_education.service.interfaces.AttachmentService;
 
@@ -18,6 +19,7 @@ public class LessonMapperImpl implements LessonMapper {
 
     private final TextContentMapper textContentMapper;
     private final AttachmentContentMapper attachmentContentMapper;
+    private final QuizContentMapper quizContentMapper;
     private final AttachmentService attachmentService;
 
     @Override
@@ -48,7 +50,8 @@ public class LessonMapperImpl implements LessonMapper {
                 TextContentResponseDTO dto = textContentMapper.toDTO(textContent);
                 content.add(dto);
             } else if (oneContent instanceof QuizContent quizContent) {
-                return null;
+                QuizContentResponseDTO dto = quizContentMapper.toDto(quizContent);
+                content.add(dto);
             }
         }
         return content;
