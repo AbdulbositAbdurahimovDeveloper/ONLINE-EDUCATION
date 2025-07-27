@@ -6,10 +6,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import uz.pdp.online_education.exceptions.DataConflictException;
 import uz.pdp.online_education.exceptions.EntityNotFoundException;
 import uz.pdp.online_education.mapper.LessonMapper;
 import uz.pdp.online_education.model.Module;
 import uz.pdp.online_education.model.lesson.Lesson;
+import uz.pdp.online_education.payload.PageDTO;
 import uz.pdp.online_education.payload.lesson.LessonCreatDTO;
 import uz.pdp.online_education.payload.lesson.LessonOrderUpdateDTO;
 import uz.pdp.online_education.payload.lesson.LessonResponseDTO;
@@ -33,12 +35,24 @@ public class LessonServiceImpl implements LessonService {
     private final LessonMapper lessonMapper;
     private final ModuleRepository moduleRepository;
 
-    @Override
-    public Page<LessonResponseDTO> read(Integer page, Integer size) {
-        Sort sort = Sort.by(Sort.Direction.ASC, Lesson.Fields.orderIndex);
-        PageRequest pageRequest = PageRequest.of(page, size,sort);
-        return lessonRepository.findAll(pageRequest).map(lessonMapper::toDTO);
-    }
+//    @Override
+//    public PageDTO<LessonResponseDTO> read(Long moduleId,Integer page, Integer size) {
+//        Sort sort = Sort.by(Sort.Direction.ASC, Lesson.Fields.orderIndex);
+//        PageRequest pageRequest = PageRequest.of(page, size,sort);
+//        Page<Lesson> lessons = lessonRepository.findAllByModule_Id(moduleId,pageRequest);
+//
+//        return new PageDTO<>(
+//                lessons.getContent().stream().map(lessonMapper::toDTO).toList(),
+//                lessons.getNumber(),
+//                lessons.getSize(),
+//                lessons.getTotalElements(),
+//                lessons.getTotalPages(),
+//                lessons.isLast(),
+//                lessons.isFirst(),
+//                lessons.getNumberOfElements(),
+//                lessons.isEmpty()
+//        );
+//    }
 
     @Override
     public LessonResponseDTO read(Long id) {
@@ -51,15 +65,21 @@ public class LessonServiceImpl implements LessonService {
     @Transactional
     @Override
     public LessonResponseDTO create(LessonCreatDTO lessonCreatDTO) {
+
+        if (lessonRepository.existsByTitleAndModuleId(lessonCreatDTO.getTitle(), lessonCreatDTO.getModuleId())) {
+            throw new DataConflictException(
+                    "Lesson with title '" + lessonCreatDTO.getTitle() + "' already exists in this module."
+            );
+        }
+
         Module module = moduleRepository.findById(lessonCreatDTO.getModuleId())
                 .orElseThrow(() -> new EntityNotFoundException("Module not found with id: " + lessonCreatDTO.getModuleId()));
-
 
         Lesson lesson = new Lesson();
         lesson.setTitle(lessonCreatDTO.getTitle());
         lesson.setContent(lessonCreatDTO.getContent());
         lesson.setModule(module);
-        lesson.setOrderIndex(lessonCreatDTO.getOrderIndex());
+        lesson.setOrderIndex(module.getLessons().size());
         lesson.setFree(lessonCreatDTO.isFree());
 
         Lesson saveLesson = lessonRepository.save(lesson);
@@ -73,9 +93,14 @@ public class LessonServiceImpl implements LessonService {
     public LessonResponseDTO update(Long id, LessonUpdateDTO lessonUpdateDTO) {
         Lesson lesson = lessonRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Lesson not found with id: " + id));
 
+        if (lessonRepository.existsByTitleAndModuleIdAndIdNot(lessonUpdateDTO.getTitle(), lesson.getModule().getId(), id)) {
+            throw new DataConflictException(
+                    "Another lesson with title '" + lessonUpdateDTO.getTitle() + "' already exists in this module."
+            );
+        }
+
         lesson.setTitle(lessonUpdateDTO.getTitle());
         lesson.setContent(lessonUpdateDTO.getContent());
-        lesson.setOrderIndex(lessonUpdateDTO.getOrderIndex());
         lesson.setFree(lessonUpdateDTO.isFree());
 
         Lesson saveLesson = lessonRepository.save(lesson);
@@ -86,10 +111,19 @@ public class LessonServiceImpl implements LessonService {
     @Transactional
     @Override
     public void delete(Long id) {
-        if (!lessonRepository.existsById(id)) {
-            throw new EntityNotFoundException("Lesson not found with id: " + id);
-        }
-        lessonRepository.deleteById(id);
+
+        Lesson lesson = lessonRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Lesson not found with id: " + id));
+
+        Long moduleId = lesson.getModule().getId();
+        Integer orderIndexOfDeleted = lesson.getOrderIndex();
+
+        lessonRepository.delete(lesson);
+
+        lessonRepository.flush();
+
+        lessonRepository.shiftOrderIndexesAfterDelete(moduleId, orderIndexOfDeleted);
+
     }
 
     @Override

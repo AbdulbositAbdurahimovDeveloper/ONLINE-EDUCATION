@@ -1,5 +1,6 @@
 package uz.pdp.online_education.payload.lesson;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -22,6 +23,7 @@ public class LessonResponseDTO implements Serializable {
 
     private String title;
 
+    @JsonProperty("description")
     private String content;
 
     private Integer orderIndex;

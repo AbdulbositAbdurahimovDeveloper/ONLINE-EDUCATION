@@ -1,10 +1,7 @@
 package uz.pdp.online_education.model.lesson;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.FieldNameConstants;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
@@ -15,6 +12,7 @@ import uz.pdp.online_education.model.Abs.AbsLongEntity;
 @Getter
 @Setter
 @Entity
+@ToString
 @Table(name = "contents")
 @Inheritance(strategy = InheritanceType.JOINED) // yoki SINGLE_TABLE, TABLE_PER_CLASS
 @DiscriminatorColumn(name = "content_type") // Faqat SINGLE_TABLE va JOINED uchun
@@ -22,9 +20,11 @@ import uz.pdp.online_education.model.Abs.AbsLongEntity;
 public abstract class Content extends AbsLongEntity {
 
     @Column(nullable = false)
-    private int blockOrder; // Dars ichidagi tartibi
+    private Integer blockOrder; // Dars ichidagi tartibi
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lesson_id", nullable = false)
+    @ToString.Exclude
     private Lesson lesson;
 }
+

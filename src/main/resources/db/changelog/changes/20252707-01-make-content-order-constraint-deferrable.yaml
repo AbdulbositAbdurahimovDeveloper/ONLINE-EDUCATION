@@ -1,0 +1,38 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20252707-01-make-content-order-constraint-deferrable
+      author: Eldor04
+      comment: "Replaces the non-deferrable unique constraint on 'contents' with a deferrable one to allow for reordering operations"
+      changes:
+        # 1-QADAM: Mavjud "qattiq" cheklovni o'chirish
+        - dropUniqueConstraint:
+            constraintName: uq_content_order_per_lesson
+            tableName: contents
+            comment: "Dropping the old, non-deferrable constraint first"
+
+        # 2-QADAM: Yangi "yumshoq" (DEFERRABLE) cheklovni qo'shish
+        - sql:
+            dbms: "postgresql"
+            comment: "Creating the new, DEFERRABLE unique constraint to enable flexible reordering"
+            sql: |
+              ALTER TABLE contents
+              ADD CONSTRAINT uq_content_order_per_lesson
+              UNIQUE (lesson_id, block_order)
+              DEFERRABLE INITIALLY DEFERRED;
+
+      # =====================================================================
+      # BU O'ZGARISHNI ORQAGA QAYTARISH (ROLLBACK)
+      # Rollback jarayoni ham teskari tartibda bo'ladi:
+      # avval yangi cheklovni o'chirib, keyin eski cheklovni qayta tiklaymiz.
+      # =====================================================================
+      rollback:
+        # 1. Yangi, "yumshoq" cheklovni o'chirish
+        - sql:
+            dbms: "postgresql"
+            sql: ALTER TABLE contents DROP CONSTRAINT IF EXISTS uq_content_order_per_lesson;
+
+        # 2. Eski, "qattiq" cheklovni qayta tiklash
+        - addUniqueConstraint:
+            constraintName: uq_content_order_per_lesson
+            tableName: contents
+            columnNames: "lesson_id, block_order"
