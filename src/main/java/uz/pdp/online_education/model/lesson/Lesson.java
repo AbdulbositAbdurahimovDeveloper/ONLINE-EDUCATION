@@ -26,7 +26,7 @@ public class Lesson extends AbsLongEntity {
     @Column(nullable = false)
     private String title;
 
-//    @Lob // Katta hajmdagi matnlar uchun
+    @Lob // Katta hajmdagi matnlar uchun
     private String content;
 
     @Column(name = "order_index", nullable = false)

@@ -7,6 +7,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.User;
+import uz.pdp.online_education.payload.FilterDTO;
 import uz.pdp.online_education.payload.PageDTO;
 import uz.pdp.online_education.payload.ResponseDTO;
 import uz.pdp.online_education.payload.course.CourseCreateDTO;
@@ -24,6 +25,14 @@ public class CourseController {
     private final CourseService courseService;
     private final ModuleService moduleService;
 
+    @GetMapping("/open/courses/filter")
+    public ResponseEntity<ResponseDTO<PageDTO<?>>> filter(FilterDTO filterDTO,
+                                                          @RequestParam(defaultValue = "0") Integer page,
+                                                          @RequestParam(defaultValue = "10") Integer size) {
+        PageDTO<CourseDetailDTO> courseDetailDTOPageDTO = courseService.filter(filterDTO,page,size);
+        return  ResponseEntity.ok(ResponseDTO.success(courseDetailDTOPageDTO));
+    }
+
     @GetMapping("/open/courses")
     public ResponseEntity<ResponseDTO<PageDTO<CourseDetailDTO>>> read(@RequestParam(defaultValue = "0") Integer page,
                                                                       @RequestParam(defaultValue = "10") Integer size) {
@@ -40,8 +49,7 @@ public class CourseController {
     @GetMapping("courses/{courseId}/modules")
     public ResponseEntity<ResponseDTO<PageDTO<ModuleDetailDTO>>> read(@PathVariable Long courseId,
                                                                       @RequestParam(defaultValue = "0") Integer page,
-                                                                      @RequestParam(defaultValue = "10") Integer size,
-                                                                      PagedResourcesAssembler<uz.pdp.online_education.model.Module> assembler) {
+                                                                      @RequestParam(defaultValue = "10") Integer size) {
         PageDTO<ModuleDetailDTO> modulePage = moduleService.read(courseId, page, size);
 
         return ResponseEntity.ok(ResponseDTO.success(modulePage));

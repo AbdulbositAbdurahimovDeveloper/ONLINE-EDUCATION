@@ -115,7 +115,7 @@ public class EmailServiceImpl implements EmailService {
             helper.setFrom(fromEmail);
 
             // 4. Xabarni jo'natish
-            mailSender.send(mimeMessage);
+//            mailSender.send(mimeMessage);
             log.info("Successfully sent payment receipt email to {}", user.getProfile().getEmail());
 
         } catch (MessagingException e) {

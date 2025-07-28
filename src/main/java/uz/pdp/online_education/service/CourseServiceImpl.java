@@ -4,25 +4,28 @@ import com.github.slugify.Slugify;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uz.pdp.online_education.exceptions.DataConflictException;
 import uz.pdp.online_education.exceptions.EntityNotFoundException;
 import uz.pdp.online_education.mapper.CourseMapper;
-import uz.pdp.online_education.model.Attachment;
-import uz.pdp.online_education.model.Category;
-import uz.pdp.online_education.model.Course;
+import uz.pdp.online_education.model.*;
 import uz.pdp.online_education.model.Module;
-import uz.pdp.online_education.model.User;
+import uz.pdp.online_education.payload.FilterDTO;
 import uz.pdp.online_education.payload.PageDTO;
 import uz.pdp.online_education.payload.course.CourseCreateDTO;
 import uz.pdp.online_education.payload.course.CourseDetailDTO;
 import uz.pdp.online_education.payload.course.CourseUpdateDTO;
+import uz.pdp.online_education.payload.course.CourseWithRatingDTO;
 import uz.pdp.online_education.repository.AttachmentRepository;
 import uz.pdp.online_education.repository.CategoryRepository;
 import uz.pdp.online_education.repository.CourseRepository;
 import uz.pdp.online_education.repository.ModuleRepository;
 import uz.pdp.online_education.service.interfaces.CourseService;
+import uz.pdp.online_education.specification.CourseSpecification;
 
 import java.util.List;
 
@@ -36,6 +39,66 @@ public class CourseServiceImpl implements CourseService {
     private final AttachmentRepository attachmentRepository;
     private final CategoryRepository categoryRepository;
     private final ModuleRepository moduleRepository;
+
+    // CourseServiceImpl.java
+
+    // CourseServiceImpl.java
+
+    @Override
+    @Transactional(readOnly = true) // LOB muammosini hal qilish uchun shart!
+    public PageDTO<CourseDetailDTO> filter(FilterDTO filterDTO, Integer page, Integer size) {
+
+        // Saralashni Pageable orqali dinamik boshqaramiz
+        Sort sort = Sort.by(Sort.Direction.DESC, "averageRating");
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // To'g'ridan-to'g'ri Criteria API bilan ishlaydigan metodimizni chaqiramiz
+        Page<CourseWithRatingDTO> resultPage = courseRepository.filterWithCriteria(filterDTO, pageable);
+
+        // Natijani bizga kerakli DTO ga o'giramiz
+        Page<CourseDetailDTO> courseDetailDTOPage = resultPage.map(dto ->
+                courseMapper.courseToCourseDetailDTO(dto.getCourse())
+        );
+
+        // Yakuniy PageDTO ni qaytaramiz
+        return new PageDTO<>(
+                courseDetailDTOPage.getContent(),
+                courseDetailDTOPage.getNumber(),
+                courseDetailDTOPage.getSize(),
+                courseDetailDTOPage.getTotalElements(),
+                courseDetailDTOPage.getTotalPages(),
+                courseDetailDTOPage.isLast(),
+                courseDetailDTOPage.isFirst(),
+                courseDetailDTOPage.getNumberOfElements(),
+                courseDetailDTOPage.isEmpty()
+        );
+    }
+//    @Override
+//    public PageDTO<CourseDetailDTO> filter(FilterDTO filterDTO, Integer page, Integer size) {
+//
+//        // 1. Bizning yangi, aqlli Specification'imizni yaratamiz
+//        Specification<Course> spec = CourseSpecification.filterAndPotentiallySort(filterDTO);
+//
+//        // 2. PageRequest'ni yaratamiz (saralash spec ichida bo'lgani uchun bu yerda shart emas)
+//        PageRequest pageRequest = PageRequest.of(page, size);
+//
+//        // 3. Bazadan ma'lumotlarni olamiz
+//        Page<Course> courses = courseRepository.findAll(spec, pageRequest);
+//
+//        // 4. Natijani DTO'ga o'girib, qaytaramiz
+//        return new PageDTO<>(
+//                courses.getContent().stream().map(courseMapper::courseToCourseDetailDTO).toList(),
+//                courses.getNumber(),
+//                courses.getSize(),
+//                courses.getTotalElements(),
+//                courses.getTotalPages(),
+//                courses.isLast(),
+//                courses.isFirst(),
+//                courses.getNumberOfElements(),
+//                courses.isEmpty()
+//        );
+//    }
+
 
     /**
      * @param page default:0
