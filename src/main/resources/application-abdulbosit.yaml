@@ -53,8 +53,13 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
-#logging:
-#  level:
+logging:
+  level:
+    uz:
+      pdp:
+        online_education:
+          service:
+            GenerateService=DEBUG:
 #    root: WARN
 #    org.springframework.web: INFO
 #    org.hibernate.SQL: DEBUG

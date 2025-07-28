@@ -37,7 +37,6 @@ public class Payment extends AbsLongEntity {
   @Column(nullable = false)
   private TransactionStatus status;
 
-  // Karta raqamining oxirgi 4 ta raqami (xavfsizlik uchun)
   @Column(length = 16)
   private String maskedCardNumber;
 

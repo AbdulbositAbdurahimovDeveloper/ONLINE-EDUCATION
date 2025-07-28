@@ -1,10 +1,7 @@
 package uz.pdp.online_education.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.FieldNameConstants;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
@@ -16,6 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
+@ToString
 @Entity(name = "courses")
 @FieldNameConstants
 @SQLDelete(sql = "UPDATE courses SET deleted = true WHERE id = ?")
@@ -40,9 +38,11 @@ public class Course extends AbsLongEntity {
     private Category category;//course qaysi categoryda
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
     private List<Module> modules; // coursening modullari
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
     private List<Review> reviews;
 
     private boolean deleted = false;

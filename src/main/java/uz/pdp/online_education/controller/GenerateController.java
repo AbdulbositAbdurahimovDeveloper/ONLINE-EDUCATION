@@ -30,4 +30,29 @@ public class GenerateController {
 
         return ResponseEntity.ok(ResponseDTO.success(courseDetailDTOS));
     }
+
+    @GetMapping("/full-course/{count}")
+    public ResponseEntity<ResponseDTO<?>> generateCoursesAndModules(@PathVariable int count) {
+        generateService.generateFullStackCourses(count);
+        return ResponseEntity.ok(ResponseDTO.success("created"));
+    }
+
+    @GetMapping("user/student/{count}")
+    public ResponseEntity<ResponseDTO<?>> generateStudents(@PathVariable int count) {
+        generateService.generateUserStudent(count);
+        return ResponseEntity.ok(ResponseDTO.success("created"));
+    }
+
+    @GetMapping("payment")
+    public ResponseEntity<ResponseDTO<?>> generatePayments() {
+        generateService.generateStudentPayments();
+        return ResponseEntity.ok(ResponseDTO.success("created"));
+    }
+    @GetMapping("review")
+    public ResponseEntity<ResponseDTO<?>> generateCourseReviews() {
+        generateService.generateCourseReviews();
+        return ResponseEntity.ok(ResponseDTO.success("created"));
+    }
+
+
 }

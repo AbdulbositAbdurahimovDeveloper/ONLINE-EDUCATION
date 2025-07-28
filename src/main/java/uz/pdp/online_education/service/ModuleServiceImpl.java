@@ -51,6 +51,7 @@ public class ModuleServiceImpl implements ModuleService {
      * @return Page
      */
     @Override
+    @Transactional(readOnly = true)
     public PageDTO<ModuleDetailDTO> read(Long courseId, Integer page, Integer size) {
         Sort sort = Sort.by(Sort.Direction.ASC, Module.Fields.orderIndex);
         PageRequest pageRequest = PageRequest.of(page, size, sort);
