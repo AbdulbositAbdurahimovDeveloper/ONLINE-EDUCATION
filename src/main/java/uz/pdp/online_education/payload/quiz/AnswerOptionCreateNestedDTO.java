@@ -9,21 +9,15 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
-/**
- * DTO for {@link uz.pdp.online_education.model.quiz.AnswerOption}
- */
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AnswerOptionCreatDTO implements Serializable {
+@Data
+public class AnswerOptionCreateNestedDTO implements Serializable {
 
-    @Size(max = 100)
     @NotBlank
+    @Size(max = 1000)
     private String text;
-
     @NotNull
-    private boolean isCorrect;
+    private Boolean isCorrect;
 
-    @NotNull
-    private Long questionId;
 }

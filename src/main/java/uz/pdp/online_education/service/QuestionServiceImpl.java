@@ -1,12 +1,17 @@
 package uz.pdp.online_education.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import uz.pdp.online_education.enums.QuestionType;
+import uz.pdp.online_education.exceptions.DataConflictException;
 import uz.pdp.online_education.exceptions.EntityNotFoundException;
 import uz.pdp.online_education.mapper.QuestionMapper;
+import uz.pdp.online_education.model.quiz.AnswerOption;
 import uz.pdp.online_education.model.quiz.Question;
 import uz.pdp.online_education.model.quiz.Quiz;
-import uz.pdp.online_education.payload.quiz.QuestionCreateDTO;
+import uz.pdp.online_education.payload.quiz.AnswerOptionCreateNestedDTO;
+import uz.pdp.online_education.payload.quiz.QuestionCreateWithAnswersDTO;
 import uz.pdp.online_education.payload.quiz.QuestionResponseDTO;
 import uz.pdp.online_education.payload.quiz.QuestionUpdateDTO;
 import uz.pdp.online_education.repository.QuestionRepository;
@@ -24,22 +29,43 @@ public class QuestionServiceImpl implements QuestionService {
     private final QuestionMapper questionMapper;
 
     @Override
-    public QuestionResponseDTO create(QuestionCreateDTO createDTO) {
-        Quiz quiz = quizRepository.findById(createDTO.getQuizId()).orElseThrow(
-                () -> new EntityNotFoundException("Quiz not found"));
+    @Transactional
+    public QuestionResponseDTO createWithAnswers(QuestionCreateWithAnswersDTO createDTO) {
+        validateAnswerOptions(createDTO.getType(), createDTO.getOptions());
+
+        Quiz quiz = quizRepository.findById(createDTO.getQuizId())
+                .orElseThrow(() -> new EntityNotFoundException("Quiz not found with id: " + createDTO.getQuizId()));
 
         Question question = new Question();
         question.setText(createDTO.getText());
         question.setType(createDTO.getType());
 
+        createDTO.getOptions().forEach(optionDto -> {
+            AnswerOption answerOption = new AnswerOption();
+            answerOption.setText(optionDto.getText());
+            answerOption.setCorrect(optionDto.getIsCorrect());
+            question.addOption(answerOption);
+        });
 
         quiz.addQuestion(question);
-
-        Question save = questionRepository.save(question);
-        return questionMapper.toDto(save);
-
-
+        Question savedQuestion = questionRepository.save(question);
+        return questionMapper.toDto(savedQuestion);
     }
+
+    private void validateAnswerOptions(QuestionType type, List<AnswerOptionCreateNestedDTO> options) {
+        long correctOptionsCount = options.stream()
+                .filter(AnswerOptionCreateNestedDTO::getIsCorrect)
+                .count();
+
+        if (type == QuestionType.SINGLE_CHOICE && correctOptionsCount != 1) {
+            throw new DataConflictException("A single-choice question must have exactly one correct answer.");
+        }
+
+        if (type == QuestionType.MULTIPLE_CHOICE && correctOptionsCount < 1) {
+            throw new DataConflictException("A multiple-choice question must have at least one correct answer.");
+        }
+    }
+
 
     @Override
     public QuestionResponseDTO getById(Long id) {
