@@ -1,5 +1,7 @@
 package uz.pdp.online_education.service.interfaces;
 
+import uz.pdp.online_education.model.Comment;
+import uz.pdp.online_education.payload.comment.CommentCreateDto;
 import uz.pdp.online_education.payload.comment.CommentResponseDto;
 import uz.pdp.online_education.payload.comment.CommentUpdateDto;
 
@@ -22,4 +24,6 @@ public interface CommentService {
 
     // Dars bo'yicha barcha kommentlarni olish
     List<CommentResponseDto> getAllByLessonId(Long lessonId);
+
+    Comment createComment(CommentCreateDto dto);
 }
