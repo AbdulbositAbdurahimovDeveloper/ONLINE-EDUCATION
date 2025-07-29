@@ -1,6 +1,6 @@
 package uz.pdp.online_education.service.interfaces;
 
-import uz.pdp.online_education.payload.quiz.QuestionCreateDTO;
+import uz.pdp.online_education.payload.quiz.QuestionCreateWithAnswersDTO;
 import uz.pdp.online_education.payload.quiz.QuestionResponseDTO;
 import uz.pdp.online_education.payload.quiz.QuestionUpdateDTO;
 
@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface QuestionService {
 
-    QuestionResponseDTO create(QuestionCreateDTO createDTO);
+    QuestionResponseDTO createWithAnswers(QuestionCreateWithAnswersDTO createDTO);
 
     QuestionResponseDTO getById(Long id);
 

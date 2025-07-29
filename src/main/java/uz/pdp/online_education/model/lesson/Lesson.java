@@ -8,6 +8,7 @@ import org.hibernate.annotations.SQLRestriction;
 import uz.pdp.online_education.model.Abs.AbsLongEntity;
 import uz.pdp.online_education.model.Module;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @AllArgsConstructor
@@ -44,6 +45,6 @@ public class Lesson extends AbsLongEntity {
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("blockOrder ASC")
     @ToString.Exclude // `Content` entitisida `blockOrder` maydoni bo'lishi kerak
-    private List<Content> contents;
+    private List<Content> contents = new ArrayList<>();
 
 }
