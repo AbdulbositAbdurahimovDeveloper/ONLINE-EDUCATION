@@ -141,7 +141,7 @@ public class AttachmentServiceImpl implements AttachmentService {
 
             ObjectWriteResponse objectWriteResponse = minioClient.putObject(
                     PutObjectArgs.builder()
-                            .object(UUID.randomUUID() + "/" + multipartFile.getOriginalFilename())
+                            .object(UUID.randomUUID() + "_" + multipartFile.getOriginalFilename())
                             .contentType(multipartFile.getContentType())
                             .bucket(bucketName)
                             .stream(multipartFile.getInputStream(), multipartFile.getSize(), -1)
