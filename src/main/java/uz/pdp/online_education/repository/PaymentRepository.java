@@ -29,6 +29,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
      * @param courseId Kurs ID si.
      * @return Sotib olingan modullar soni.
      */
-    @Query("SELECT COUNT(DISTINCT p.module.id) FROM Payment p WHERE p.user.id = :userId AND p.module.course.id = :courseId AND p.status = 'SUCCESS'")
+    @Query("SELECT COUNT(DISTINCT p.module.id) FROM payment p WHERE p.user.id = :userId AND p.module.course.id = :courseId AND p.status = 'SUCCESS'")
     long countPurchasedModulesInCourse(Long userId, Long courseId);
 }

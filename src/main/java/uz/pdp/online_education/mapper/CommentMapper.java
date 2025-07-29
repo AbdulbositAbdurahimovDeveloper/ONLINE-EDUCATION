@@ -4,7 +4,6 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import uz.pdp.online_education.model.Comment;
-import uz.pdp.online_education.payload.comment.CommentCreateDto;
 import uz.pdp.online_education.payload.comment.CommentResponseDto;
 import uz.pdp.online_education.payload.comment.CommentUpdateDto;
 
@@ -25,15 +24,15 @@ public interface CommentMapper {
      * E'tibor bering: user, course, lesson, parent kabi maydonlar DTO'da yo'q.
      * Ular servis qatlamida alohida o'rnatilishi kerak, shuning uchun ularni ignore qilamiz.
      */
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "user", ignore = true)
-    @Mapping(target = "course", ignore = true)
-    @Mapping(target = "lesson", ignore = true)
-    @Mapping(target = "parent", ignore = true)
-    @Mapping(target = "replies", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    Comment toEntity(CommentCreateDto createDto);
+//    @Mapping(target = "id", ignore = true)
+//    @Mapping(target = "user", ignore = true)
+//    @Mapping(target = "course", ignore = true)
+//    @Mapping(target = "lesson", ignore = true)
+//    @Mapping(target = "parent", ignore = true)
+//    @Mapping(target = "replies", ignore = true)
+//    @Mapping(target = "createdAt", ignore = true)
+//    @Mapping(target = "updatedAt", ignore = true)
+//    Comment toEntity(CommentCreateDto createDto);
 
     /**
      * CommentUpdateDto (DTO) ma'lumotlari bilan mavjud Comment (Entity)ni yangilaydi.

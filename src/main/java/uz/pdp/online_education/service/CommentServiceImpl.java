@@ -11,7 +11,6 @@ import uz.pdp.online_education.model.Comment;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.model.lesson.Lesson;
-import uz.pdp.online_education.payload.comment.CommentCreateDto;
 import uz.pdp.online_education.payload.comment.CommentResponseDto;
 import uz.pdp.online_education.payload.comment.CommentUpdateDto;
 import uz.pdp.online_education.repository.CommentRepository;
@@ -34,56 +33,7 @@ public class CommentServiceImpl implements CommentService {
     private final PurchaseService purchaseService;
     private final CommentMapper commentMapper;
 
-    @Override
-    @Transactional
-    public CommentResponseDto create(CommentCreateDto createDto, Long currentUserId) {
-        User user = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new EntityNotFoundException("Foydalanuvchi topilmadi: " + currentUserId));
 
-        if (createDto.getCommentableId() == null || createDto.getCommentableType() == null || createDto.getCommentableType().isBlank()) {
-            throw new DataValidationException("Komment 'course' yoki 'lesson' ga bog'langan bo'lishi shart.");
-        }
-
-        // DTO'dan Entity'ga o'tkazish mapper orqali
-        Comment comment = commentMapper.toEntity(createDto);
-
-        // Qolgan murakkab maydonlarni servisda o'rnatamiz
-        comment.setUser(user);
-
-        String type = createDto.getCommentableType().toLowerCase();
-
-        if ("course".equals(type)) {
-            Course course = courseRepository.findById(createDto.getCommentableId())
-                    .orElseThrow(() -> new EntityNotFoundException("Kurs topilmadi: " + createDto.getCommentableId()));
-
-            if (!purchaseService.hasSufficientCourseAccess(currentUserId, course.getId(), 0.20)) {
-                throw new ForbiddenException("Komment yozish uchun kurs modullarining kamida 20% qismini sotib olishingiz kerak.");
-            }
-            comment.setCourse(course);
-
-        } else if ("lesson".equals(type)) {
-            Lesson lesson = lessonRepository.findById(createDto.getCommentableId())
-                    .orElseThrow(() -> new EntityNotFoundException("Dars topilmadi: " + createDto.getCommentableId()));
-
-            if (!purchaseService.hasLessonAccess(currentUserId, lesson.getId())) {
-                throw new ForbiddenException("Komment yozish uchun ushbu dars joylashgan modulni sotib olishingiz kerak.");
-            }
-            comment.setLesson(lesson);
-        } else {
-            throw new DataValidationException("'commentableType' faqat 'course' yoki 'lesson' bo'lishi mumkin.");
-        }
-
-        if (createDto.getParentId() != null) {
-            Comment parentComment = commentRepository.findById(createDto.getParentId())
-                    .orElseThrow(() -> new EntityNotFoundException("Ota-komment topilmadi: " + createDto.getParentId()));
-            comment.setParent(parentComment);
-        }
-
-        Comment savedComment = commentRepository.save(comment);
-
-        // Entity'dan DTO'ga o'tkazish mapper orqali
-        return commentMapper.toDto(savedComment);
-    }
 
     @Override
     @Transactional
