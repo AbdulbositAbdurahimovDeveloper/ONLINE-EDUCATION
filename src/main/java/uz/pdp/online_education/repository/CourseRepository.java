@@ -20,4 +20,13 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             countQuery = "SELECT COUNT(c) FROM courses c" // @SQLRestriction (deleted=false) avtomatik hisobga olinadi
     )
     Page<Course> findAllOrderByAverageRatingDesc(Pageable pageable);
+
+    @Query("""
+    SELECT c FROM courses c
+    WHERE c.category.id = :categoryId AND c.deleted = false
+    ORDER BY 
+        (SELECT COALESCE(AVG(r.rating), 0) FROM Review r WHERE r.course = c) DESC
+    """)
+    List<Course> findAllByCategoryIdOrderByAvgRatingDesc(Long categoryId);
+
 }

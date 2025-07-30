@@ -7,9 +7,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uz.pdp.online_education.exceptions.EntityNotFoundException;
 import uz.pdp.online_education.mapper.CategoryMapper;
+import uz.pdp.online_education.model.Attachment;
 import uz.pdp.online_education.model.Category;
+import uz.pdp.online_education.model.Course;
+import uz.pdp.online_education.model.Review;
 import uz.pdp.online_education.payload.category.*;
+import uz.pdp.online_education.payload.course.CourseResponseDto;
 import uz.pdp.online_education.repository.CategoryRepository;
+import uz.pdp.online_education.repository.CourseRepository;
 import uz.pdp.online_education.service.interfaces.CategoryService;
 
 import java.util.List;
@@ -22,7 +27,7 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
     private final Slugify slugify = Slugify.builder().build();
-
+    private final CourseRepository courseRepository;
     @Override
     @Transactional
     public CategoryDTO create(CategoryCreateDTO dto) {
@@ -64,5 +69,35 @@ public class CategoryServiceImpl implements CategoryService {
                 .map(categoryMapper::toDTO)
                 .collect(Collectors.toList());
     }
-//endi bu servicni ozgartirib ber qanday misol 0dan 5 gacha orderdisplayli faqlar bor ularni ichidan 2 ni ochirib yuborsak 3da gi desplayorder 2 ga 4 dagi 3 ga 5 dagi 4 ga tushisin faq chegaralanmagan yani kop qoshila veradi shuni inobatga olib qoy
+
+
+
+    public List<CourseResponseDto> getCoursesSortedByReview(Long categoryId) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new RuntimeException("Category not found!"));
+
+        List<Course> courses = courseRepository.findAllByCategoryIdOrderByAvgRatingDesc(categoryId);
+
+        return courses.stream().map(course -> {
+            double avgRating = course.getReviews().stream()
+                    .mapToInt(Review::getRating)
+                    .average()
+                    .orElse(0.0);
+
+            String thumbnailUrl = null;
+            if (course.getThumbnailUrl() != null) {
+                Attachment attachment = course.getThumbnailUrl();
+                thumbnailUrl = "https://cdn.onlineedu.uz/" + attachment.getBucketName() + "/" + attachment.getMinioKey();
+            }
+
+            return new CourseResponseDto(
+                    course.getId(),
+                    course.getTitle(),
+                    course.getDescription(),
+                    thumbnailUrl,
+                    avgRating
+            );
+        }).collect(Collectors.toList());
+    }
+
 }

@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import uz.pdp.online_education.payload.ResponseDTO;
 import uz.pdp.online_education.payload.category.*;
+import uz.pdp.online_education.payload.course.CourseResponseDto;
 import uz.pdp.online_education.service.interfaces.CategoryService;
 
 import java.util.List;
@@ -41,5 +42,13 @@ public class CategoryController {
     @GetMapping
     public ResponseEntity<ResponseDTO<List<CategoryDTO>>> getAll() {
         return ResponseEntity.ok(ResponseDTO.success(categoryService.getAll()));
+    }
+
+    @GetMapping("/{id}/courses")
+    public ResponseEntity<ResponseDTO<List<CourseResponseDto>>> getCoursesSortedByReview(@PathVariable Long id) {
+
+        List<CourseResponseDto> courseList = categoryService.getCoursesSortedByReview(id);
+
+        return ResponseEntity.ok(ResponseDTO.success(courseList));
     }
 }
