@@ -13,5 +13,6 @@ public interface TextContentMapper {
 
 
     @Mapping(source = "lesson.id", target = "lessonId")
+    @Mapping(target = "contentType", expression = "java(\"TEXT\")")
     TextContentResponseDTO toDTO(TextContent textContent);
 }

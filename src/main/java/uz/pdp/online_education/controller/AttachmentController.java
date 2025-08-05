@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,7 +31,7 @@ public class AttachmentController {
         return ResponseEntity.ok(ResponseDTO.success(attachmentDTO));
     }
 
-    @PostMapping("/icons")
+    @PostMapping(value = "/icons", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ResponseDTO<?>> saveIcon(@RequestPart("file") MultipartFile multipartFile) {
         AttachmentDTO attachmentDTO = attachmentService.saveIcon(multipartFile);
         return ResponseEntity.ok(ResponseDTO.success(attachmentDTO));

@@ -83,6 +83,7 @@ public class PaymentServiceImpl implements PaymentService {
      */
     @Override
     public PageDTO<PaymentDTO> readPayments(Long id, Integer page, Integer size) {
+        moduleRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Module nor found with id: " + id));
 
         PageRequest pageRequest = PageRequest.of(page,size);
         Page<Payment> payments = paymentRepository.findByModule_Id(id, pageRequest);

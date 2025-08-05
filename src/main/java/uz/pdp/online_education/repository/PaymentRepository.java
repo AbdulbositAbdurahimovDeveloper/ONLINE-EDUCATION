@@ -12,7 +12,6 @@ import uz.pdp.online_education.model.User;
 import java.util.List;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
-    List<Payment> findByModule_Id(Long moduleId);
     Page<Payment> findByModule_Id(Long moduleId, Pageable pageable);
 
     /**
@@ -29,4 +28,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
      */
     @Query("SELECT DISTINCT p.module.course FROM payment p WHERE p.user.id = :userId")
     List<Course> findCoursesByUserId(@Param("userId") Long userId);
+
+    boolean existsByUser_UsernameAndModule_Id(String userUsername, Long moduleId);
 }

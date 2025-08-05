@@ -146,6 +146,13 @@ public class CourseServiceImpl implements CourseService {
 
         String baseSlug = slugify.slugify(courseCreateDTO.getTitle());
 
+        if (courseRepository.existsByThumbnailUrl_Id(courseCreateDTO.getThumbnailId()))
+            throw new DataConflictException("Thumbnail already exists");
+
+        if (courseRepository.existsByTitle(courseCreateDTO.getTitle())) {
+            throw new DataConflictException("Title already exists");
+        }
+
         Attachment attachment = attachmentRepository.findById(courseCreateDTO.getThumbnailId())
                 .orElseThrow(() -> new EntityNotFoundException("Attachment not found with id: " + courseCreateDTO.getThumbnailId()));
 

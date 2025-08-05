@@ -35,4 +35,7 @@ public interface ModuleRepository extends JpaRepository<Module, Long> {
     @Query("SELECT m.title FROM modules m")
     Set<String> findAllTitles();
 
+    boolean existsByTitle(String title);
+
+    long countById(Long id);
 }

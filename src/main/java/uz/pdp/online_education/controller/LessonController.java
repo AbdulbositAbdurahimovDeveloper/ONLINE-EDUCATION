@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import uz.pdp.online_education.payload.PageDTO;
 import uz.pdp.online_education.payload.ResponseDTO;
@@ -31,31 +32,36 @@ public class LessonController {
 //    }
 
     @GetMapping("/{id}")
+    @PreAuthorize(value = "hasRole('ADMIN') or hasRole('INSTRUCTOR') or @courseSecurity.isPaymentOrFreeLesson(authentication, #id)")
     public ResponseEntity<ResponseDTO<?>> read(@PathVariable("id") Long id) {
         LessonResponseDTO lessonResponseDTO = lessonService.read(id);
         return ResponseEntity.ok(ResponseDTO.success(lessonResponseDTO));
     }
 
     @PostMapping
-    public ResponseEntity<ResponseDTO<?>> create(@RequestBody LessonCreatDTO lessonCreatDTO) {
+    @PreAuthorize(value = "hasAnyRole('ADMIN','INSTRUCTOR')")
+    public ResponseEntity<ResponseDTO<?>> create(@RequestBody @Valid LessonCreatDTO lessonCreatDTO) {
         LessonResponseDTO lessonResponseDTO = lessonService.create(lessonCreatDTO);
         return ResponseEntity.ok(ResponseDTO.success(lessonResponseDTO));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize(value = "hasAnyRole('ADMIN','INSTRUCTOR')")
     public ResponseEntity<ResponseDTO<?>> update(@PathVariable("id") Long id,
-                                    @RequestBody LessonUpdateDTO lessonUpdateDTO) {
+                                    @RequestBody @Valid LessonUpdateDTO lessonUpdateDTO) {
         LessonResponseDTO lessonResponseDTO = lessonService.update(id, lessonUpdateDTO);
         return ResponseEntity.ok(ResponseDTO.success(lessonResponseDTO));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize(value = "hasAnyRole('ADMIN','INSTRUCTOR')")
     public ResponseEntity<?> delete(@PathVariable("id") Long id) {
         lessonService.delete(id);
         return ResponseEntity.ok(ResponseDTO.success("Lesson deleted successfully"));
     }
 
     @PatchMapping("/order/{moduleId}")
+    @PreAuthorize(value = "hasAnyRole('ADMIN','INSTRUCTOR')")
     public ResponseEntity<ResponseDTO<?>> updateLessonOrder(
             @PathVariable Long moduleId,
             @Valid @RequestBody LessonOrderUpdateDTO request) { // Endi DTO qabul qilamiz

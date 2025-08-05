@@ -9,8 +9,7 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public class PageDTO<T> extends RepresentationModel<PageDTO<T>> {
+public class PageDTO<T> {
     private List<T> content;
     private int pageNumber;
     private int pageSize;

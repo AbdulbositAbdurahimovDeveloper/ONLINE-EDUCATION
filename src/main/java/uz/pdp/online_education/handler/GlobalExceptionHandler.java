@@ -12,6 +12,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import uz.pdp.online_education.exceptions.DataConflictException;
 import uz.pdp.online_education.exceptions.EntityNotFoundException;
 import uz.pdp.online_education.payload.ResponseDTO;
@@ -170,6 +172,48 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles cases where a requested endpoint (URL) does not exist.
+     * This catches Spring's NoResourceFoundException and returns a standard 404 response.
+     *
+     * @param ex The NoResourceFoundException instance, containing the path and method.
+     * @return A ResponseEntity with a 404 Not Found status and a clear message.
+     */
+    @ExceptionHandler(NoResourceFoundException.class) // <-- QO'SHILGAN YANGI HANDLER
+    public ResponseEntity<ResponseDTO<Object>> handleNoResourceFound(NoResourceFoundException ex) {
+        String message = String.format("'%s' manzili uchun %s so'rovi bo'yicha resurs topilmadi.",
+                ex.getResourcePath(), ex.getHttpMethod());
+        log.warn(message);
+
+        ErrorDTO error = new ErrorDTO(HttpStatus.NOT_FOUND.value(), message);
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ResponseDTO.error(error));
+    }
+
+    /**
+     * Handles exceptions thrown when an uploaded file exceeds the maximum configured size.
+     * This provides a clear 'Payload Too Large' response instead of a generic server error.
+     *
+     * @param ex The MaxUploadSizeExceededException instance.
+     * @return A ResponseEntity with a 413 Payload Too Large status and a clear error message.
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ResponseDTO<Object>> handleMaxUploadSizeExceeded(MaxUploadSizeExceededException ex) {
+        log.warn("File upload failed: Maximum upload size was exceeded. Configured limit is {} bytes.", ex.getMaxUploadSize());
+
+        ErrorDTO error = new ErrorDTO(
+                HttpStatus.PAYLOAD_TOO_LARGE.value(), // Status code 413
+                "File size cannot exceed"
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(ResponseDTO.error(error));
+    }
+
+
+
+    /**
      * A catch-all handler for any other unhandled exceptions.
      * This is a critical safety net.
      *
@@ -178,7 +222,6 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ResponseDTO<Object>> handleAllOtherExceptions(Exception ex) {
-        // MUHIM: Har doim kutilmagan xatolikni log faylga to'liq yozing!
         log.error("An unexpected error occurred", ex);
 
         ErrorDTO error = new ErrorDTO(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Tizimda kutilmagan ichki xatolik yuz berdi.");

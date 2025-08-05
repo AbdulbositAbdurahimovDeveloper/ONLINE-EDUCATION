@@ -1,0 +1,18 @@
+[
+  {
+    "key": "hello",
+    "translations": {
+      "uz": "Assalomu alaykum",
+      "en": "Hello",
+      "ru": "Здравствуйте"
+    }
+  },
+  {
+    "key": "bye",
+    "translations": {
+      "uz": "Xayr",
+      "en": "Goodbye",
+      "ru": "До свидания"
+    }
+  }
+]
