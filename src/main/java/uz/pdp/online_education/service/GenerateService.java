@@ -480,14 +480,14 @@ public class GenerateService  {
 
         log.debug("        Attaching TextContent block.");
         TextContent textContent = new TextContent();
-        textContent.setBlockOrder(1);
+        textContent.setBlockOrder(0);
         textContent.setText(String.join("\n\n", faker.lorem().paragraphs(5)));
         textContent.setLesson(lesson);
         contents.add(textContent);
 
         log.debug("        Attaching QuizContent block.");
         QuizContent quizContent = new QuizContent();
-        quizContent.setBlockOrder(2);
+        quizContent.setBlockOrder(1);
         quizContent.setLesson(lesson);
         quizContent.setQuiz(generateQuizForContent(quizContent, existingQuizTitles));
         contents.add(quizContent);

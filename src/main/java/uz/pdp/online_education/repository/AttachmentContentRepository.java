@@ -14,21 +14,6 @@ import java.util.Optional;
 public interface AttachmentContentRepository extends JpaRepository<AttachmentContent, Long> {
 
     /**
-     * Berilgan attachment ID'si orqali u bog'langan kontent bloki, dars va
-     * modulni topib, o'sha modulni qaytaradi.
-     *
-     * @param attachmentId Qidirilayotgan attachment'ning ID'si
-     * @return Topilgan modul (Optional ichida) yoki bo'sh Optional
-     */
-    @Query("""
-                SELECT ac.lesson.module
-                FROM AttachmentContent ac
-                WHERE ac.attachment.id = :attachmentId
-            """)
-    Optional<Module> findModuleByAttachmentId(@Param("attachmentId") Long attachmentId);
-
-
-    /**
      * Berilgan dars (lesson) uchun o'chirilgan elementning tartibidan katta bo'lgan
      * barcha elementlarning tartibini (blockOrder) bittaga kamaytiradi.
      * @Modifying bu so'rov SELECT emas, balki UPDATE, DELETE yoki INSERT ekanligini bildiradi.

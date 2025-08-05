@@ -18,6 +18,7 @@ public class AttachmentDTO implements Serializable {
     private String originalName;
     private String contentType;
     private Long fileSize;
+    private String minioKey;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 }

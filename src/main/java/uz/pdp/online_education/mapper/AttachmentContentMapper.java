@@ -14,6 +14,7 @@ public interface AttachmentContentMapper {
     @Mapping(target = "contentUrl",source = "id")
     @Mapping(target = "lessonId",source = "lesson.id")
     @Mapping(target = "attachmentId",source = "attachment.id")
+    @Mapping(target = "contentType", expression = "java(\"ATTACHMENT\")")
     @Mapping(source = "createdAt", target = "createdAt", qualifiedByName = "timestampToLong")
     @Mapping(source = "updatedAt", target = "updatedAt", qualifiedByName = "timestampToLong")
     AttachmentContentDTO toDTO(AttachmentContent attachmentContent);

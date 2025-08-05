@@ -1,12 +1,13 @@
 package uz.pdp.online_education.service;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import uz.pdp.online_education.enums.QuestionType;
 import uz.pdp.online_education.exceptions.DataConflictException;
 import uz.pdp.online_education.exceptions.EntityNotFoundException;
 import uz.pdp.online_education.mapper.QuestionMapper;
+import uz.pdp.online_education.model.lesson.Lesson;
 import uz.pdp.online_education.model.quiz.AnswerOption;
 import uz.pdp.online_education.model.quiz.Question;
 import uz.pdp.online_education.model.quiz.Quiz;
@@ -14,6 +15,7 @@ import uz.pdp.online_education.payload.quiz.AnswerOptionCreateNestedDTO;
 import uz.pdp.online_education.payload.quiz.QuestionCreateWithAnswersDTO;
 import uz.pdp.online_education.payload.quiz.QuestionResponseDTO;
 import uz.pdp.online_education.payload.quiz.QuestionUpdateDTO;
+import uz.pdp.online_education.repository.PaymentRepository;
 import uz.pdp.online_education.repository.QuestionRepository;
 import uz.pdp.online_education.repository.QuizRepository;
 import uz.pdp.online_education.service.interfaces.QuestionService;
@@ -27,6 +29,7 @@ public class QuestionServiceImpl implements QuestionService {
     private final QuizRepository quizRepository;
     private final QuestionRepository questionRepository;
     private final QuestionMapper questionMapper;
+    private final PaymentRepository paymentRepository;
 
     @Override
     @Transactional
@@ -97,9 +100,31 @@ public class QuestionServiceImpl implements QuestionService {
 
     @Override
     public void delete(Long id) {
-        if (!questionRepository.existsById(id)){
+        if (!questionRepository.existsById(id)) {
             throw new EntityNotFoundException("Question not found with id: " + id);
         }
         questionRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true) // To'lovlar ro'yxatini yuklash uchun tranzaksiya kerak
+    public boolean isUserQuestionBought(String username, Long quizId) {
+        Question question = questionRepository.findById(quizId)
+                .orElseThrow(() -> new EntityNotFoundException("Question not found with id: " + quizId));
+
+        Lesson lesson = question.getQuiz().getQuizContent().getLesson();
+
+        if (lesson.isFree()) {
+            return true;
+        }
+
+        boolean hasPaid = paymentRepository.existsByUser_UsernameAndModule_Id(username, lesson.getModule().getId());
+
+        if (hasPaid) {
+            return true;
+        }
+
+        // Agar yuqoridagi shartlarning hech biri bajarilmasa, xatolik beramiz.
+        throw new DataConflictException("Tolov qiling.");
     }
 }

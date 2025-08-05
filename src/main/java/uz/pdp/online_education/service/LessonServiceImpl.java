@@ -128,7 +128,7 @@ public class LessonServiceImpl implements LessonService {
 
         // 2. O'lchamlar mosligini tekshiramiz. Bu frontend xatosining oldini oladi.
         if (orderedLessonIds.size() != lessonsInDb.size()) {
-            throw new IllegalStateException("The number of sent IDs does not match the number of lessons in the module.");
+            throw new DataConflictException("The number of sent IDs does not match the number of lessons in the module.");
         }
 
         // 3. Darslarni tezkor qidirish uchun Map'ga o'tkazamiz (ID -> Lesson).
@@ -151,5 +151,28 @@ public class LessonServiceImpl implements LessonService {
 
         // @Transactional tufayli o'zgartirilgan barcha lesson'lar tranzaksiya
         // yakunida avtomatik ravishda bazaga saqlanadi.
+    }
+
+    /**
+     * @param username String
+     * @param lessonId Long
+     * @return boolean
+     */
+    @Override
+    public boolean isPaymentOrFreeLesson(String username, Long lessonId) {
+
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new EntityNotFoundException("Lesson not found with id: " + lessonId));
+
+        if (lesson.isFree())
+            return true;
+
+        Module module = lesson.getModule();
+        module.getPayments().stream()
+                .filter(payment -> payment.getUser().getUsername().equals(username))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("Tolov qilinmagan with username: " + username));
+
+        return true;
     }
 }

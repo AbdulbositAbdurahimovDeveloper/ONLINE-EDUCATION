@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Course Search</title>
+
+    <!-- Ikonkalar uchun Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Shriftlar uchun Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- ======================= CSS STYLES ======================= -->
+    <style>
+        :root {
+            --primary-color: #4582ff;
+            --text-color: #555;
+            --heading-color: #111;
+            --border-color: #e0e0e0;
+            --background-color: #f8f9fa;
+            --white-color: #fff;
+            --shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            color: var(--text-color);
+            margin: 0;
+            background-color: var(--background-color);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: var(--white-color);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            margin: 0 0 10px;
+            text-align: center;
+            color: var(--heading-color);
+        }
+        #api-form {
+            display: flex;
+            gap: 10px;
+        }
+        #api-url-input {
+            flex-grow: 1;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 15px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        #api-url-input:focus {
+            border-color: var(--primary-color);
+        }
+        #api-form button {
+            border: none;
+            background: var(--primary-color);
+            color: var(--white-color);
+            padding: 0 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.2s;
+        }
+        #api-form button:hover {
+            background-color: #3a75e8;
+        }
+        .results-summary {
+            margin-bottom: 20px;
+            font-weight: 500;
+            padding: 10px;
+            background: #eef3ff;
+            border-left: 4px solid var(--primary-color);
+            border-radius: 4px;
+        }
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .course-card {
+            background: var(--white-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow);
+        }
+        .card-image-placeholder {
+            height: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+        .card-content {
+            padding: 20px;
+            flex-grow: 1;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .card-content h3 {
+            margin: 0 0 10px;
+            font-size: 18px;
+            color: var(--heading-color);
+            height: 54px;
+            line-height: 1.5;
+            overflow: hidden;
+        }
+        .card-content .description {
+            font-size: 14px;
+            height: 60px;
+            overflow: hidden;
+            color: #777;
+        }
+        .course-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: #777;
+            padding: 15px 20px;
+            background-color: #fafbff;
+        }
+        .stars { color: #ffb60a; }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 40px;
+        }
+        .pagination button {
+            border: 1px solid var(--border-color);
+            background: var(--white-color);
+            min-width: 40px;
+            height: 40px;
+            padding: 0 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .pagination button.active {
+            background: var(--primary-color);
+            color: var(--white-color);
+            border-color: var(--primary-color);
+        }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 50px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .message-container {
+            text-align: center;
+            padding: 50px;
+            background-color: var(--white-color);
+            border-radius: 12px;
+            color: #999;
+        }
+        .message-container i {
+            font-size: 50px;
+            margin-bottom: 20px;
+        }
+        .message-container.error {
+            color: #d9534f;
+            background-color: #f2dede;
+            border: 1px solid #ebccd1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header class="header">
+        <h1>API Course Tester</h1>
+        <form id="api-form">
+            <input type="text" id="api-url-input" name="url" placeholder="Paste your full API URL here..." value="http://localhost:8080/api/v1/open/courses/filter?size=9">
+            <button type="submit">
+                <i class="fas fa-paper-plane"></i> Send
+            </button>
+        </form>
+    </header>
+
+    <main>
+        <div id="results-summary" class="results-summary" style="display: none;"></div>
+        <div id="results-container" class="results-grid">
+            <div id="message-container" class="message-container">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <h2>Ready to fetch data</h2>
+                <p>Enter an API endpoint URL in the field above and click "Send".</p>
+            </div>
+        </div>
+        <div id="pagination-controls" class="pagination"></div>
+    </main>
+</div>
+
+<!-- ======================= JAVASCRIPT CODE ======================= -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        const form = document.getElementById('api-form');
+        const urlInput = document.getElementById('api-url-input');
+        const resultsContainer = document.getElementById('results-container');
+        const summaryContainer = document.getElementById('results-summary');
+        const paginationControls = document.getElementById('pagination-controls');
+        const messageContainer = document.getElementById('message-container');
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const apiUrl = urlInput.value.trim();
+            if (!apiUrl) {
+                showMessage('Please enter a valid API URL.', 'error');
+                return;
+            }
+            fetchAndRender(apiUrl);
+        });
+
+        async function fetchAndRender(apiUrl) {
+            showLoader();
+
+            try {
+                const response = await fetch(apiUrl);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                if (data.success && data.data) {
+                    renderResults(data.data, apiUrl);
+                } else {
+                    throw new Error(data.message || 'API response was not successful.');
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                showMessage(`<strong>Error:</strong> ${error.message}. Please check the console and the API URL.`, 'error');
+            }
+        }
+
+        function renderResults(data, baseUrl) {
+            resultsContainer.innerHTML = '';
+            summaryContainer.style.display = 'block';
+
+            if (data.empty) {
+                showMessage('No courses found for this request.', 'info');
+                summaryContainer.textContent = 'Found 0 results.';
+                paginationControls.innerHTML = '';
+                return;
+            }
+
+            summaryContainer.textContent = `Showing ${data.numberOfElements} of ${data.totalElements} results. Page ${data.pageNumber + 1} of ${data.totalPages}.`;
+
+            data.content.forEach(course => {
+                const courseCard = document.createElement('div');
+                courseCard.className = 'course-card';
+                const firstLetter = course.title.charAt(0).toUpperCase();
+                const colorIndex = course.id % 360;
+
+                courseCard.innerHTML = `
+                        <div class="card-image-placeholder" style="background-color: hsl(${colorIndex}, 60%, 50%)">
+                            <span>${firstLetter}</span>
+                        </div>
+                        <div class="card-content">
+                            <h3><a href="/courses/${course.slug}" target="_blank">${course.title}</a></h3>
+                            <p class="description">${course.description}</p>
+                        </div>
+                        <div class="course-meta">
+                            <span class="stars" title="Rating: ${course.reviewSummary.averageRating.toFixed(1)}">
+                                ${generateStars(course.reviewSummary.averageRating)}
+                                (${course.reviewSummary.count})
+                            </span>
+                            <span><i class="fas fa-book-open"></i> ${course.modulesCount} Modules</span>
+                        </div>
+                    `;
+                resultsContainer.appendChild(courseCard);
+            });
+
+            renderPagination(data, baseUrl);
+        }
+
+        function renderPagination(data, baseUrl) {
+            paginationControls.innerHTML = '';
+            if (data.totalPages <= 1) return;
+
+            for (let i = 0; i < data.totalPages; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.innerText = i + 1;
+                if (i === data.pageNumber) {
+                    pageButton.classList.add('active');
+                }
+                pageButton.addEventListener('click', () => {
+                    const url = new URL(baseUrl);
+                    url.searchParams.set('page', i);
+                    urlInput.value = url.toString(); // Inputni ham yangilaymiz
+                    fetchAndRender(url.toString());
+                });
+                paginationControls.appendChild(pageButton);
+            }
+        }
+
+        function generateStars(rating) {
+            let html = '';
+            for (let i = 1; i <= 5; i++) {
+                if (rating >= i) html += '<i class="fas fa-star"></i>';
+                else if (rating >= i - 0.5) html += '<i class="fas fa-star-half-alt"></i>';
+                else html += '<i class="far fa-star"></i>';
+            }
+            return html;
+        }
+
+        function showLoader() {
+            resultsContainer.innerHTML = '<div class="loader"></div>';
+            summaryContainer.style.display = 'none';
+            paginationControls.innerHTML = '';
+        }
+
+        function showMessage(message, type = 'info') {
+            resultsContainer.innerHTML = `
+                    <div class="message-container ${type}">
+                        <i class="fas ${type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle'}"></i>
+                        <div>${message}</div>
+                    </div>
+                `;
+        }
+    });
+</script>
+</body>
+</html>

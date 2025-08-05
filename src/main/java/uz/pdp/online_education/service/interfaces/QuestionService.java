@@ -17,4 +17,6 @@ public interface QuestionService {
     QuestionResponseDTO update(Long id, QuestionUpdateDTO updateDTO);
 
     void delete(Long id);
+
+    boolean isUserQuestionBought(String username, Long quizId);
 }

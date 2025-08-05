@@ -13,6 +13,8 @@ import uz.pdp.online_education.mapper.LessonMapper;
 import uz.pdp.online_education.mapper.ModuleMapper;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.Module;
+import uz.pdp.online_education.model.lesson.AttachmentContent;
+import uz.pdp.online_education.model.lesson.Content;
 import uz.pdp.online_education.model.lesson.Lesson;
 import uz.pdp.online_education.payload.ModuleOrderIndexDTO;
 import uz.pdp.online_education.payload.PageDTO;
@@ -20,10 +22,7 @@ import uz.pdp.online_education.payload.lesson.LessonResponseDTO;
 import uz.pdp.online_education.payload.module.ModuleCreateDTO;
 import uz.pdp.online_education.payload.module.ModuleDetailDTO;
 import uz.pdp.online_education.payload.module.ModuleUpdateDTO;
-import uz.pdp.online_education.repository.AttachmentContentRepository;
-import uz.pdp.online_education.repository.CourseRepository;
-import uz.pdp.online_education.repository.LessonRepository;
-import uz.pdp.online_education.repository.ModuleRepository;
+import uz.pdp.online_education.repository.*;
 import uz.pdp.online_education.service.interfaces.ModuleService;
 
 import java.util.HashSet;
@@ -43,6 +42,7 @@ public class ModuleServiceImpl implements ModuleService {
     private final LessonRepository lessonRepository;
     private final LessonMapper lessonMapper;
     private final AttachmentContentRepository attachmentContentRepository;
+    private final ContentRepository contentRepository;
 
     /**
      * @param courseId Long
@@ -91,11 +91,14 @@ public class ModuleServiceImpl implements ModuleService {
      * @return
      */
     @Override
+    @Transactional(readOnly = true)
     public PageDTO<LessonResponseDTO> readLessons(Long id, Integer page, Integer size) {
-
+        Module module = moduleRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Module nor found with id: " + id));
         Sort sort = Sort.by(Sort.Direction.ASC, Lesson.Fields.orderIndex);
         PageRequest pageRequest = PageRequest.of(page, size, sort);
         Page<Lesson> lessons = lessonRepository.findByModule_Id(id, pageRequest);
+
 
         return new PageDTO<>(
                 lessons.getContent().stream().map(lessonMapper::toDTO).toList(),
@@ -115,16 +118,21 @@ public class ModuleServiceImpl implements ModuleService {
      * @return moduleDetailsDTO
      */
     @Override
+    @Transactional
     public ModuleDetailDTO create(ModuleCreateDTO moduleCreateDTO) {
 
         Course course = courseRepository.findById(moduleCreateDTO.getCourseId())
                 .orElseThrow(() -> new EntityNotFoundException("Course not found with id: " + moduleCreateDTO.getCourseId()));
 
+        if (moduleRepository.existsByTitle(moduleCreateDTO.getTitle()))
+            throw new DataConflictException("Title already exists");
+
         Module module = new Module();
         module.setTitle(moduleCreateDTO.getTitle());
         module.setDescription(moduleCreateDTO.getDescription());
         module.setPrice(moduleCreateDTO.getPrice());
-        module.setOrderIndex(course.getModules().size());
+        int orderIndex = course.getModules() != null ? course.getModules().size() : 0;
+        module.setOrderIndex(orderIndex);
         module.setCourse(course);
 
         moduleRepository.save(module);
@@ -141,9 +149,12 @@ public class ModuleServiceImpl implements ModuleService {
         Module module = moduleRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Module nor found with id: " + id));
 
-        module.setTitle(moduleUpdateDTO.getTitle());
-        module.setDescription(moduleUpdateDTO.getDescription());
-        module.setPrice(moduleUpdateDTO.getPrice());
+        if (moduleUpdateDTO.getTitle() != null)
+            module.setTitle(moduleUpdateDTO.getTitle());
+        if (moduleUpdateDTO.getDescription() != null)
+            module.setDescription(moduleUpdateDTO.getDescription());
+        if (moduleUpdateDTO.getPrice() != null)
+            module.setPrice(moduleUpdateDTO.getPrice());
 
         moduleRepository.save(module);
 
@@ -157,6 +168,9 @@ public class ModuleServiceImpl implements ModuleService {
     @Override
     @Transactional
     public void updateModuleOrderIndex(Long courseId, List<ModuleOrderIndexDTO> orderedModuleDtos) {
+
+        courseRepository.findById(courseId)
+                .orElseThrow(() -> new EntityNotFoundException("Course not found with id: " + courseId));
 
         // 1. Kursga tegishli barcha modullarni bazadan olamiz.
         List<Module> modulesInDb = moduleRepository.findAllByCourse_Id(courseId);
@@ -208,21 +222,19 @@ public class ModuleServiceImpl implements ModuleService {
      * @param id Long
      */
     @Override
-    @Transactional // Bu operatsiya bir nechta qadamdan iborat, shuning uchun atomar bo'lishi shart!
+    @Transactional
     public void delete(Long id) {
-        // 1. O'chiriladigan modulni topamiz
         Module moduleToDelete = moduleRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Module not found with id: " + id));
 
-        // 2. Kerakli ma'lumotlarni (kurs va o'chirilayotgan indeks) olib qolamiz
         Course course = moduleToDelete.getCourse();
         Integer deletedOrderIndex = moduleToDelete.getOrderIndex();
 
-        // 3. Ommaviy yangilashni chaqiramiz: o'chirilgan moduldan keyingi barcha modullarning
-        //    indeksini bittaga kamaytiramiz.
+        moduleToDelete.setOrderIndex(null);
+        moduleRepository.saveAndFlush(moduleToDelete);
+
         moduleRepository.shiftOrderIndexesAfterDelete(course, deletedOrderIndex);
 
-        // 4. Va nihoyat, modulni o'zini o'chiramiz (soft delete).
         moduleRepository.delete(moduleToDelete);
     }
 //    @Override
@@ -252,13 +264,21 @@ public class ModuleServiceImpl implements ModuleService {
 
     @Override
     public boolean isUserModuleBought(String username, Long attachmentContentId) {
+        Content content = contentRepository.findById(attachmentContentId)
+                .orElseThrow(() -> new EntityNotFoundException("Attachment content not found with id: " + attachmentContentId));
 
-        Module module = attachmentContentRepository.findModuleByAttachmentId(attachmentContentId)
-                .orElseThrow(() -> new EntityNotFoundException("Attachment not found with id: " + attachmentContentId));
+
+        Lesson lesson = content.getLesson();
+
+        if (lesson.isFree())
+            return true;
+
+        Module module = lesson.getModule();
 
         module.getPayments().stream().filter(Payment -> Payment.getUser().getUsername().equals(username))
                 .findFirst()
                 .orElseThrow(() -> new BadCredentialsException("Siz ushbu videoni korishingiz uchun avval tolov qiling"));
+
         return true;
     }
 }

@@ -24,5 +24,25 @@
       "name": "application.minio.buckets",
       "type": "java.lang.String",
       "description": "Description for application.minio.buckets."
+    },
+    {
+      "name": "spring.spring.servlet.multipart.max-file-size",
+      "type": "java.lang.String",
+      "description": "Description for spring.spring.servlet.multipart.max-file-size."
+    },
+    {
+      "name": "spring.spring.servlet.multipart.max-request-size",
+      "type": "java.lang.String",
+      "description": "Description for spring.spring.servlet.multipart.max-request-size."
+    },
+    {
+      "name": "server.url.development",
+      "type": "java.lang.String",
+      "description": "Description for server.url.development."
+    },
+    {
+      "name": "server.url.production",
+      "type": "java.lang.String",
+      "description": "Description for server.url.production."
     }
   ] }

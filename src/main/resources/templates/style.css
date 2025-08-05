@@ -1,0 +1,247 @@
+/* Umumiy Stillar va O'zgaruvchilar */
+:root {
+    --primary-color: #4582ff;
+    --text-color: #555;
+    --heading-color: #111;
+    --border-color: #eee;
+    --background-color: #f8f9fa;
+    --white-color: #fff;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    color: var(--text-color);
+    margin: 0;
+    background-color: var(--background-color);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header */
+header {
+    background: var(--white-color);
+    border-bottom: 1px solid var(--border-color);
+    padding: 10px 0;
+}
+header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.logo {
+    color: var(--primary-color);
+    font-weight: 700;
+}
+header nav a {
+    text-decoration: none;
+    color: var(--heading-color);
+    margin: 0 15px;
+    font-weight: 500;
+}
+header nav a.active {
+    color: var(--primary-color);
+}
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+.header-actions a {
+    text-decoration: none;
+    color: var(--text-color);
+}
+
+/* Asosiy Qism (Main Layout) */
+main.container {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 30px;
+    margin-top: 30px;
+}
+
+/* Filtrlar Paneli (Sidebar) */
+.filters-sidebar .filter-widget {
+    background: var(--white-color);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
+}
+.filter-widget h3 {
+    margin-top: 0;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    font-size: 18px;
+    color: var(--heading-color);
+}
+.filter-widget ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.filter-widget li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.filter-widget label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+.filter-widget .stars {
+    color: #ffb60a;
+}
+
+/* Kurslar Ro'yxati */
+.grid-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.search-bar {
+    display: flex;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+}
+.search-bar input {
+    border: none;
+    padding: 10px;
+    outline: none;
+    width: 250px;
+}
+.search-bar button {
+    border: none;
+    background: var(--primary-color);
+    color: var(--white-color);
+    padding: 0 15px;
+    cursor: pointer;
+}
+
+.courses-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+/* Kurs Kartochkasi */
+.course-card {
+    background: var(--white-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: box-shadow 0.3s ease;
+}
+.course-card:hover {
+    box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+}
+.course-card .card-image {
+    position: relative;
+}
+.course-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+}
+.course-card .category-tag {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: var(--primary-color);
+    color: var(--white-color);
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+}
+.course-card .card-content {
+    padding: 20px;
+}
+.course-card .card-content h3 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    color: var(--heading-color);
+}
+.course-card .card-content h3 a {
+    text-decoration: none;
+    color: inherit;
+}
+.course-card .instructor-info {
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+.course-card .course-meta {
+    display: flex;
+    gap: 20px;
+    font-size: 13px;
+    color: #777;
+    margin-bottom: 15px;
+}
+.course-card .course-meta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.course-card .card-footer {
+    padding: 20px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.course-card .price {
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--primary-color);
+}
+.course-card .view-more-btn {
+    text-decoration: none;
+    font-weight: 500;
+    color: var(--heading-color);
+}
+
+/* Paginatsiya */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 30px;
+}
+.pagination button {
+    border: 1px solid var(--border-color);
+    background: var(--white-color);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-weight: 500;
+}
+.pagination button.active {
+    background: var(--primary-color);
+    color: var(--white-color);
+    border-color: var(--primary-color);
+}
+.pagination button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* Responsivlik */
+@media (max-width: 992px) {
+    main.container {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 768px) {
+    .courses-container {
+        grid-template-columns: 1fr;
+    }
+}

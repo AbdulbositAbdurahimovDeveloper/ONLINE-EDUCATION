@@ -9,6 +9,11 @@ spring:
   application:
     name: ONLINE-EDUCATION
 
+  spring:
+    servlet:
+      multipart:
+        max-file-size: 10MB
+        max-request-size: 11MB
   banner:
     location: classpath:banner.txt
 

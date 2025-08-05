@@ -9,13 +9,12 @@ import uz.pdp.online_education.payload.lesson.LessonSummaryDTO;
 import java.time.Instant;
 import java.util.List;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ModuleDetailDTO extends RepresentationModel<ModuleDetailDTO> {
+public class ModuleDetailDTO {
     private Long id;
     private String title;
     private String description;
