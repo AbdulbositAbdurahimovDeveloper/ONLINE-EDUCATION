@@ -31,6 +31,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/**",
+                                "/telegram-bot",
                                 "/api/attachment/open/**",
                                 "/api/auth/**",
                                 "/api/open/**",
