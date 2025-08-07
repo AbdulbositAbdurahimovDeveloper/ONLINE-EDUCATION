@@ -100,6 +100,7 @@ application:
 
 telegram:
   bot:
-    token: ${TELEGRAM-BOT-TOKEN}
-    username: ${TELEGRAM-BOT-USERNAME}
-    webhook-path: ${TELEGRAM-BOT-PATH}
+    token: ${TELEGRAM_BOT_TOKEN}
+    username: ${TELEGRAM_BOT_USERNAME}
+    webhook-path: ${TELEGRAM_BOT_PATH}
+    chat-id: ${TELEGRAM_BOT_CHAT_ID}
