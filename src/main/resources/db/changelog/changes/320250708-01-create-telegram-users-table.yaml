@@ -29,7 +29,7 @@ databaseChangeLog:
                     nullable: false
                     remarks: "Stores the current state of the user in the bot's conversation flow"
               - column:
-                  name: current_role
+                  name: selected_role
                   type: VARCHAR(255)
                   constraints:
                     nullable: false
