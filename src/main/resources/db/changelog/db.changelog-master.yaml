@@ -75,4 +75,6 @@ databaseChangeLog:
       file: db/changelog/changes/20230805-01-fix-module-order-unique-constraint.yaml
   - include:
       file: db/changelog/changes/320250708-01-create-telegram-users-table.yaml
+  - include:
+      file: db/changelog/changes/3202500808-01-drop-selected-role-column.yaml
 

@@ -36,7 +36,7 @@ public class DataLoader implements CommandLineRunner {
     public void run(String... args) {
 
         createBaseUser();
-        createTgUser();
+//        createTgUser();
 
     }
 
@@ -47,8 +47,7 @@ public class DataLoader implements CommandLineRunner {
             TelegramUser telegramUser = new TelegramUser(
                     chatId,
                     user,
-                    UserState.DEFAULT,
-                    Role.ADMIN
+                    UserState.DEFAULT
             );
             telegramUserRepository.save(telegramUser);
         }

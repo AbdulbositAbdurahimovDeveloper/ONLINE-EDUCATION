@@ -1,37 +1,31 @@
 package uz.pdp.online_education.telegram.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum BotMessage {
 
-    // Barcha xabarlar shu yerda, "KALIT("Matn")" formatida e'lon qilinadi
-    WELCOME("Assalomu alaykum! Bizning online ta'lim platformamizga xush kelibsiz!"),
-    MAIN_MENU("⬇️ Quyidagi bo'limlardan birini tanlang:"),
-    ASK_CONTACT("Iltimos, profilingizni tasdiqlash uchun telefon raqamingizni yuboring."),
-    
-    // Xatoliklar
-    ERROR_UNEXPECTED("Kutilmagan xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring."),
-    ERROR_USER_NOT_FOUND("Sizning profilingiz topilmadi. Iltimos, avval saytdan ro'yxatdan o'ting."),
+    WELCOME_FIRST_TIME("welcome-first-time"),
 
-    // Muvaffaqiyatli xabarlar
-    SUCCESS_CONNECTION("✅ Sizning profilingiz muvaffaqiyatli bog'landi!"),
-    
-    // Dinamik xabarlar uchun formatlangan matnlar
-    COURSE_LIST_HEADER("📚 Siz a'zo bo'lgan kurslar ro'yxati:\n\n"),
-    COURSE_ITEM_FORMAT("🔹 %s\n"), // %s o'rniga kurs nomi qo'yiladi
-    
-    // Agar biror kalit topilmasa qaytariladigan standart xabar
-    KEY_NOT_FOUND("Xabar topilmadi."),
+    START_MESSAGE_STUDENT("start-message-student"),
+    START_MESSAGE_INSTRUCTOR("start-message-instructor"),
+    START_MESSAGE_ADMIN("start-message-admin"),
 
-    CHANGED_ROLE("Sizning rolein almashtirildi");
+    ROLE_CHANGED_STUDENT("role-changed.student"), // Nuqta ierarxiyani bildiradi
+    ROLE_CHANGED_INSTRUCTOR("role-changed.instructor"),
+    ROLE_CHANGED_ADMIN("role-changed.admin"),
 
-    // --- Enum'ning ichki mexanizmi ---
+    COURSE_ITEM_FORMAT("dynamic.course-item-format"),
 
-    private final String message;
+    ERROR_UNEXPECTED("error.unexpected"),
+    ERROR_USER_NOT_FOUND("error.user-not-found"),
 
-    BotMessage(String message) {
-        this.message = message;
+    KEY_NOT_FOUND("key-not-found");
+
+    private final String key;
+
+    BotMessage(String key) {
+        this.key = key;
     }
 
-    public String getMessage(Object... args) {
-        return String.format(message, args);
-    }
 }

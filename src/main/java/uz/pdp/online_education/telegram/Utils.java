@@ -6,4 +6,5 @@ public interface Utils {
     String INSTRUCTOR = "/instructor";
     String STUDENT = "/student";
 
+    String START = "/start";
 }
