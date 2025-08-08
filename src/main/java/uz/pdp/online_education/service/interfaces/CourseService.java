@@ -3,6 +3,7 @@ package uz.pdp.online_education.service.interfaces;
 import org.springframework.data.domain.Page;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.User;
+import uz.pdp.online_education.payload.FilterDTO;
 import uz.pdp.online_education.payload.PageDTO;
 import uz.pdp.online_education.payload.course.CourseCreateDTO;
 import uz.pdp.online_education.payload.course.CourseDetailDTO;
@@ -11,6 +12,8 @@ import uz.pdp.online_education.payload.course.CourseUpdateDTO;
 import java.util.List;
 
 public interface CourseService {
+
+    PageDTO<CourseDetailDTO> filter(FilterDTO filterDTO, Integer page, Integer size);
 
     PageDTO<CourseDetailDTO> read(Integer page, Integer size);
 

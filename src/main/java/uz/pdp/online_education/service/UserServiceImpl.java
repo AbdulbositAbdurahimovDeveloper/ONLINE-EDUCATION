@@ -3,6 +3,7 @@ package uz.pdp.online_education.service;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -31,6 +32,7 @@ import uz.pdp.online_education.repository.AttachmentRepository;
 import uz.pdp.online_education.repository.UserProfileRepository;
 import uz.pdp.online_education.repository.UserRepository;
 import uz.pdp.online_education.repository.VerificationTokenRepository;
+import uz.pdp.online_education.service.interfaces.CacheManagerService;
 import uz.pdp.online_education.service.interfaces.EmailService;
 import uz.pdp.online_education.service.interfaces.UserService;
 
@@ -53,6 +55,7 @@ public class UserServiceImpl implements UserService {
     private final AttachmentRepository attachmentRepository;
     private final VerificationTokenRepository verificationTokenRepository;
     private final EmailService emailService;
+    private final CacheManagerService cacheManagerService;
 
     @Override
     @Cacheable(value = "users", key = "#username")
@@ -133,8 +136,11 @@ public class UserServiceImpl implements UserService {
             throw new DataConflictException("Phone number already registered!");
         }
 
-        Attachment attachment = attachmentRepository.findById(request.getProfilePictureId())
-                .orElseThrow(() -> new EntityNotFoundException("Attachment not found!"));
+        Attachment attachment = null;
+        if (request.getProfilePictureId() != null) {
+            attachment = attachmentRepository.findById(request.getProfilePictureId())
+                    .orElseThrow(() -> new EntityNotFoundException("Attachment not found!"));
+        }
 
         // 2. User obyektini yaratish
         User user = new User();
@@ -159,7 +165,7 @@ public class UserServiceImpl implements UserService {
         User savedUser = userRepository.save(user);
 
         // 6. Javob DTO-sini yaratib, qaytarish
-//        return userMapper.toDTO(savedUser);
+//        return userMapper.toDto(savedUser);
 
         // 2. Verifikatsiya tokenini yaratish va saqlash
         String token = UUID.randomUUID().toString();
@@ -236,26 +242,49 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserDTO update(Long id, UserRegisterRequestDTO registerRequestDTO) {
+    public UserDTO update(Long id, UserUpdateRequestDTO userUpdateRequestDTO) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
 
         UserProfile profile = user.getProfile();
-        if (!Objects.equals(profile.getProfilePicture().getId(), registerRequestDTO.getProfilePictureId())) {
-            Attachment attachment = attachmentRepository.findById(registerRequestDTO.getProfilePictureId())
-                    .orElseThrow(() -> new EntityNotFoundException("Attachment not found!"));
-            profile.setProfilePicture(attachment);
-        }
 
-        if (!Objects.equals(profile.getEmail(), registerRequestDTO.getEmail())) {
-            profile.setEmail(registerRequestDTO.getEmail());
+        //1. Yangi profil rasmining ID 'sini DTO' dan olamiz.
+        Long newPictureId = userUpdateRequestDTO.getProfilePictureId();
+
+        // 2. Mavjud profil rasmini va uning ID'sini olamiz (xavfsiz usulda).
+        Attachment currentPicture = profile.getProfilePicture();
+        Long currentPictureId = (currentPicture != null) ? currentPicture.getId() : null;
+
+        // 3. Eski va yangi ID'lar bir-biridan farq qilsagina ishni davom ettiramiz.
+        // Bu keraksiz bazaga murojaatlarning oldini oladi.
+        if (!Objects.equals(currentPictureId, newPictureId)) {
+
+            // Holat A: Yangi rasm qo'shilyapti yoki almashtirilyapti.
+            if (newPictureId != null) {
+                Attachment newAttachment = attachmentRepository.findById(newPictureId)
+                        .orElseThrow(() -> new EntityNotFoundException("Attachment not found with id: " + newPictureId));
+                profile.setProfilePicture(newAttachment);
+
+                // Holat B: Mavjud rasm o'chirilyapti.
+            } else {
+                profile.setProfilePicture(null);
+            }
+        }
+//        if (Objects.nonNull(profile.getProfilePicture()) & !Objects.equals(profile.getProfilePicture().getId(), userUpdateRequestDTO.getProfilePictureId())) {
+//            Attachment attachment = attachmentRepository.findById(userUpdateRequestDTO.getProfilePictureId())
+//                    .orElseThrow(() -> new EntityNotFoundException("Attachment not found!"));
+//            profile.setProfilePicture(attachment);
+//        }
+
+        if (!Objects.equals(profile.getEmail(), userUpdateRequestDTO.getEmail())) {
+            profile.setEmail(userUpdateRequestDTO.getEmail());
             user.setEnabled(false);
         }
 
-        profile.setFirstName(registerRequestDTO.getFirstName());
-        profile.setLastName(registerRequestDTO.getLastName());
-        profile.setPhoneNumber(registerRequestDTO.getPhoneNumber());
-        profile.setBio(registerRequestDTO.getBio());
+        profile.setFirstName(userUpdateRequestDTO.getFirstName());
+        profile.setLastName(userUpdateRequestDTO.getLastName());
+        profile.setPhoneNumber(userUpdateRequestDTO.getPhoneNumber());
+        profile.setBio(userUpdateRequestDTO.getBio());
 
         user.setProfile(profile);
         profile.setUser(user);
@@ -271,6 +300,7 @@ public class UserServiceImpl implements UserService {
 
         UserProfile profile = user.getProfile();
 
+        cacheManagerService.deleteCacheUser(user.getUsername());
         userProfileRepository.deleteById(profile.getId());
         userRepository.deleteById(user.getId());
         log.info("User deleted with id: {}", id);

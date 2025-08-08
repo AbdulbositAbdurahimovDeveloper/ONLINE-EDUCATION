@@ -34,12 +34,14 @@ public class ModuleController {
     }
 
     @PostMapping
+    @PreAuthorize(value = "hasRole('ADMIN') or hasRole('INSTRUCTOR')")
     public ResponseEntity<ResponseDTO<ModuleDetailDTO>> create(@RequestBody ModuleCreateDTO moduleCreateDTO) {
         ModuleDetailDTO moduleDetailDTO = moduleService.create(moduleCreateDTO);
         return ResponseEntity.ok(ResponseDTO.success(moduleDetailDTO));
     }
 
     @GetMapping("/{id}/lessons")
+    @PreAuthorize(value = "hasRole('ADMIN') or hasRole('INSTRUCTOR') or @courseSecurity.isUserEnrolled(authentication, #id)")
     public ResponseEntity<ResponseDTO<?>> readLessons(@PathVariable Long id,
                                                       @RequestParam(defaultValue = "0") Integer page,
                                                       @RequestParam(defaultValue = "10") Integer size) {
@@ -48,6 +50,7 @@ public class ModuleController {
     }
 
     @GetMapping("/{id}/payment")
+    @PreAuthorize(value = "hasRole('ADMIN') or hasRole('INSTRUCTOR')")
     public ResponseEntity<ResponseDTO<?>> readPayments(@PathVariable Long id,
                                                        @RequestParam(defaultValue = "0") Integer page,
                                                        @RequestParam(defaultValue = "10") Integer size) {
@@ -56,18 +59,21 @@ public class ModuleController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize(value = "hasRole('ADMIN') or hasRole('INSTRUCTOR')")
     public ResponseEntity<ResponseDTO<ModuleDetailDTO>> update(@PathVariable Long id, @RequestBody ModuleUpdateDTO moduleUpdateDTO) {
         ModuleDetailDTO moduleDetailDTO = moduleService.update(id, moduleUpdateDTO);
         return ResponseEntity.ok(ResponseDTO.success(moduleDetailDTO));
     }
 
     @PatchMapping("/{courseId}/reorder")
+    @PreAuthorize(value = "hasRole('ADMIN') or hasRole('INSTRUCTOR')")
     public ResponseEntity<ResponseDTO<?>> reorder(@PathVariable Long courseId, @RequestBody List<ModuleOrderIndexDTO> moduleOrderDTOS) {
         moduleService.updateModuleOrderIndex(courseId, moduleOrderDTOS);
         return ResponseEntity.ok(ResponseDTO.success("successful"));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize(value = "hasRole('ADMIN')")
     public ResponseEntity<ResponseDTO<String>> delete(@PathVariable Long id) {
         moduleService.delete(id);
         return ResponseEntity.ok(ResponseDTO.success("Module deleted"));

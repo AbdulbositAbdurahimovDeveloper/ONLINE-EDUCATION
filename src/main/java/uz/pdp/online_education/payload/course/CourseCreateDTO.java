@@ -15,7 +15,7 @@ import java.io.Serializable;
 public class CourseCreateDTO implements Serializable {
 
     @NotBlank(message = "Kurs sarlavhasi bo'sh bo'lishi mumkin emas")
-    @Size(min = 5, max = 150, message = "Sarlavha 5 dan 150 gacha belgidan iborat bo'lishi kerak")
+    @Size(min = 2, max = 150, message = "Sarlavha {min} dan {max} gacha belgidan iborat bo'lishi kerak")
     private String title;
 
     @Size(max = 1000, message = "Tavsif 1000 ta belgidan oshmasligi kerak")

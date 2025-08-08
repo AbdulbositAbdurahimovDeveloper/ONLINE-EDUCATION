@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20230805-01-fix-module-order-unique-constraint
+      author: abdulbosit
+      comment: "Replaces the global unique constraint on (course_id, order_index) with a partial index using raw SQL."
+      changes:
+        # 1-qadam: Eski cheklovni Liquibase ning standart buyrug'i bilan o'chiramiz.
+        - dropUniqueConstraint:
+            constraintName: uq_module_order_per_course
+            tableName: modules
+
+        # 2-qadam: Yangi partial unique index'ni to'g'ridan-to'g'ri SQL orqali yaratamiz.
+        - sql:
+            comment: "Create a partial unique index for non-deleted modules."
+            dbms: postgresql  # Bu buyruq PostgreSQL uchun ekanligini ko'rsatish ixtiyoriy, lekin yaxshi amaliyot.
+            sql: |
+              CREATE UNIQUE INDEX idx_module_order_per_course_unique_not_deleted
+                  ON modules (course_id, order_index)
+                  WHERE (deleted = false);

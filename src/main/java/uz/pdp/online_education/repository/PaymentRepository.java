@@ -4,31 +4,30 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import uz.pdp.online_education.enums.TransactionStatus;
+import org.springframework.data.repository.query.Param;
+import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.Payment;
+import uz.pdp.online_education.model.User;
+
+import java.util.List;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
-
-    // SIZNING MAVJUD METODINGIZ
     Page<Payment> findByModule_Id(Long moduleId, Pageable pageable);
 
-    // --- QO'SHILADIGAN YANGI METODLAR ---
+    /**
+     * Finds all unique users who have made at least one payment.
+     * @return A list of unique User entities.
+     */
+    @Query("SELECT DISTINCT p.user FROM payment p")
+    List<User> findAllDistinctUsers();
 
     /**
-     * Foydalanuvchi va modul ID si bo'yicha muvaffaqiyatli to'lov mavjudligini tekshiradi.
-     * @param userId Foydalanuvchi ID si.
-     * @param moduleId Modul ID si.
-     * @param status Tranzaksiya holati (masalan, SUCCESS).
-     * @return To'lov mavjud bo'lsa true, aks holda false qaytaradi.
+     * Finds all courses that a specific user has paid for.
+     * @param userId The ID of the user.
+     * @return A list of unique Course entities purchased by the user.
      */
-    boolean existsByUserIdAndModuleIdAndStatus(Long userId, Long moduleId, TransactionStatus status);
+    @Query("SELECT DISTINCT p.module.course FROM payment p WHERE p.user.id = :userId")
+    List<Course> findCoursesByUserId(@Param("userId") Long userId);
 
-    /**
-     * Foydalanuvchi berilgan kursdagi nechta modulni sotib olganini sanaydi.
-     * @param userId Foydalanuvchi ID si.
-     * @param courseId Kurs ID si.
-     * @return Sotib olingan modullar soni.
-     */
-    @Query("SELECT COUNT(DISTINCT p.module.id) FROM payment p WHERE p.user.id = :userId AND p.module.course.id = :courseId AND p.status = 'SUCCESS'")
-    long countPurchasedModulesInCourse(Long userId, Long courseId);
+    boolean existsByUser_UsernameAndModule_Id(String userUsername, Long moduleId);
 }

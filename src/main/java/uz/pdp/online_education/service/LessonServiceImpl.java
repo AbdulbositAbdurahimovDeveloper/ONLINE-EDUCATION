@@ -1,9 +1,6 @@
 package uz.pdp.online_education.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uz.pdp.online_education.exceptions.DataConflictException;
@@ -11,9 +8,7 @@ import uz.pdp.online_education.exceptions.EntityNotFoundException;
 import uz.pdp.online_education.mapper.LessonMapper;
 import uz.pdp.online_education.model.Module;
 import uz.pdp.online_education.model.lesson.Lesson;
-import uz.pdp.online_education.payload.PageDTO;
 import uz.pdp.online_education.payload.lesson.LessonCreatDTO;
-import uz.pdp.online_education.payload.lesson.LessonOrderUpdateDTO;
 import uz.pdp.online_education.payload.lesson.LessonResponseDTO;
 import uz.pdp.online_education.payload.lesson.LessonUpdateDTO;
 import uz.pdp.online_education.repository.LessonRepository;
@@ -23,7 +18,6 @@ import uz.pdp.online_education.service.interfaces.LessonService;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -42,7 +36,7 @@ public class LessonServiceImpl implements LessonService {
 //        Page<Lesson> lessons = lessonRepository.findAllByModule_Id(moduleId,pageRequest);
 //
 //        return new PageDTO<>(
-//                lessons.getContent().stream().map(lessonMapper::toDTO).toList(),
+//                lessons.getContent().stream().map(lessonMapper::toDto).toList(),
 //                lessons.getNumber(),
 //                lessons.getSize(),
 //                lessons.getTotalElements(),
@@ -134,7 +128,7 @@ public class LessonServiceImpl implements LessonService {
 
         // 2. O'lchamlar mosligini tekshiramiz. Bu frontend xatosining oldini oladi.
         if (orderedLessonIds.size() != lessonsInDb.size()) {
-            throw new IllegalStateException("The number of sent IDs does not match the number of lessons in the module.");
+            throw new DataConflictException("The number of sent IDs does not match the number of lessons in the module.");
         }
 
         // 3. Darslarni tezkor qidirish uchun Map'ga o'tkazamiz (ID -> Lesson).
@@ -157,5 +151,28 @@ public class LessonServiceImpl implements LessonService {
 
         // @Transactional tufayli o'zgartirilgan barcha lesson'lar tranzaksiya
         // yakunida avtomatik ravishda bazaga saqlanadi.
+    }
+
+    /**
+     * @param username String
+     * @param lessonId Long
+     * @return boolean
+     */
+    @Override
+    public boolean isPaymentOrFreeLesson(String username, Long lessonId) {
+
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new EntityNotFoundException("Lesson not found with id: " + lessonId));
+
+        if (lesson.isFree())
+            return true;
+
+        Module module = lesson.getModule();
+        module.getPayments().stream()
+                .filter(payment -> payment.getUser().getUsername().equals(username))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("Tolov qilinmagan with username: " + username));
+
+        return true;
     }
 }

@@ -1,7 +1,9 @@
 package uz.pdp.online_education.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import uz.pdp.online_education.payload.faq.FaqDTO;
 import uz.pdp.online_education.payload.faq.FaqRequestDTO;
@@ -28,16 +30,19 @@ public class FaqsController {
     }
 
     @PostMapping
-    public ResponseEntity<ResponseDTO<FaqDTO>> create(@RequestBody FaqRequestDTO dto) {
+    @PreAuthorize(value = "hasAnyRole('ADMIN','INSTRUCTOR')")
+    public ResponseEntity<ResponseDTO<FaqDTO>> create(@RequestBody @Valid FaqRequestDTO dto) {
         return ResponseEntity.ok(ResponseDTO.success(faqService.create(dto)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ResponseDTO<FaqDTO>> update(@PathVariable Long id, @RequestBody FaqRequestDTO dto) {
+    @PreAuthorize(value = "hasAnyRole('ADMIN','INSTRUCTOR')")
+    public ResponseEntity<ResponseDTO<FaqDTO>> update(@PathVariable Long id, @RequestBody @Valid FaqRequestDTO dto) {
         return ResponseEntity.ok(ResponseDTO.success(faqService.update(id, dto)));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize(value = "hasAnyRole('ADMIN','INSTRUCTOR')")
     public ResponseEntity<ResponseDTO<String>> delete(@PathVariable Long id) {
         faqService.delete(id);
         return ResponseEntity.ok(ResponseDTO.success("Faq deleted"));

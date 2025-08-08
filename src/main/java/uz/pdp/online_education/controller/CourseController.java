@@ -1,12 +1,13 @@
 package uz.pdp.online_education.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.User;
+import uz.pdp.online_education.payload.FilterDTO;
 import uz.pdp.online_education.payload.PageDTO;
 import uz.pdp.online_education.payload.ResponseDTO;
 import uz.pdp.online_education.payload.course.CourseCreateDTO;
@@ -24,6 +25,14 @@ public class CourseController {
     private final CourseService courseService;
     private final ModuleService moduleService;
 
+    @GetMapping("/open/courses/filter")
+    public ResponseEntity<ResponseDTO<PageDTO<?>>> filter(FilterDTO filterDTO,
+                                                          @RequestParam(defaultValue = "0") Integer page,
+                                                          @RequestParam(defaultValue = "10") Integer size) {
+        PageDTO<CourseDetailDTO> courseDetailDTOPageDTO = courseService.filter(filterDTO,page,size);
+        return  ResponseEntity.ok(ResponseDTO.success(courseDetailDTOPageDTO));
+    }
+
     @GetMapping("/open/courses")
     public ResponseEntity<ResponseDTO<PageDTO<CourseDetailDTO>>> read(@RequestParam(defaultValue = "0") Integer page,
                                                                       @RequestParam(defaultValue = "10") Integer size) {
@@ -40,35 +49,38 @@ public class CourseController {
     @GetMapping("courses/{courseId}/modules")
     public ResponseEntity<ResponseDTO<PageDTO<ModuleDetailDTO>>> read(@PathVariable Long courseId,
                                                                       @RequestParam(defaultValue = "0") Integer page,
-                                                                      @RequestParam(defaultValue = "10") Integer size,
-                                                                      PagedResourcesAssembler<uz.pdp.online_education.model.Module> assembler) {
+                                                                      @RequestParam(defaultValue = "10") Integer size) {
         PageDTO<ModuleDetailDTO> modulePage = moduleService.read(courseId, page, size);
 
         return ResponseEntity.ok(ResponseDTO.success(modulePage));
     }
 
     @PostMapping("/courses")
-    public ResponseEntity<ResponseDTO<CourseDetailDTO>> create(@RequestBody CourseCreateDTO courseCreateDTO,
+    @PreAuthorize(value = "hasAnyRole('ADMIN','INSTRUCTOR')")
+    public ResponseEntity<ResponseDTO<CourseDetailDTO>> create(@RequestBody @Valid CourseCreateDTO courseCreateDTO,
                                                                @AuthenticationPrincipal User instructor) {
         CourseDetailDTO courseDetailDTO = courseService.create(courseCreateDTO, instructor);
         return ResponseEntity.ok(ResponseDTO.success(courseDetailDTO));
     }
 
     @PutMapping("/courses/{id}")
+    @PreAuthorize(value = "hasAnyRole('ADMIN','INSTRUCTOR')")
     public ResponseEntity<ResponseDTO<CourseDetailDTO>> update(@PathVariable Long id,
-                                                               @RequestBody CourseUpdateDTO courseUpdateDTO,
+                                                               @RequestBody @Valid CourseUpdateDTO courseUpdateDTO,
                                                                @AuthenticationPrincipal User instructor) {
         CourseDetailDTO courseDetailDTO = courseService.update(id, courseUpdateDTO, instructor);
         return ResponseEntity.ok(ResponseDTO.success(courseDetailDTO));
     }
 
     @PatchMapping("/courses/{id}")
+    @PreAuthorize(value = "hasAnyRole('ADMIN','INSTRUCTOR')")
     public ResponseEntity<ResponseDTO<?>> patch(@PathVariable Long id) {
         courseService.updateSuccess(id);
         return ResponseEntity.ok(ResponseDTO.success("update"));
     }
 
     @DeleteMapping("/courses/{id}")
+    @PreAuthorize(value = "hasAnyRole('ADMIN','INSTRUCTOR')")
     public ResponseEntity<ResponseDTO<String>> delete(@PathVariable Long id) {
         courseService.delete(id);
         return ResponseEntity.ok(ResponseDTO.success("Courses deleted"));

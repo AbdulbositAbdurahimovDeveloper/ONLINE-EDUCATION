@@ -3,6 +3,7 @@ package uz.pdp.online_education.payload.lesson;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import uz.pdp.online_education.payload.content.ContentDTO;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
@@ -13,7 +14,7 @@ import java.sql.Timestamp;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AttachmentContentDTO implements Serializable {
+public class AttachmentContentDTO implements Serializable, ContentDTO {
     private Long id;
     private Integer blockOrder;
     private Long lessonId;
@@ -21,4 +22,5 @@ public class AttachmentContentDTO implements Serializable {
     private String contentUrl;
     private Long updatedAt;
     private Long createdAt;
+    private String contentType;
 }

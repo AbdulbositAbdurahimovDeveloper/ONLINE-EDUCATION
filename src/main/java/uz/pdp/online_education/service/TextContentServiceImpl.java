@@ -39,16 +39,19 @@ public class TextContentServiceImpl implements TextContentService {
         textContent.setBlockOrder(lesson.getContents().size());
         textContent.setText(createDTO.getText());
         textContent.setLesson(lesson);
-        textContentRepository.save(textContent);
+        TextContent save = textContentRepository.save(textContent);
+
+        System.out.println(save);
 
         return textContentMapper.toDTO(textContent);
     }
 
     @Override
     public TextContentResponseDTO getById(Long id) {
-        return textContentRepository.findById(id)
-                .map(textContentMapper::toDTO)
+        TextContent textContent = textContentRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Text content not found with id: " + id));
+
+        return textContentMapper.toDTO(textContent);
     }
 
     @Transactional

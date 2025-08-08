@@ -27,7 +27,7 @@ public interface ModuleMapper {
 
     @Named("count")
     default Integer lessonsCount(List<?> l) {
-        return l.size();
+        return l != null ? l.size() : null;
     }
 
 

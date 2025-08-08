@@ -28,8 +28,16 @@ public class AttachmentContentController {
     }
 
     @PostMapping
+    @PreAuthorize(value = "hasAnyRole('ADMIN','INSTRUCTOR')")
     public ResponseEntity<ResponseDTO<?>> create(@RequestBody AttachmentContentCreateDTO attachmentContentCreateDTO){
-        return null;
+        AttachmentContentDTO attachmentContentDTO = attachmentContentService.create(attachmentContentCreateDTO);
+        return ResponseEntity.ok(ResponseDTO.success(attachmentContentDTO));
+    }
 
+    @DeleteMapping("/{id}")
+    @PreAuthorize(value = "hasAnyRole('ADMIN','INSTRUCTOR')")
+    public  ResponseEntity<ResponseDTO<?>> delete(@PathVariable Long id) {
+        attachmentContentService.delete(id);
+        return  ResponseEntity.ok(ResponseDTO.success("content deleted"));
     }
 }

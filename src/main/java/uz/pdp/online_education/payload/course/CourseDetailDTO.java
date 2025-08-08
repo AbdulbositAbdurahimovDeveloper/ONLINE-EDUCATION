@@ -5,13 +5,13 @@ import lombok.*;
 import org.springframework.hateoas.RepresentationModel;
 import uz.pdp.online_education.payload.review.ReviewSummaryDTO;
 
-@EqualsAndHashCode(callSuper = true)
+//@EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class CourseDetailDTO extends RepresentationModel<CourseDetailDTO> {
+public class CourseDetailDTO {
     private Long id;
     private String title;
     private String description;

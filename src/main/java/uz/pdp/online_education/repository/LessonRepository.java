@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import uz.pdp.online_education.model.Module;
 import uz.pdp.online_education.model.lesson.Lesson;
 import uz.pdp.online_education.payload.PageDTO;
 
@@ -28,4 +29,6 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
     void shiftOrderIndexesAfterDelete(Long moduleId, Integer orderIndex);
 
     Page<Lesson> findAllByModule_Id(Long moduleId, Pageable pageable);
+
+    Page<Lesson> findByModule(Module module, Pageable pageable);
 }

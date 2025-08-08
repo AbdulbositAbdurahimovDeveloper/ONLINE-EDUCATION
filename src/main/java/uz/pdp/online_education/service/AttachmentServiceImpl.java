@@ -7,10 +7,12 @@ import io.minio.PutObjectArgs;
 import io.minio.http.Method;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import uz.pdp.online_education.config.properties.MinioProperties;
+import uz.pdp.online_education.exceptions.DataConflictException;
 import uz.pdp.online_education.exceptions.EntityNotFoundException;
 import uz.pdp.online_education.mapper.AttachmentMapper;
 import uz.pdp.online_education.model.Attachment;
@@ -18,6 +20,7 @@ import uz.pdp.online_education.payload.content.attachmentContent.AttachmentDTO;
 import uz.pdp.online_education.repository.AttachmentRepository;
 import uz.pdp.online_education.service.interfaces.AttachmentService;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -32,6 +35,13 @@ public class AttachmentServiceImpl implements AttachmentService {
     private final AttachmentMapper attachmentMapper;
     private final MinioClient minioClient;
     private final MinioProperties minio;
+
+    // Ruxsat etilgan rasm turlari ro'yxati
+    private static final List<String> ALLOWED_IMAGE_TYPES = List.of(
+            MediaType.IMAGE_JPEG_VALUE, // "image/jpeg"
+            MediaType.IMAGE_PNG_VALUE,  // "image/png"
+            "image/svg+xml"             // SVG uchun
+    );
 
 
     public AttachmentServiceImpl(AttachmentRepository attachmentRepository,
@@ -58,6 +68,17 @@ public class AttachmentServiceImpl implements AttachmentService {
      */
     @Override
     public AttachmentDTO saveIcon(MultipartFile multipartFile) {
+
+        if (multipartFile == null || multipartFile.isEmpty()) {
+            throw new IllegalArgumentException("Fayl bo'sh bo'lishi mumkin emas.");
+        }
+
+        // 2. Fayl turini tekshirish
+        String contentType = multipartFile.getContentType();
+        if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType)) {
+            throw new DataConflictException("Faqat .jpeg, .png, .svg formatdagi rasmlar yuklash mumkin.");
+        }
+
         String bucketName = minio.getBuckets().get(2);
         String minioKey = saveFileMinio(multipartFile, bucketName);
 
@@ -99,7 +120,7 @@ public class AttachmentServiceImpl implements AttachmentService {
     }
 
     @Override
-    public ResponseEntity<?> tempLink(Long id, Integer minute) {
+    public String tempLink(Long id, Integer minute) {
         Attachment attachment = attachmentRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Attachment not found with id: " + id));
 
@@ -107,7 +128,7 @@ public class AttachmentServiceImpl implements AttachmentService {
 
         try {
 
-            String presignedObjectUrl = minioClient.getPresignedObjectUrl(
+            return minioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .bucket(attachment.getBucketName())
                             .object(minioKey)
@@ -115,8 +136,7 @@ public class AttachmentServiceImpl implements AttachmentService {
                             .expiry(minute, TimeUnit.MINUTES)
                             .build()
             );
-
-            return new ResponseEntity<>(presignedObjectUrl, HttpStatus.OK);
+//            return new ResponseEntity<>(presignedObjectUrl, HttpStatus.OK);
 
 
         } catch (Exception e) {
@@ -142,7 +162,7 @@ public class AttachmentServiceImpl implements AttachmentService {
 
             ObjectWriteResponse objectWriteResponse = minioClient.putObject(
                     PutObjectArgs.builder()
-                            .object(UUID.randomUUID() + "/" + multipartFile.getOriginalFilename())
+                            .object(UUID.randomUUID() + "_" + multipartFile.getOriginalFilename())
                             .contentType(multipartFile.getContentType())
                             .bucket(bucketName)
                             .stream(multipartFile.getInputStream(), multipartFile.getSize(), -1)

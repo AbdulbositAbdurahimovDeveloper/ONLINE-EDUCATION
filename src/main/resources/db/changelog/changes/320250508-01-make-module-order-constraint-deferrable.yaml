@@ -1,0 +1,41 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20252007-21-add-unique-name-index-to-category
+      author: Eldor04
+      comment: "Replaces the non-unique index on category.name with a partial unique index for soft-delete compatibility"
+      changes:
+        # 1-QADAM: Mavjud oddiy indeksni o'chirish.
+        # Agar bu indeks oldin yaratilmagan bo'lsa, xatolik bo'lmasligi uchun
+        # oldindan shart (preCondition) qo'yishimiz mumkin, lekin odatda dropIndex o'zi buni to'g'ri boshqaradi.
+        - dropIndex:
+            indexName: idx_category_name
+            tableName: category
+            comment: "Dropping the old, non-unique index first"
+
+        # 2-QADAM: Yangi, partial unique indeksni qo'shish
+        - sql:
+            dbms: "postgresql"
+            comment: "Adding the new, partial unique index on name to support soft-delete uniqueness"
+            sql: |
+              CREATE UNIQUE INDEX idx_category_name_unique_not_deleted
+              ON category (name)
+              WHERE deleted = false;
+
+      # =====================================================================
+      # BU O'ZGARISHNI ORQAGA QAYTARISH (ROLLBACK)
+      # Rollback jarayoni ham teskari tartibda bo'ladi:
+      # avval yangi noyob indeksni o'chirib, keyin eski oddiy indeksni qayta tiklaymiz.
+      # =====================================================================
+      rollback:
+        # 1. Yangi, noyob indeksni o'chirish
+        - dropIndex:
+            indexName: idx_category_name_unique_not_deleted
+            tableName: category
+
+        # 2. Eski, oddiy unumdorlik indeksini qayta tiklash
+        - createIndex:
+            indexName: idx_category_name
+            tableName: category
+            columns:
+              - column:
+                  name: name

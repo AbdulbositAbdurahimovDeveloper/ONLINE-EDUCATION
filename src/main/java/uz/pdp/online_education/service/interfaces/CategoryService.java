@@ -1,9 +1,10 @@
 package uz.pdp.online_education.service.interfaces;
 
+import uz.pdp.online_education.payload.PageDTO;
 import uz.pdp.online_education.payload.category.CategoryCreateDTO;
 import uz.pdp.online_education.payload.category.CategoryUpdateDTO;
 import uz.pdp.online_education.payload.category.CategoryDTO;
-import uz.pdp.online_education.payload.course.CourseResponseDto;
+import uz.pdp.online_education.payload.course.CourseDetailDTO;
 
 import java.util.List;
 
@@ -19,6 +20,5 @@ public interface CategoryService {
 
     List<CategoryDTO> getAll();
 
-    public List<CourseResponseDto> getCoursesSortedByReview(Long categoryId);
-
+    PageDTO<CourseDetailDTO> readCoursesByCategoryId(Long id, Integer page, Integer size);
 }

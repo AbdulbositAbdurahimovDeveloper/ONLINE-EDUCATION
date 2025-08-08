@@ -1,0 +1,59 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20250708-22-create-telegram-users-table
+      author: Eldor04
+      comment: "Creating the telegram_users table to store bot user states and link to the main user account"
+      changes:
+        # 1-QADAM: JADVALNI YARATISH
+        - createTable:
+            tableName: telegram_users
+            columns:
+              - column:
+                  name: chat_id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    remarks: "The Telegram chat ID, serves as the primary key"
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    unique: true # Bitta sayt foydalanuvchisi faqat bitta telegram akkauntga bog'lanishi mumkin
+                    nullable: true # Foydalanuvchi bog'lanmagan bo'lishi ham mumkin
+                    remarks: "Foreign key to the main 'users' table"
+              - column:
+                  name: user_state
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    remarks: "Stores the current state of the user in the bot's conversation flow"
+              - column:
+                  name: selected_role
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                  remarks: "The current role the user is interacting as (e.g., STUDENT, INSTRUCTOR)"
+
+        # 2-QADAM: TASHQI KALITNI QO'SHISH
+        - addForeignKeyConstraint:
+            baseTableName: telegram_users
+            baseColumnNames: user_id
+            constraintName: fk_telegram_users_on_users
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: SET NULL # Agar saytdagi user o'chirilsa, botdagi yozuv qolsin, lekin bog'liqlik uzilsin
+
+        # 3-QADAM: UNUMDORLIK INDEKSLARI
+        # user_id ustuniga 'unique' cheklovi qo'yilgani uchun unga indeks avtomatik yaratiladi.
+        # Qo'shimcha indekslar hozircha shart emas.
+
+      # =====================================================================
+      # BARCHA O'ZGARISHLARNI ORQAGA QAYTARISH (ROLLBACK)
+      # =====================================================================
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: telegram_users
+            constraintName: fk_telegram_users_on_users
+        - dropTable:
+            tableName: telegram_users

@@ -83,6 +83,7 @@ public class PaymentServiceImpl implements PaymentService {
      */
     @Override
     public PageDTO<PaymentDTO> readPayments(Long id, Integer page, Integer size) {
+        moduleRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Module nor found with id: " + id));
 
         PageRequest pageRequest = PageRequest.of(page,size);
         Page<Payment> payments = paymentRepository.findByModule_Id(id, pageRequest);
@@ -142,7 +143,9 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setModule(module);
         payment.setAmount(module.getPrice());
         payment.setStatus(TransactionStatus.SUCCESS);
-        payment.setMaskedCardNumber(paymentCreateDTO.getMaskedCardNumber());
+        String card = paymentCreateDTO.getMaskedCardNumber();
+        String masked = card.substring(0, 4) + "******" + card.substring(card.length() - 6);
+        payment.setMaskedCardNumber(masked);
         payment.setDescription(paymentCreateDTO.getDescription());
 
         paymentRepository.save(payment);

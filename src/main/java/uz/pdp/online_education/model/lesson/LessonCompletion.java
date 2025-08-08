@@ -1,10 +1,7 @@
 package uz.pdp.online_education.model.lesson;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import uz.pdp.online_education.model.Abs.AbsLongEntity;
 import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.model.lesson.Lesson;
@@ -13,6 +10,7 @@ import uz.pdp.online_education.model.lesson.Lesson;
 @NoArgsConstructor
 @Getter
 @Setter
+@ToString
 @Entity
 @Table(name = "lesson_completions", uniqueConstraints = {
     // Bitta foydalanuvchi bitta darsni faqat bir marta "tugatgan" deb belgilashi mumkin
@@ -22,10 +20,12 @@ public class LessonCompletion extends AbsLongEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
+    @ToString.Exclude
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "lesson_id", nullable = false)
+    @ToString.Exclude
     private Lesson lesson;
     
     // Agar dars qachon tugatilganini saqlash kerak bo'lsa:
