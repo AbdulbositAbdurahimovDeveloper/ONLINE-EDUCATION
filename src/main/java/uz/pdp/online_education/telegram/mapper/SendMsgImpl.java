@@ -2,8 +2,11 @@ package uz.pdp.online_education.telegram.mapper;
 
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 
 @Service
 public class SendMsgImpl implements SendMsg {
@@ -26,22 +29,72 @@ public class SendMsgImpl implements SendMsg {
     }
 
     @Override
-    public SendMessage sendMessage(Long chatId, String message, ReplyKeyboardMarkup replyKeyboardMarkup) {
+    public SendMessage sendMessage(Long chatId, String message, ReplyKeyboard keyboard) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
         sendMessage.setText(message);
         sendMessage.setParseMode("HTML");
-        sendMessage.setReplyMarkup(replyKeyboardMarkup);
+        sendMessage.setReplyMarkup(keyboard);
         return sendMessage;
     }
 
+    /**
+     * @param chatId
+     * @param messageId
+     * @return
+     */
     @Override
-    public SendMessage sendMessage(Long chatId, String message, InlineKeyboardMarkup inlineKeyboardMarkup) {
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(chatId);
-        sendMessage.setText(message);
-        sendMessage.setParseMode("HTML");
-        sendMessage.setReplyMarkup(inlineKeyboardMarkup);
+    public DeleteMessage deleteMessage(Long chatId, Integer messageId) {
+        DeleteMessage deleteMessage = new DeleteMessage();
+        deleteMessage.setChatId(chatId);
+        deleteMessage.setMessageId(messageId);
+        return deleteMessage;
+    }
+
+    /**
+     * Creates a message specifically to remove the ReplyKeyboard from the user's screen.
+     *
+     * @param chatId The target chat ID.
+     * @param text   A temporary text to be shown while the keyboard is being removed.
+     * @return A SendMessage object configured to remove the reply keyboard.
+     */
+    @Override
+    public SendMessage sendReplyKeyboardRemove(Long chatId, String text) {
+        SendMessage sendMessage = new SendMessage(chatId.toString(), text);
+
+        ReplyKeyboardRemove removeKeyboard = new ReplyKeyboardRemove(true);
+        sendMessage.setReplyMarkup(removeKeyboard);
+
         return sendMessage;
     }
+
+    /**
+     * PRIMARY METHOD: Creates a fully configured EditMessageText object.
+     * @param chatId The target chat ID.
+     * @param messageId The ID of the message to be edited.
+     * @param newText The new text for the message.
+     * @param newKeyboard The new inline keyboard for the message.
+     * @return A configured {@link EditMessageText} object.
+     */
+    public EditMessageText editMessage(Long chatId, Integer messageId, String newText, InlineKeyboardMarkup newKeyboard) {
+        EditMessageText editMessageText = new EditMessageText();
+        editMessageText.setChatId(chatId.toString());
+        editMessageText.setMessageId(messageId);
+        editMessageText.setText(newText);
+        editMessageText.setParseMode("HTML");
+        editMessageText.setReplyMarkup(newKeyboard);
+        return editMessageText;
+    }
+
+    /**
+     * OVERLOADED: Edits only the text of a message, leaving the keyboard unchanged.
+     * @param chatId The target chat ID.
+     * @param messageId The ID of the message to be edited.
+     * @param newText The new text for the message.
+     * @return A configured {@link EditMessageText} object.
+     */
+    public EditMessageText editMessage(Long chatId, Integer messageId, String newText) {
+        return editMessage(chatId, messageId, newText, null);
+    }
+
 }

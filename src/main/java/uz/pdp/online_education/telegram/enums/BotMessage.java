@@ -5,22 +5,36 @@ import lombok.Getter;
 @Getter
 public enum BotMessage {
 
-    WELCOME_FIRST_TIME("welcome-first-time"),
+    // --- Common Messages ---
+    WELCOME_FIRST_TIME("common.welcome-first-time"),
+    ERROR_UNEXPECTED("common.error.unexpected"),
+    ERROR_USER_NOT_FOUND("common.error.user-not-found"),
+    KEY_NOT_FOUND("common.key-not-found"),
 
-    START_MESSAGE_STUDENT("start-message-student"),
-    START_MESSAGE_INSTRUCTOR("start-message-instructor"),
-    START_MESSAGE_ADMIN("start-message-admin"),
+    // --- Role Changed Messages ---
+    ROLE_CHANGED_STUDENT("common.role-changed.student"),
+    ROLE_CHANGED_INSTRUCTOR("common.role-changed.instructor"),
+    ROLE_CHANGED_ADMIN("common.role-changed.admin"),
 
-    ROLE_CHANGED_STUDENT("role-changed.student"), // Nuqta ierarxiyani bildiradi
-    ROLE_CHANGED_INSTRUCTOR("role-changed.instructor"),
-    ROLE_CHANGED_ADMIN("role-changed.admin"),
+    // --- Student Messages ---
+    START_MESSAGE_STUDENT("student.start-message"),
+    DASHBOARD_STUDENT("student.dashboard"),
 
-    COURSE_ITEM_FORMAT("dynamic.course-item-format"),
+    // --- Instructor Messages ---
+    START_MESSAGE_INSTRUCTOR("instructor.start-message"),
+    DASHBOARD_INSTRUCTOR("instructor.dashboard"),
 
-    ERROR_UNEXPECTED("error.unexpected"),
-    ERROR_USER_NOT_FOUND("error.user-not-found"),
+    // --- Admin Messages ---
+    START_MESSAGE_ADMIN("admin.start-message"),
+    DASHBOARD_ADMIN("admin.dashboard"),
+    ADMIN_USERS_MENU("admin.users-menu"),
+    ADMIN_COURSES_MENU("admin.courses-menu"),
+    ADMIN_BROADCAST_INIT("admin.broadcast.init");
 
-    KEY_NOT_FOUND("key-not-found");
+    // --- Dynamic/Format-only keys (can be in common or a separate section) ---
+    // Hozircha bu kalitni .yml faylga qo'shmadik,
+    // agar kerak bo'lsa, 'common' ichiga qo'shish mumkin.
+    // COURSE_ITEM_FORMAT("common.dynamic.course-item-format");
 
     private final String key;
 

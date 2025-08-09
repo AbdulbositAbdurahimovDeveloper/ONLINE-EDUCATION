@@ -22,11 +22,11 @@ public class InstructorMessageServiceImpl implements InstructorMessageService {
     private final MessageService messageService;
 
     /**
-     * @param message 
+     * @param message
      * @return
      */
     @Override
-    public BotApiMethod<?> handleMessage(Message message) {
+    public void handleMessage(Message message) {
         Long chatId = message.getChatId();
 
         String text = message.getText();
@@ -34,14 +34,13 @@ public class InstructorMessageServiceImpl implements InstructorMessageService {
         Role currentRole = roleService.getUserRole(chatId);
 
         if (text.equals(Utils.START)) {
-            return startMessage(chatId);
+            startMessage(chatId);
         }
 
-        return null;
     }
 
-    private SendMessage startMessage(Long chatId) {
-        return sendMsg.sendMessage(
+    private void startMessage(Long chatId) {
+        sendMsg.sendMessage(
                 chatId,
                 messageService.getMessage(BotMessage.START_MESSAGE_INSTRUCTOR)
         );
