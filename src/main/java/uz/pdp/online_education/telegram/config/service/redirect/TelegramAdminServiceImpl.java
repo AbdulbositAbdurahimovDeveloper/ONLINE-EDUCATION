@@ -16,18 +16,16 @@ public class TelegramAdminServiceImpl implements TelegramAdminService {
     private final AdminMessageService adminMessageService;
 
     /**
-     * @param update 
+     * @param update
      * @return
      */
     @Override
-    public BotApiMethod<?> onUpdateResave(Update update) {
+    public void onUpdateResave(Update update) {
 
         if (update.hasCallbackQuery()) {
-            return adminCallBackQueryService.handleCallback(update.getCallbackQuery());
+            adminCallBackQueryService.handleCallback(update.getCallbackQuery());
         } else if (update.hasMessage()) {
-            return adminMessageService.handleMessage(update.getMessage());
+            adminMessageService.handleMessage(update.getMessage());
         }
-
-        return null;
     }
 }

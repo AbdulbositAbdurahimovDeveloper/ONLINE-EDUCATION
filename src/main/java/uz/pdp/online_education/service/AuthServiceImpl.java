@@ -24,13 +24,14 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
     private final PasswordEncoder passwordEncoder;
-    private final  TelegramUserRepository telegramUserRepository;
+    private final TelegramUserRepository telegramUserRepository;
 
     /**
      * Registers a new user coming from the Telegram bot and links their account immediately.
      * Skips email verification and sets the account as enabled.
+     *
      * @param request The DTO containing registration data (firstName, lastName, etc.).
-     * @param chatId The user's unique Telegram chat ID.
+     * @param chatId  The user's unique Telegram chat ID.
      */
     @Transactional
     @Override
@@ -44,7 +45,7 @@ public class AuthServiceImpl implements AuthService {
         }
         // Telefon raqam uchun ham tekshiruv
         if (request.getPhoneNumber() != null && !request.getPhoneNumber().isEmpty() &&
-            userProfileRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+                userProfileRepository.existsByPhoneNumber(request.getPhoneNumber())) {
             throw new DataConflictException("Bu telefon raqami allaqachon ro'yxatdan o'tgan!");
         }
 
@@ -62,7 +63,7 @@ public class AuthServiceImpl implements AuthService {
         profile.setEmail(request.getEmail());
         profile.setPhoneNumber(request.getPhoneNumber());
         // bio va profilePicture'ni DTO'dan olish mumkin
-        profile.setBio(request.getBio()); 
+        profile.setBio(request.getBio());
 
         // 4. Ikkala obyektni bir-biriga bog'lash
         user.setProfile(profile);
@@ -73,10 +74,10 @@ public class AuthServiceImpl implements AuthService {
 
         // 6. ENG MUHIM QADAM: Telegram profilini yaratish va bog'lash
         // Avval bu chatId bilan boshqa profil bog'lanmaganligiga ishonch hosil qilish
-        if (telegramUserRepository.existsById(chatId)) {
-             throw new DataConflictException("Bu Telegram profili allaqachon boshqa akkauntga ulangan!");
+        if (telegramUserRepository.getCurrentUser(chatId).getUser() != null) {
+            throw new DataConflictException("Bu Telegram profili allaqachon boshqa akkauntga ulangan!");
         }
-        
+
         TelegramUser telegramUser = new TelegramUser();
         telegramUser.setChatId(chatId);
         telegramUser.setUser(savedUser); // Yangi yaratilgan user bilan bog'lash

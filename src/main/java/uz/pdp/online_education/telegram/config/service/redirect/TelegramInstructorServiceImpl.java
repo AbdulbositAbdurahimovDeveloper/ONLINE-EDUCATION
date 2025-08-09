@@ -2,7 +2,6 @@ package uz.pdp.online_education.telegram.config.service.redirect;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import uz.pdp.online_education.telegram.config.service.template.TelegramInstructorService;
 import uz.pdp.online_education.telegram.service.instructor.template.InstructorCallBackQueryService;
@@ -20,14 +19,13 @@ public class TelegramInstructorServiceImpl implements TelegramInstructorService 
      * @return
      */
     @Override
-    public BotApiMethod<?> onUpdateResave(Update update) {
+    public void onUpdateResave(Update update) {
 
         if (update.hasCallbackQuery()) {
-            return instructorCallBackQueryService.handleCallback(update.getCallbackQuery());
+             instructorCallBackQueryService.handleCallback(update.getCallbackQuery());
         } else if (update.hasMessage()) {
-            return instructorMessageService.handleMessage(update.getMessage());
+             instructorMessageService.handleMessage(update.getMessage());
         }
 
-        return null;
     }
 }

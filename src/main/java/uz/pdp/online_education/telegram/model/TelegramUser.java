@@ -16,7 +16,11 @@ public class TelegramUser {
     @Id
     private Long chatId;
 
-    @OneToOne
+    //    @OneToOne
+//    private User user;
+    @OneToOne// FetchType.LAZY tavsiya etiladi
+    @JoinColumn(name = "user_id", unique = true)
+    @ToString.Exclude // Bu ustun aloqani o'rnatadi
     private User user;
 
     @Enumerated(EnumType.STRING)

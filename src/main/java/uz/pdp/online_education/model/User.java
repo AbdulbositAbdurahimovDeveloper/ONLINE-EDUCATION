@@ -14,6 +14,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import uz.pdp.online_education.enums.Role;
 import uz.pdp.online_education.model.Abs.AbsLongEntity;
+import uz.pdp.online_education.telegram.model.TelegramUser;
 
 import java.util.Collection;
 import java.util.List;
@@ -38,6 +39,15 @@ public class User extends AbsLongEntity implements UserDetails {
     @OneToOne(mappedBy = "user", orphanRemoval = true,cascade = CascadeType.ALL)
     @JsonManagedReference
     private UserProfile profile;
+
+    /**
+     * The associated TelegramUser account for this user.
+     * This is the inverse side of the OneToOne relationship.
+     * The 'mappedBy = "user"' indicates that the relationship is managed
+     * by the 'user' field in the TelegramUser entity.
+     */
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private TelegramUser telegramUser;
 
     private boolean deleted = false;
 

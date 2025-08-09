@@ -1,13 +1,16 @@
 package uz.pdp.online_education.telegram.config.service;
 
 import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import uz.pdp.online_education.enums.Role;
 import uz.pdp.online_education.repository.TelegramUserRepository;
 import uz.pdp.online_education.telegram.Utils;
+import uz.pdp.online_education.telegram.config.controller.OnlineEducationBot;
 import uz.pdp.online_education.telegram.enums.UserState;
 import uz.pdp.online_education.telegram.model.TelegramUser;
 import uz.pdp.online_education.telegram.service.RoleService;
@@ -32,6 +35,7 @@ public class UpdateDispatcherService {
     private final SendMsg sendMsg;
     private final TelegramUserRepository telegramUserRepository;
     private final InlineKeyboardService inlineKeyboardService;
+    private final OnlineEducationBot onlineEducationBot;
 
 
     public UpdateDispatcherService(@Lazy RoleService roleService,
@@ -39,7 +43,10 @@ public class UpdateDispatcherService {
                                    @Lazy TelegramInstructorService telegramInstructorService,
                                    @Lazy TelegramStudentService telegramStudentService,
                                    @Lazy MessageService message,
-                                   @Lazy SendMsg sendMsg, TelegramUserRepository telegramUserRepository, InlineKeyboardService inlineKeyboardService) {
+                                   @Lazy SendMsg sendMsg,
+                                   @Lazy TelegramUserRepository telegramUserRepository,
+                                   @Lazy InlineKeyboardService inlineKeyboardService,
+                                   @Lazy OnlineEducationBot onlineEducationBot) {
         this.roleService = roleService;
         this.telegramAdminService = telegramAdminService;
         this.telegramInstructorService = telegramInstructorService;
@@ -48,45 +55,49 @@ public class UpdateDispatcherService {
         this.sendMsg = sendMsg;
         this.telegramUserRepository = telegramUserRepository;
         this.inlineKeyboardService = inlineKeyboardService;
+        this.onlineEducationBot = onlineEducationBot;
     }
 
-    public BotApiMethod<?> dispatch(Update update) {
-        Long chatId = getUserChatId(update);
+    @Async
+    public void dispatch(Update update) {
+        Long userChatId = getUserChatId(update);
 
-        TelegramUser currentUser = telegramUserRepository.findByChatId(chatId)
+        TelegramUser currentUser = telegramUserRepository.findByChatId(userChatId)
                 .orElse(null);
 
-        if (Objects.isNull(currentUser) || Objects.nonNull(currentUser.getUser())) {
-            Long userChatId = getUserChatId(update);
+        if (Objects.isNull(currentUser) || Objects.isNull(currentUser.getUser())) {
 
             TelegramUser telegramUser = new TelegramUser();
-            telegramUser.setChatId(chatId);
+            telegramUser.setChatId(userChatId);
             telegramUser.setUserState(UserState.AUTHENTICATED);
             telegramUserRepository.save(telegramUser);
+            telegramUserRepository.flush();
 
             String sendMessage = message.getMessage(BotMessage.WELCOME_FIRST_TIME);
             InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.welcomeFirstTime(userChatId);
-            return sendMsg.sendMessage(userChatId, sendMessage, inlineKeyboardMarkup);
+            try {
+                onlineEducationBot.execute(sendMsg.sendMessage(userChatId, sendMessage, inlineKeyboardMarkup));
+            } catch (TelegramApiException e) {
+                throw new RuntimeException(e);
+            }
 
         }
-
+        Long chatId = getUserChatId(update);
         Role currentRole = roleService.getUserRole(chatId);
 
         if (Objects.equals(currentRole, Role.ADMIN)) {
 
-            return telegramAdminService.onUpdateResave(update);
+            telegramAdminService.onUpdateResave(update);
 
         } else if (Objects.equals(currentRole, Role.INSTRUCTOR)) {
 
-            return telegramInstructorService.onUpdateResave(update);
+            telegramInstructorService.onUpdateResave(update);
 
         } else if (Objects.equals(currentRole, Role.STUDENT)) {
 
-            return telegramStudentService.onUpdateResave(update);
+            telegramStudentService.onUpdateResave(update);
 
         }
-
-        return null;
     }
 
 
@@ -95,6 +106,8 @@ public class UpdateDispatcherService {
             return update.getMessage().getChatId();
         } else if (update.hasCallbackQuery()) {
             return update.getCallbackQuery().getMessage().getChatId();
+        }else if (update.hasMyChatMember()) {
+            return update.getMyChatMember().getChat().getId();
         }
         return null;
     }

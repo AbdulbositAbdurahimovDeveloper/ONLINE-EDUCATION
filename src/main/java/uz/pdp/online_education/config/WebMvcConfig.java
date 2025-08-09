@@ -39,9 +39,29 @@ public class WebMvcConfig implements WebMvcConfigurer {
         this.minio = minioProperties;
     }
 
+//    @Override
+//    public void addInterceptors(InterceptorRegistry registry) {
+//        registry.addInterceptor(loggingInterceptor);
+//    }
+
+    /**
+     * Interceptorlarni ro'yxatga oluvchi metod.
+     * Bu yerda qaysi interceptor qaysi yo'llar uchun ishlashini belgilaymiz.
+     */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(loggingInterceptor);
+        // LoggingInterceptor'ni ro'yxatga olamiz
+        registry.addInterceptor(loggingInterceptor)
+                // VA UNGA QOIDALAR BELGILAYMIZ:
+
+                // 1. Qaysi yo'llar uchun ISHLAMASLIGINI ko'rsatamiz
+                .excludePathPatterns("/telegram-bot");
+
+        // Agar boshqa yo'llarni ham istisno qilmoqchi bo'lsangiz:
+        // .excludePathPatterns("/telegram-bot", "/static/**", "/swagger-ui/**");
+
+        // 2. (Ixtiyoriy) Faqat ma'lum yo'llar uchun ishlashini ham belgilash mumkin
+        // .addPathPatterns("/api/**");
     }
 
     @Bean
@@ -101,6 +121,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
         }
         return client;
     }
+
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {

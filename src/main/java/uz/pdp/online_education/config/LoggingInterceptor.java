@@ -8,16 +8,6 @@ import org.springframework.web.servlet.HandlerInterceptor;
 @Component
 public class LoggingInterceptor implements HandlerInterceptor {
 
-//    @Override
-//    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-//        System.out.println("---- INCOMING REQUEST ----");
-//        System.out.println("METHOD : " + request.getMethod());
-//        System.out.println("URI    : " + request.getRequestURI());
-//        System.out.println("QUERY  : " + request.getQueryString());
-//        System.out.println("AUTH   : " + request.getHeader("Authorization"));
-//        System.out.println("--------------------------");
-//        return true;
-//    }
 
 
     /**
@@ -28,7 +18,7 @@ public class LoggingInterceptor implements HandlerInterceptor {
      * @return true
      */
 //    @Override
-    public boolean preHandle7(HttpServletRequest request, HttpServletResponse response, Object handler) {
+    public boolean preHandler(HttpServletRequest request, HttpServletResponse response, Object handler) {
         // Muvaffaqiyatli log - Yashil rangda
         System.out.println("\n\033[0;32m🔔  📥  NEW REQUEST RECEIVED\033[0m");
         System.out.println("➡️  Method : " + request.getMethod());

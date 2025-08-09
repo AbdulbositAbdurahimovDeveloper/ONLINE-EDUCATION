@@ -19,6 +19,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public Role getUserRole(Long chatId) {
+
         TelegramUser telegramUser = telegramUserRepository.findByChatId(chatId)
                 .orElse(null);
 
@@ -26,7 +27,7 @@ public class RoleServiceImpl implements RoleService {
             return Role.STUDENT;
         }
 
-        if (telegramUser.getUser() != null) {
+        if (telegramUser.getUser() == null) {
             return Role.STUDENT;
         }
 

@@ -20,14 +20,12 @@ public class TelegramStudentServiceImpl implements TelegramStudentService {
      * @return
      */
     @Override
-    public BotApiMethod<?> onUpdateResave(Update update) {
+    public void onUpdateResave(Update update) {
 
         if (update.hasCallbackQuery()) {
-            return studentCallBackQueryService.handleCallback(update.getCallbackQuery());
+             studentCallBackQueryService.handleCallback(update.getCallbackQuery());
         } else if (update.hasMessage()) {
-            return studentMessageService.handleMessage(update.getMessage());
+             studentMessageService.handleMessage(update.getMessage());
         }
-
-        return null;
     }
 }

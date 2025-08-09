@@ -15,7 +15,6 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
      * @return
      */
     @Override
-    public BotApiMethod<?> handleCallback(CallbackQuery callbackQuery) {
-        return null;
+    public void handleCallback(CallbackQuery callbackQuery) {
     }
 }
