@@ -5,8 +5,8 @@ import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import uz.pdp.online_education.telegram.config.service.template.TelegramAdminService;
-import uz.pdp.online_education.telegram.service.admin.AdminCallBackQueryService;
-import uz.pdp.online_education.telegram.service.admin.AdminMessageService;
+import uz.pdp.online_education.telegram.service.admin.template.AdminCallBackQueryService;
+import uz.pdp.online_education.telegram.service.admin.template.AdminMessageService;
 
 @Service
 @RequiredArgsConstructor

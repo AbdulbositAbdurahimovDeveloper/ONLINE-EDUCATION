@@ -1,0 +1,40 @@
+# Xabarlar kalit-qiymat ko'rinishida saqlanadi
+# Masalan: welcome-first-time: "Salom..."
+
+welcome-first-time: |
+  👋 Assalomu alaykum!
+  
+  <b>Online Education</b> ta'lim platformasining rasmiy botiga xush kelibsiz!
+  
+  Botning barcha imkoniyatlaridan 🔑 to‘liq foydalanish uchun, iltimos, saytdagi profilingizni ulang.
+  
+  Quyidagi tugma sizni kirish yoki yangi akkaunt yaratish sahifasiga olib boradi.
+
+start-message-student: |
+  👋 <b>Assalomu alaykum, hurmatli %s!</b>
+  
+  📚 Siz <b>Online Education</b> platformamizga muvaffaqiyatli ulandingiz.
+
+start-message-instructor: |
+  👋 <b>Assalomu alaykum, muallim %s!</b>
+  
+  🎓 Siz <b>Online Education</b> platformamizda instructor sifatida tanildingiz.
+
+start-message-admin: |
+  👋 <b>Assalomu alaykum, admin %s!</b>
+  
+  🔐 Siz platformaning administratorisiz.
+
+role-changed:
+  student: "🔄 Rolingiz muvaffaqiyatli <b>O‘quvchi (Student)</b> ga o'zgartirildi."
+  instructor: "🔄 Rolingiz muvaffaqiyatli <b>Instructor</b> ga o'zgartirildi."
+  admin: "🔄 Rolingiz muvaffaqiyatli <b>Administrator</b> ga o'zgartirildi."
+
+dynamic:
+  course-item-format: "🔹 %s (Davomiyligi: %d soat)\n"
+
+error:
+  unexpected: "Kutilmagan xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring."
+  user-not-found: "Sizning profilingiz topilmadi. Iltimos, avval saytdan ro'yxatdan o'ting."
+
+key-not-found: "Xabar topilmadi."

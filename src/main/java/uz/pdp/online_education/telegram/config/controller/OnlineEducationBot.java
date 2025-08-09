@@ -33,7 +33,7 @@ public class OnlineEducationBot extends TelegramWebhookBot {
      */
     @Override
     public BotApiMethod<?> onWebhookUpdateReceived(Update update) {
-//        log.info("update: {}", update.getEditedMessage().getFrom().getUserName());
+//        log.info("update: {}", update.getMessage().getChatId());
         return updateDispatcherService.dispatch(update);
     }
 
