@@ -1,37 +1,45 @@
 package uz.pdp.online_education.telegram.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum BotMessage {
 
-    // Barcha xabarlar shu yerda, "KALIT("Matn")" formatida e'lon qilinadi
-    WELCOME("Assalomu alaykum! Bizning online ta'lim platformamizga xush kelibsiz!"),
-    MAIN_MENU("⬇️ Quyidagi bo'limlardan birini tanlang:"),
-    ASK_CONTACT("Iltimos, profilingizni tasdiqlash uchun telefon raqamingizni yuboring."),
-    
-    // Xatoliklar
-    ERROR_UNEXPECTED("Kutilmagan xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring."),
-    ERROR_USER_NOT_FOUND("Sizning profilingiz topilmadi. Iltimos, avval saytdan ro'yxatdan o'ting."),
+    // --- Common Messages ---
+    WELCOME_FIRST_TIME("common.welcome-first-time"),
+    ERROR_UNEXPECTED("common.error.unexpected"),
+    ERROR_USER_NOT_FOUND("common.error.user-not-found"),
+    KEY_NOT_FOUND("common.key-not-found"),
 
-    // Muvaffaqiyatli xabarlar
-    SUCCESS_CONNECTION("✅ Sizning profilingiz muvaffaqiyatli bog'landi!"),
-    
-    // Dinamik xabarlar uchun formatlangan matnlar
-    COURSE_LIST_HEADER("📚 Siz a'zo bo'lgan kurslar ro'yxati:\n\n"),
-    COURSE_ITEM_FORMAT("🔹 %s\n"), // %s o'rniga kurs nomi qo'yiladi
-    
-    // Agar biror kalit topilmasa qaytariladigan standart xabar
-    KEY_NOT_FOUND("Xabar topilmadi."),
+    // --- Role Changed Messages ---
+    ROLE_CHANGED_STUDENT("common.role-changed.student"),
+    ROLE_CHANGED_INSTRUCTOR("common.role-changed.instructor"),
+    ROLE_CHANGED_ADMIN("common.role-changed.admin"),
 
-    CHANGED_ROLE("Sizning rolein almashtirildi");
+    // --- Student Messages ---
+    START_MESSAGE_STUDENT("student.start-message"),
+    DASHBOARD_STUDENT("student.dashboard"),
 
-    // --- Enum'ning ichki mexanizmi ---
+    // --- Instructor Messages ---
+    START_MESSAGE_INSTRUCTOR("instructor.start-message"),
+    DASHBOARD_INSTRUCTOR("instructor.dashboard"),
 
-    private final String message;
+    // --- Admin Messages ---
+    START_MESSAGE_ADMIN("admin.start-message"),
+    DASHBOARD_ADMIN("admin.dashboard"),
+    ADMIN_USERS_MENU("admin.users-menu"),
+    ADMIN_COURSES_MENU("admin.courses-menu"),
+    ADMIN_BROADCAST_INIT("admin.broadcast.init");
 
-    BotMessage(String message) {
-        this.message = message;
+    // --- Dynamic/Format-only keys (can be in common or a separate section) ---
+    // Hozircha bu kalitni .yml faylga qo'shmadik,
+    // agar kerak bo'lsa, 'common' ichiga qo'shish mumkin.
+    // COURSE_ITEM_FORMAT("common.dynamic.course-item-format");
+
+    private final String key;
+
+    BotMessage(String key) {
+        this.key = key;
     }
 
-    public String getMessage(Object... args) {
-        return String.format(message, args);
-    }
 }

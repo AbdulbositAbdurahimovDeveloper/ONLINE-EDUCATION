@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduPress - Telegram bilan bog'lanish</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="auth-container">
+    <!-- Kirish Formasi (Boshida ko'rinadi) -->
+    <form id="loginForm" class="auth-form" action="/api/auth/login-telegram" method="POST">
+        <h1>Tizimga Kirish</h1>
+        <p>Telegram profilingizni saytdagi akkauntingizga bog'lash uchun kiring.</p>
+
+        <div class="input-group">
+            <label for="login_username">Foydalanuvchi nomi</label>
+            <input type="text" id="login_username" name="username" required>
+        </div>
+
+        <div class="input-group">
+            <label for="login_password">Parol</label>
+            <input type="password" id="login_password" name="password" required>
+        </div>
+
+        <input type="hidden" id="login_chat_id" name="chat_id">
+
+        <button type="submit">Kirish va Bog'lash</button>
+
+        <p class="switch-form">
+            Akkauntingiz yo'qmi? <a href="#" id="showRegisterLink">Ro'yxatdan o'tish</a>
+        </p>
+    </form>
+
+    <!-- Ro'yxatdan o'tish Formasi (Boshida yashirin) -->
+    <form id="registerForm" class="auth-form" action="/api/auth/register-telegram" method="POST" style="display: none;">
+        <h1>Ro'yxatdan O'tish</h1>
+        <p>Yangi akkaunt yarating va uni darhol Telegram profilingizga bog'lang.</p>
+
+        <div class="input-group">
+            <label for="reg_firstname">Ism</label>
+            <input type="text" id="reg_firstname" name="firstName" required>
+        </div>
+
+        <div class="input-group">
+            <label for="reg_lastname">Familiya</label>
+            <input type="text" id="reg_lastname" name="lastName" required>
+        </div>
+
+        <div class="input-group">
+            <label for="reg_username">Foydalanuvchi nomi (username)</label>
+            <input type="text" id="reg_username" name="username" required>
+        </div>
+
+        <div class="input-group">
+            <label for="reg_email">Email</label>
+            <input type="email" id="reg_email" name="email" required>
+        </div>
+
+        <div class="input-group">
+            <label for="reg_password">Parol</label>
+            <input type="password" id="reg_password" name="password" required>
+        </div>
+
+        <input type="hidden" id="register_chat_id" name="chat_id">
+
+        <button type="submit">Ro'yxatdan o'tish va Bog'lash</button>
+
+        <p class="switch-form">
+            Akkauntingiz bormi? <a href="#" id="showLoginLink">Tizimga kirish</a>
+        </p>
+    </form>
+
+    <div id="message-box" class="message-box"></div>
+</div>
+
+<script src="/js/script.js"></script>
+</body>
+</html>

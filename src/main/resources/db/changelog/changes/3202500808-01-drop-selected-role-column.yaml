@@ -1,0 +1,27 @@
+databaseChangeLog:
+  # ... avvalgi changeSet'lar bu yerda ...
+
+  - changeSet:
+      id: 202500808-01-drop-selected-role-column
+      author: Eldor04 # yoki o'zgartirish kiritayotgan muallif
+      comment: "Removing the selected_role column from telegram_users as it is no longer needed"
+      changes:
+        # 1-QADAM: KERAKSIZ USTUNNI O'CHIRISH
+        - dropColumn:
+            tableName: telegram_users
+            columnName: selected_role
+
+      # =====================================================================
+      # O'ZGARISHNI ORQAGA QAYTARISH (ROLLBACK)
+      # =====================================================================
+      rollback:
+        # Rollback qilish uchun ustunni asl holatiga qayta qo'shamiz
+        - addColumn:
+            tableName: telegram_users
+            columns:
+              - column:
+                  name: selected_role
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                  remarks: "The current role the user is interacting as (e.g., STUDENT, INSTRUCTOR)"
