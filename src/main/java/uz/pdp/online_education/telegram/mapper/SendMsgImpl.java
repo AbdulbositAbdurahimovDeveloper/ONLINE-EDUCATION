@@ -3,6 +3,7 @@ package uz.pdp.online_education.telegram.mapper;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
@@ -93,8 +94,18 @@ public class SendMsgImpl implements SendMsg {
      * @param newText The new text for the message.
      * @return A configured {@link EditMessageText} object.
      */
+    @Override
     public EditMessageText editMessage(Long chatId, Integer messageId, String newText) {
         return editMessage(chatId, messageId, newText, null);
+    }
+
+    @Override
+    public EditMessageReplyMarkup editMarkup(Long chatId, Integer messageId){
+        EditMessageReplyMarkup editMessageReplyMarkup = new EditMessageReplyMarkup();
+        editMessageReplyMarkup.setChatId(chatId.toString());
+        editMessageReplyMarkup.setMessageId(messageId);
+        editMessageReplyMarkup.setReplyMarkup(null);
+        return editMessageReplyMarkup;
     }
 
 }
