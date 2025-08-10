@@ -45,6 +45,8 @@ public interface Utils {
         String COURSE_LIST_TEXT = "📋 Barcha kurslar ro'yxati";
         String COURSE_ADD_TEXT = "➕ Yangi kurs qo'shish";
         String COURSE_SEARCH_TEXT = "🔎 Kurs qidirish";
+
+        String BACK_TO_MY_COURSES_TEXT = "⬅️ Mening Kurslarimga qaytish";
     }
 
     // --- INLINE KEYBOARD CALLBACK DATA PREFIXES ---
@@ -64,6 +66,11 @@ public interface Utils {
         String COURSE_LIST_CALLBACK = "courses:list:page:0";
         String COURSE_ADD_CALLBACK = "courses:add:init";
         String COURSE_SEARCH_CALLBACK = "courses:search:init";
+
+        String MY_COURSE_VIEW_CALLBACK = "mycourse:view:"; // Prefix
+        String MY_COURSE_LIST_PAGE_CALLBACK = "mycourse:list:page:"; // Prefix
+
+        String BACK_TO_MY_COURSES_CALLBACK = "mycourse:list:page:0";
 
         String USERS_PREFIX = "users";
         String COURSES_PREFIX = "courses";

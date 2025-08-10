@@ -51,6 +51,58 @@ student:
 
     🏆 <b>Yakunlangan Modullar: %d ta</b>
        <i>(Bu sizning yutuqlaringiz!)</i>
+  my-courses:
+    header: |
+      📚 <b>Mening Kurslarim</b>  
+      <i>(Sahifa %d / %d)</i>  
+
+      <i>Siz a'zo bo'lgan kurslar ro'yxati. Davom ettirish uchun raqamni tanlang:</i>
+
+    list-item: |
+      <b>%d.</b> %s  
+      <i>Umumiy o'zlashtirish:</i> <b>%d%%</b>  
+      <code>%s</code>
+
+    no-courses: |
+      😔 Siz hali hech qanday kursga a'zo bo'lmabsiz.  
+      
+      🎓 <b>Barcha Kurslar</b> bo'limidan o'zingizga mos kursni tanlashingiz mumkin!
+
+  course-modules:
+    header: |
+      📚 <b>Kurs:</b> %s  
+
+      <i>Davom ettirish uchun modulni tanlang:</i>
+
+    list-item: |
+      <b>%d.</b> %s  (✅ %d%%)  
+      <code>%s</code>
+
+    no-modules: |
+      ❌ Kechirasiz, bu kursda hali modullar mavjud emas.
+
+  lesson:
+    content-header: |
+      📖 <b>Dars:</b> %s  
+
+      <i>Quyida darsning asosiy mazmuni keltirilgan.</i>  
+      <i>To'liq versiya va qo'shimcha materiallarni saytdan topishingiz mumkin.</i>
+
+    main-menu: |
+      📖 <b>Dars: %s</b>
+      
+      <b>Asosiy mavzu:</b>
+      %s
+      
+      _Quyidagi bo'limlardan birini tanlang:_
+    quiz-text: "Testni bajarish va bilimingizni sinash uchun saytdagi sahifaga o'ting."
+
+    fully-paid-module: |
+      🔒 <b>Modul: %s</b>
+      
+      Ushbu modul to'liq pullik va unda bepul darslar mavjud emas.
+      
+      Darslarni ko'rishni boshlash uchun, iltimos, avval modulni sotib oling.    
 
 # ======================================================
 # INSTRUCTOR MESSAGES

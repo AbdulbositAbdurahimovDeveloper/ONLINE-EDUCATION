@@ -2,6 +2,7 @@ package uz.pdp.online_education.telegram.mapper;
 
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
@@ -18,4 +19,7 @@ public interface SendMsg {
 
     EditMessageText editMessage(Long chatId, Integer messageId, String menuText, InlineKeyboardMarkup keyboard);
 
+    EditMessageText editMessage(Long chatId, Integer messageId, String menuText);
+
+    EditMessageReplyMarkup editMarkup(Long chatId, Integer messageId);
 }

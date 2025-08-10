@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldNameConstants;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
+import uz.pdp.online_education.enums.EnrollmentStatus;
 import uz.pdp.online_education.model.Abs.AbsLongEntity;
 
 @AllArgsConstructor
@@ -16,19 +17,19 @@ import uz.pdp.online_education.model.Abs.AbsLongEntity;
 @FieldNameConstants
 @Table(uniqueConstraints = {
         // Bitta foydalanuvchi bitta modulga faqat bir marta yozilishi mumkin
-        @UniqueConstraint(columnNames = {"user_id", "course_module_id"})
+        @UniqueConstraint(columnNames = {"user_id", "module_id"})
 })
 public class ModuleEnrollment extends AbsLongEntity {
 
     // Modulga yozilgan foydalanuvchi
     @ToString.Exclude
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne( optional = false)
     @JoinColumn(name = "user_id")
     private User user;
 
     // Foydalanuvchi yozilgan modul
     @ToString.Exclude
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne( optional = false)
     @JoinColumn(name = "module_id")
     private Module module;
 

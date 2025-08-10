@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import uz.pdp.online_education.model.Module;
 import uz.pdp.online_education.model.lesson.Lesson;
 import uz.pdp.online_education.payload.PageDTO;
@@ -31,4 +32,15 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
     Page<Lesson> findAllByModule_Id(Long moduleId, Pageable pageable);
 
     Page<Lesson> findByModule(Module module, Pageable pageable);
+
+    /**
+     * Finds all lessons for a specific module, ordered by their index.
+     * @param moduleId The ID of the module.
+     * @return A sorted list of lessons.
+     */
+    List<Lesson> findAllByModuleIdOrderByOrderIndexAsc(Long moduleId);
+
+
+    @Query("SELECT COUNT(l) > 0 FROM Lesson l WHERE l.module.id = :moduleId AND l.isFree = true")
+    boolean hasFreeLessons(@Param("moduleId") Long moduleId);
 }
