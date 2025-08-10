@@ -5,21 +5,23 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import uz.pdp.online_education.enums.EnrollmentStatus;
 import uz.pdp.online_education.enums.TransactionStatus;
 import uz.pdp.online_education.exceptions.DataConflictException;
 import uz.pdp.online_education.exceptions.EntityNotFoundException;
 import uz.pdp.online_education.mapper.PaymentMapper;
+import uz.pdp.online_education.model.*;
 import uz.pdp.online_education.model.Abs.AbsLongEntity;
 import uz.pdp.online_education.model.Module;
-import uz.pdp.online_education.model.Payment;
-import uz.pdp.online_education.model.User;
-import uz.pdp.online_education.model.UserProfile;
 import uz.pdp.online_education.payload.PageDTO;
+import uz.pdp.online_education.payload.enrollment.ModuleEnrollmentRequestDTO;
 import uz.pdp.online_education.payload.payment.PaymentCreateDTO;
 import uz.pdp.online_education.payload.payment.PaymentDTO;
+import uz.pdp.online_education.repository.ModuleEnrollmentRepository;
 import uz.pdp.online_education.repository.ModuleRepository;
 import uz.pdp.online_education.repository.PaymentRepository;
 import uz.pdp.online_education.service.interfaces.EmailService;
+import uz.pdp.online_education.service.interfaces.ModuleEnrollmentService;
 import uz.pdp.online_education.service.interfaces.PaymentService;
 
 import java.math.BigDecimal;
@@ -36,6 +38,8 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentMapper paymentMapper;
     private final ModuleRepository moduleRepository;
     private final EmailService emailService;
+    private final ModuleEnrollmentService moduleEnrollmentService;
+    private final ModuleEnrollmentRepository moduleEnrollmentRepository;
 
     /**
      * @param page Integer
@@ -151,6 +155,20 @@ public class PaymentServiceImpl implements PaymentService {
         paymentRepository.save(payment);
 
         emailService.sendPaymentReceipt(payment);
+
+//        ModuleEnrollmentRequestDTO moduleEnrollmentRequestDTO = new ModuleEnrollmentRequestDTO(
+//                currentUser.getId(),
+//                module.getId()
+//        );
+//        moduleEnrollmentService.enrollUser(moduleEnrollmentRequestDTO);
+
+//        ModuleEnrollment enrollment = moduleEnrollmentRepository
+//                .findByUserIdAndModuleId(payment.getUser().getId(), payment.getModule().getId())
+//                .orElse(new ModuleEnrollment(payment.getUser(), payment.getModule()));
+
+        // HOLATNI O'ZGARTIRISH
+//        enrollment.setStatus(EnrollmentStatus.ACTIVE);
+//        moduleEnrollmentRepository.save(enrollment);
 
         return paymentMapper.toDTO(payment);
 

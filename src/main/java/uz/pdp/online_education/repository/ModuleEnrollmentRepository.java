@@ -1,10 +1,16 @@
 package uz.pdp.online_education.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.ModuleEnrollment;
+
+import java.util.Collection;
+import java.util.List;
 
 @Repository
 public interface ModuleEnrollmentRepository extends JpaRepository<ModuleEnrollment, Long> {
@@ -38,4 +44,59 @@ public interface ModuleEnrollmentRepository extends JpaRepository<ModuleEnrollme
      */
     @Query("SELECT COUNT(me) FROM module_enrollments me WHERE me.user.id = :userId AND me.progressPercentage = 100.0")
     Integer countCompletedModulesByUserId(@Param("userId") Long userId);
+
+    /**
+     * Finds all unique courses a user is enrolled in, sorted by their average rating in descending order.
+     * This query starts from ModuleEnrollment, joins to Course, and then left joins to Review to calculate the average rating.
+     *
+     * @param userId The ID of the user.
+     * @param pageable Pagination information.
+     * @return A paginated list of the user's enrolled Courses, sorted by average rating.
+     */
+    @Query(value = "SELECT me.module.course " +
+            "FROM module_enrollments me " +
+            "LEFT JOIN me.module.course.reviews r " +
+            "WHERE me.user.id = :userId " +
+            "GROUP BY me.module.course " +
+            "ORDER BY COALESCE(AVG(r.rating), 0.0) DESC, me.module.course.id ASC")
+    Page<Course> findEnrolledCoursesByUserIdSortedByRating(@Param("userId") Long userId, Pageable pageable);
+
+    /**
+     * Calculates the average progress percentage for a specific user within a specific course.
+     * It does this by averaging the progress of all modules the user is enrolled in for that course.
+     *
+     * @param userId The ID of the user.
+     * @param courseId The ID of the course.
+     * @return The average progress as a Double, or null if no relevant enrollments are found.
+     */
+    @Query("SELECT AVG(me.progressPercentage) " +
+            "FROM module_enrollments me " +
+            "WHERE me.user.id = :userId AND me.module.course.id = :courseId")
+    Double findAverageProgressForCourse(@Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    /**
+     * Finds all enrollments for a specific user within a specific course.
+     * The results are ordered by the module's orderIndex to display them correctly.
+     *
+     * @param userId The ID of the user.
+     * @param courseId The ID of the course.
+     * @return A list of ModuleEnrollments.
+     */
+    @Query("SELECT me FROM module_enrollments me " +
+            "WHERE me.user.id = :userId AND me.module.course.id = :courseId " +
+            "ORDER BY me.module.orderIndex ASC")
+    List<ModuleEnrollment> findEnrollmentsByUserAndCourse(@Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    Collection<ModuleEnrollment> findAllByUserId(Long userId);
+
+    boolean existsByUserIdAndModuleId(Long userId, Long moduleId);
+
+    Collection<ModuleEnrollment> findAllByModuleId(Long moduleId);
+
+    /**
+     * Finds all unique courses a user is enrolled in (regardless of payment status).
+     * This is used for the "My Courses" section, which acts as a personal cabinet.
+     */
+    @Query("SELECT DISTINCT me.module.course FROM module_enrollments me WHERE me.user.id = :userId")
+    Page<Course> findEnrolledCoursesByUserId(@Param("userId") Long userId, Pageable pageable);
 }

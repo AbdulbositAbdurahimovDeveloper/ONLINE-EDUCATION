@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import uz.pdp.online_education.enums.TransactionStatus;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.Payment;
 import uz.pdp.online_education.model.User;
@@ -30,4 +31,11 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     List<Course> findCoursesByUserId(@Param("userId") Long userId);
 
     boolean existsByUser_UsernameAndModule_Id(String userUsername, Long moduleId);
+
+    /**
+     * Checks if a successful payment exists for a specific user and module.
+     * @return true if a successful payment is found, otherwise false.
+     */
+    boolean existsByUserIdAndModuleIdAndStatus(Long userId, Long moduleId, TransactionStatus status);
+
 }

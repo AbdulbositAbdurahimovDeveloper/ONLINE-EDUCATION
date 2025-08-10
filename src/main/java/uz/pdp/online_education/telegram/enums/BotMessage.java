@@ -19,6 +19,19 @@ public enum BotMessage {
     // --- Student Messages ---
     START_MESSAGE_STUDENT("student.start-message"),
     DASHBOARD_STUDENT("student.dashboard"),
+    STUDENT_MY_COURSES_HEADER("student.my-courses.header"),
+    STUDENT_MY_COURSES_LIST_ITEM("student.my-courses.list-item"),
+    STUDENT_MY_COURSES_NO_COURSES("student.my-courses.no-courses"),
+
+    STUDENT_COURSE_MODULES_HEADER("student.course-modules.header"),
+    STUDENT_COURSE_MODULES_LIST_ITEM("student.course-modules.list-item"),
+    STUDENT_COURSE_MODULES_NO_MODULES("student.course-modules.no-modules"),
+
+    STUDENT_LESSON_CONTENT_HEADER("student.lesson.content-header"),
+
+    STUDENT_LESSON_MAIN_MENU("student.lesson.main-menu"),
+    STUDENT_LESSON_QUIZ_TEXT("student.lesson.quiz-text"),
+    STUDENT_LESSON_FULLY_PAID_MODULE("student.lesson.fully-paid-module"),
 
     // --- Instructor Messages ---
     START_MESSAGE_INSTRUCTOR("instructor.start-message"),
