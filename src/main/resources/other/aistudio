@@ -11,7 +11,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import uz.pdp.online_education.telegram.config.controller.OnlineEducationBot;
 import uz.pdp.online_education.telegram.mapper.SendMsg;
 import uz.pdp.online_education.telegram.service.student.template.StudentCallBackQueryService;
-import uz.pdp.online_education.telegram.service.student.template.StudentMessageService;
+import uz.pdp.online_education.telegram.service.student.template.StudentProcessMessageService;
 import uz.pdp.online_education.telegram.service.student.template.StudentReplyKeyboardService;
 
 /**
@@ -535,7 +535,7 @@ import uz.pdp.online_education.telegram.mapper.SendMsg;
 import uz.pdp.online_education.telegram.model.TelegramUser;
 import uz.pdp.online_education.telegram.service.message.MessageService;
 import uz.pdp.online_education.telegram.service.student.template.StudentInlineKeyboardService;
-import uz.pdp.online_education.telegram.service.student.template.StudentMessageService;
+import uz.pdp.online_education.telegram.service.student.template.StudentProcessMessageService;
 import uz.pdp.online_education.telegram.service.student.template.StudentReplyKeyboardService;
 
 import java.util.List;

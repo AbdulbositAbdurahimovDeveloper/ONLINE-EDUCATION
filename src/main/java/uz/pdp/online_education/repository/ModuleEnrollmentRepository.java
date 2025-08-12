@@ -8,12 +8,16 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.ModuleEnrollment;
+import uz.pdp.online_education.model.User;
 
 import java.util.Collection;
 import java.util.List;
 
 @Repository
 public interface ModuleEnrollmentRepository extends JpaRepository<ModuleEnrollment, Long> {
+
+    @Query("SELECT me.module.id FROM module_enrollments me WHERE me.user.id = :userId AND me.module.course.id = :courseId")
+    List<Long> findEnrolledModuleIdsByUser(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     /**
      * Counts the number of unique, in-progress (not completed) courses for a specific user.
@@ -56,11 +60,12 @@ public interface ModuleEnrollmentRepository extends JpaRepository<ModuleEnrollme
      */
 //    @Query("SELECT DISTINCT me.module.course FROM ModuleEnrollment me WHERE me.user.id = :userId")
 //    Page<Course> findEnrolledCoursesByUserId(@Param("userId") Long userId, Pageable pageable);
+
     /**
      * Calculates the average progress percentage for a specific user within a specific course.
      * It does this by averaging the progress of all modules the user is enrolled in for that course.
      *
-     * @param userId The ID of the user.
+     * @param userId   The ID of the user.
      * @param courseId The ID of the course.
      * @return The average progress as a Double, or null if no relevant enrollments are found.
      */
@@ -73,7 +78,7 @@ public interface ModuleEnrollmentRepository extends JpaRepository<ModuleEnrollme
      * Finds all enrollments for a specific user within a specific course.
      * The results are ordered by the module's orderIndex to display them correctly.
      *
-     * @param userId The ID of the user.
+     * @param userId   The ID of the user.
      * @param courseId The ID of the course.
      * @return A list of ModuleEnrollments.
      */
@@ -94,4 +99,9 @@ public interface ModuleEnrollmentRepository extends JpaRepository<ModuleEnrollme
      */
     @Query("SELECT DISTINCT me.module.course FROM module_enrollments me WHERE me.user.id = :userId")
     Page<Course> findEnrolledCoursesByUserId(@Param("userId") Long userId, Pageable pageable);
+
+    @Query("SELECT COUNT(me) FROM module_enrollments me WHERE me.user.id = :userId AND me.module.course.id = :courseId")
+    long countByUserAndCourse(@Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    boolean existsByUserAndModuleId(User user, Long moduleId);
 }

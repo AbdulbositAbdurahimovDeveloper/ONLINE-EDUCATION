@@ -2,11 +2,14 @@ package uz.pdp.online_education.repository;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import uz.pdp.online_education.enums.Role;
 import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.payload.AdminDashboardDTO;
+import uz.pdp.online_education.payload.UserInfo;
 
 import java.util.List;
 import java.util.Optional;
@@ -43,4 +46,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
                      WHERE cm.status = 'NEW') AS newSupportTickets
             """, nativeQuery = true)
     AdminDashboardDTO getAdminDashboardStats();
+
+    @Query("SELECT u.id as id, up.firstName as firstName, up.lastName as lastName, count(co.id) as courseCount " +
+            "FROM users u JOIN u.profile up JOIN courses co ON co.instructor.id = u.id " +
+            "WHERE u.role = 'INSTRUCTOR' AND co.deleted = false AND co.success = true " +
+            "GROUP BY u.id, up.firstName, up.lastName " +
+            "HAVING count(co.id) > 0 " +
+            "ORDER BY up.firstName")
+    Page<UserInfo> findInstructorsWithCourseCount(Pageable pageable);
 }

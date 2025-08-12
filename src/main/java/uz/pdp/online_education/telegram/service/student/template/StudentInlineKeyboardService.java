@@ -6,6 +6,8 @@ import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.Module;
 import uz.pdp.online_education.model.ModuleEnrollment;
 import uz.pdp.online_education.model.lesson.Lesson;
+import uz.pdp.online_education.payload.CategoryInfo;
+import uz.pdp.online_education.payload.UserInfo;
 
 import java.util.List;
 
@@ -24,34 +26,32 @@ public interface StudentInlineKeyboardService {
      */
     InlineKeyboardMarkup logoutConfirmation();
 
-    InlineKeyboardMarkup myCoursesListPage(Page<Course> coursesPage);
-
-    InlineKeyboardMarkup courseModulesPage(Long courseId, List<ModuleEnrollment> enrollments);
+    /**
+     * Foydalanuvchi obuna bo'lgan kurslar ro'yxati uchun klaviatura yaratadi.
+     */
+    InlineKeyboardMarkup myCoursesMenu(Page<Course> coursePage);
 
     /**
-     * Creates a simple keyboard with a single "Back to My Courses" button.
-     * Useful for views where the user needs to navigate back to their course list.
-     *
-     * @return An {@link InlineKeyboardMarkup} with a single back button.
+     * Tanlangan kursning modullari ro'yxati uchun klaviatura yaratadi.
      */
-    InlineKeyboardMarkup backToMyCourses();
+    InlineKeyboardMarkup modulesMenu(Page<Module> modulePage, Long courseId, List<Long> enrolledModuleIds,boolean isEnrolledToFullCourse);
 
     /**
-     * Darslar ro'yxati uchun to'liq klaviaturani yaratadi.
-     * @param module Modul haqida to'liq ma'lumot (ID, narx, kurs IDsi uchun).
-     * @param lessons Ushbu modulga tegishli darslar ro'yxati.
-     * @param isEnrolled Foydalanuvchi bu modulga a'zo bo'lganmi yoki yo'q.
-     * @return Tayyor InlineKeyboardMarkup.
+     * Bitta tugmadan iborat oddiy inline klaviatura yaratadi.
+     * @param text Tugma matni
+     * @param callbackData Tugma callback ma'lumoti
+     * @return Bitta tugmali InlineKeyboardMarkup
      */
-    InlineKeyboardMarkup lessonListPage(Module module, List<Lesson> lessons, boolean isEnrolled);
+    InlineKeyboardMarkup createSingleButtonKeyboard(String text, String callbackData);
 
-    InlineKeyboardMarkup lessonViewKeyboard(Long moduleId, String lessonUrlOnSite);
+    InlineKeyboardMarkup lessonsMenu(Page<Lesson> lessonPage, Long moduleId, Long id, boolean isModuleEnrolled);
 
-    InlineKeyboardMarkup lessonContentMenu(Lesson lesson);
+    InlineKeyboardMarkup lessonContentsMenu(Lesson lesson, Long id);
+
+    /**
+     * Veb-saytga olib boruvchi URL tugmasidan iborat klaviatura yaratadi.
+     */
+    InlineKeyboardMarkup createUrlButton(String text, String url);
 
 
-    // Quiz uchun alohida klaviatura
-    InlineKeyboardMarkup quizButton(Long quizId);
-
-    InlineKeyboardMarkup buyOnlyKeyboard(Module module);
 }

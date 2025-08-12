@@ -31,4 +31,10 @@ public interface TelegramUserRepository extends JpaRepository<TelegramUser, Long
     @Modifying   // Bu so'rovning ma'lumotni o'zgartirishini (UPDATE, DELETE) bildiradi
     @Query("UPDATE telegram_users tu SET tu.userState = :state WHERE tu.chatId = :chatId")
     void updateStateByChatId(@Param("chatId") Long chatId, @Param("state") UserState state);
+
+    @Modifying // Bu annotatsiya yozish operatsiyasi ekanligini bildiradi
+    @Transactional // Bu metod o'zining alohida tranzaksiyasida ishlashi kerak
+    @Query("UPDATE telegram_users tu SET tu.user = NULL, tu.userState = 'UNREGISTERED' WHERE tu.chatId = :chatId")
+    void unregisterUserByChatId(@Param("chatId") Long chatId);
+
 }

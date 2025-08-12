@@ -38,4 +38,8 @@ public interface ModuleRepository extends JpaRepository<Module, Long> {
     boolean existsByTitle(String title);
 
     long countById(Long id);
+
+    Page<Module> findAllByCourse(Course course, Pageable pageable);
+
+    long countByCourse(Course course);
 }

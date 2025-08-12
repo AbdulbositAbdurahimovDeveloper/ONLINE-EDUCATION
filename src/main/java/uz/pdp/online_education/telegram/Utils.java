@@ -52,6 +52,32 @@ public interface Utils {
     // --- INLINE KEYBOARD CALLBACK DATA PREFIXES ---
     // Example: "users:list:page:0"
     interface CallbackData {
+
+        // --- STUDENT "MY COURSES" FLOW PREFIXES ---
+        // Format: "prefix:action:value1:value2:..."
+        // myc -> my_course, mod -> module, les -> lesson, con -> content
+        String AUTH_PREFIX = "auth";
+        String MY_COURSE_PREFIX = "myc";    // Kurslar ro'yxati uchun
+        String ALL_COURSES_PREFIX = "allc"; // Barcha kurslar oqimi uchun
+        String MODULE_PREFIX = "mod";       // Modullar ro'yxati uchun
+        String LESSON_PREFIX = "les";       // Darslar ro'yxati uchun
+        String CONTENT_PREFIX = "con";      // Kontentni ko'rish uchun
+        String STUDENT_PREFIX = "std";      // Talabaga oid umumiy harakatlar
+
+        // --- ACTIONS ---
+        String ACTION_VIEW = "v";           // Ko'rish
+        String ACTION_LIST = "l";           // Ro'yxatni ochish (odatda navigatsiya uchun)
+        String ACTION_PAGE = "p";           // Sahifa
+        String ACTION_BACK = "b";           // Orqaga
+        String ACTION_BUY = "buy";          // Sotib olish
+
+        // --- BACK TARGETS ---
+        String BACK_TO_MAIN_MENU = "main";
+        String BACK_TO_COURSES = "courses";
+        String BACK_TO_MODULES = "modules";
+        String BACK_TO_LESSONS = "lessons";
+
+
         // Format: "module:action:value1:value2"
         String USER_LIST_CALLBACK = "users:list:page:0";
         String USER_SEARCH_CALLBACK = "users:search:init";
@@ -66,6 +92,11 @@ public interface Utils {
         String COURSE_LIST_CALLBACK = "courses:list:page:0";
         String COURSE_ADD_CALLBACK = "courses:add:init";
         String COURSE_SEARCH_CALLBACK = "courses:search:init";
+//
+//        // --- TAYYOR CALLBACK SATRLARI (to'liq ko'rinishda) ---
+//        String AUTH_LOGOUT_INIT_CALLBACK = AUTH_PREFIX + ":logout:init";       // "auth:logout:init"
+//        String AUTH_LOGOUT_CONFIRM_CALLBACK = AUTH_PREFIX + ":logout:confirm"; // "auth:logout:confirm"
+//        String AUTH_LOGOUT_CANCEL_CALLBACK = AUTH_PREFIX + ":logout:cancel";   // "auth:logout:cancel"
 
         String MY_COURSE_VIEW_CALLBACK = "mycourse:view:"; // Prefix
         String MY_COURSE_LIST_PAGE_CALLBACK = "mycourse:list:page:"; // Prefix
@@ -76,12 +107,12 @@ public interface Utils {
         String COURSES_PREFIX = "courses";
         String ADMIN_PREFIX = "admin";
 
-        String ACTION_LIST = "list";
+//        String ACTION_LIST = "list";
         String ACTION_SEARCH = "search";
         String ACTION_STATS = "stats";
         String ACTION_MAIN_MENU = "main_menu";
-        String ACTION_PAGE = "page";
-        String ACTION_BACK = "back";
+//        String ACTION_PAGE = "page";
+//        String ACTION_BACK = "back";
     }
 
 

@@ -16,8 +16,6 @@ public class TelegramUser {
     @Id
     private Long chatId;
 
-    //    @OneToOne
-//    private User user;
     @OneToOne// FetchType.LAZY tavsiya etiladi
     @JoinColumn(name = "user_id", unique = true)
     @ToString.Exclude // Bu ustun aloqani o'rnatadi

@@ -15,6 +15,14 @@ import java.util.Set;
 
 public interface LessonRepository extends JpaRepository<Lesson, Long> {
 
+    /**
+     * Berilgan modul ichida kamida bitta bepul dars (`isFree = true`) mavjudligini tekshiradi.
+     * Bu 'SELECT COUNT(*)' o'rniga 'SELECT 1 ... LIMIT 1' kabi samaraliroq so'rov yuboradi.
+     * @param module Tekshirilishi kerak bo'lgan modul
+     * @return Agar kamida bitta bepul dars bo'lsa `true`, aks holda `false` qaytaradi.
+     */
+    boolean existsByModuleAndIsFreeTrue(Module module);
+
     @Query("SELECT l FROM Lesson l WHERE l.module.id =: moduleId AND l.id IN :lessonIds")
     List<Lesson> findAllModuleIdAndIdIn(Long moduleId, Set<Long> lessonIds);
 
@@ -43,4 +51,6 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
 
     @Query("SELECT COUNT(l) > 0 FROM Lesson l WHERE l.module.id = :moduleId AND l.isFree = true")
     boolean hasFreeLessons(@Param("moduleId") Long moduleId);
+
+    Page<Lesson> findAllByModuleOrderByOrderIndexAsc(Module module, Pageable pageable);
 }

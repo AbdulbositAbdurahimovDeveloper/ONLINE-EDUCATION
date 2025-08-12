@@ -2,9 +2,13 @@ package uz.pdp.online_education.telegram.mapper;
 
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageMedia;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
+import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
@@ -106,6 +110,33 @@ public class SendMsgImpl implements SendMsg {
         editMessageReplyMarkup.setMessageId(messageId);
         editMessageReplyMarkup.setReplyMarkup(null);
         return editMessageReplyMarkup;
+    }
+
+    @Override
+    public EditMessageMedia editMessageMedia(Long chatId, Integer messageId, String fileId, String caption, InlineKeyboardMarkup keyboard) {
+        InputMediaPhoto media = new InputMediaPhoto();
+        media.setMedia(fileId);
+        media.setCaption(caption);
+        media.setParseMode("HTML");
+
+        EditMessageMedia editMessageMedia = new EditMessageMedia();
+        editMessageMedia.setChatId(String.valueOf(chatId));
+        editMessageMedia.setMessageId(messageId);
+        editMessageMedia.setMedia(media);
+        editMessageMedia.setReplyMarkup(keyboard);
+
+        return editMessageMedia;
+    }
+
+    @Override
+    public SendPhoto sendPhoto(Long chatId, InputFile file, String caption, InlineKeyboardMarkup keyboard) {
+        SendPhoto sendPhoto = new SendPhoto();
+        sendPhoto.setChatId(String.valueOf(chatId));
+        sendPhoto.setPhoto(file);
+        sendPhoto.setCaption(caption);
+        sendPhoto.setReplyMarkup(keyboard);
+        sendPhoto.setParseMode("HTML");
+        return sendPhoto;
     }
 
 }
