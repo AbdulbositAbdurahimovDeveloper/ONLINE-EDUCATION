@@ -28,4 +28,6 @@ public class Attachment extends AbsLongEntity {
     @Column(name = "bucket_name", nullable = false)
     private String bucketName;
 
+    private String telegramFileId;
+
 }

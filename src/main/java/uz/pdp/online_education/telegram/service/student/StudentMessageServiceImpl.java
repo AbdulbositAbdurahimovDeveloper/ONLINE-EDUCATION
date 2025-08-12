@@ -110,7 +110,7 @@ public class StudentMessageServiceImpl implements StudentMessageService {
         User user = telegramUserRepository.findByChatId(chatId).get().getUser();
         int pageSize = 10;
         Pageable pageable = PageRequest.of(pageNumber, pageSize);
-        Page<Course> coursesPage = moduleEnrollmentRepository.findEnrolledCoursesByUserIdSortedByRating(user.getId(), pageable);
+        Page<Course> coursesPage = moduleEnrollmentRepository.findEnrolledCoursesByUserId(user.getId(), pageable);
 
         if (!coursesPage.hasContent()) {
             String noCoursesText = messageService.getMessage(BotMessage.STUDENT_MY_COURSES_NO_COURSES);
@@ -170,7 +170,7 @@ public class StudentMessageServiceImpl implements StudentMessageService {
 
         int pageSize = 10;
         Pageable pageable = PageRequest.of(pageNumber, pageSize);
-        Page<Course> coursesPage = moduleEnrollmentRepository.findEnrolledCoursesByUserIdSortedByRating(user.getId(), pageable);
+        Page<Course> coursesPage = moduleEnrollmentRepository.findEnrolledCoursesByUserId(user.getId(), pageable);
 
         if (!coursesPage.hasContent()) {
             // Bu holatda tahrirlash o'rniga "Kurslar yo'q" deb javob berish mumkin

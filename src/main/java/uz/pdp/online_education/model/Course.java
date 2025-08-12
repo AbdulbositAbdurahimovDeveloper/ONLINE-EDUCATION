@@ -17,7 +17,7 @@ import java.util.List;
 @Entity(name = "courses")
 @FieldNameConstants
 @SQLDelete(sql = "UPDATE courses SET deleted = true WHERE id = ?")
-@SQLRestriction(value = "deleted=false")
+@SQLRestriction(value = "deleted=false and success = true")
 public class Course extends AbsLongEntity {
 
     @Column(nullable = false, unique = true)

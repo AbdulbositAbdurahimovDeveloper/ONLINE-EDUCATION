@@ -8,8 +8,8 @@ spring:
   spring:
     servlet:
       multipart:
-        max-file-size: 10MB
-        max-request-size: 11MB
+        max-file-size: 1024MB
+        max-request-size: 1024MB
   banner:
     location: classpath:banner.txt
 
@@ -104,3 +104,4 @@ telegram:
     username: ${TELEGRAM_BOT_USERNAME}
     webhook-path: ${TELEGRAM_BOT_PATH}
     chat-id: ${TELEGRAM_BOT_CHAT_ID}
+    channel-id: ${TELEGRAM_BOT_CHANNEL}

@@ -45,22 +45,17 @@ public interface ModuleEnrollmentRepository extends JpaRepository<ModuleEnrollme
     @Query("SELECT COUNT(me) FROM module_enrollments me WHERE me.user.id = :userId AND me.progressPercentage = 100.0")
     Integer countCompletedModulesByUserId(@Param("userId") Long userId);
 
-    /**
-     * Finds all unique courses a user is enrolled in, sorted by their average rating in descending order.
-     * This query starts from ModuleEnrollment, joins to Course, and then left joins to Review to calculate the average rating.
-     *
-     * @param userId The ID of the user.
-     * @param pageable Pagination information.
-     * @return A paginated list of the user's enrolled Courses, sorted by average rating.
-     */
-    @Query(value = "SELECT me.module.course " +
-            "FROM module_enrollments me " +
-            "LEFT JOIN me.module.course.reviews r " +
-            "WHERE me.user.id = :userId " +
-            "GROUP BY me.module.course " +
-            "ORDER BY COALESCE(AVG(r.rating), 0.0) DESC, me.module.course.id ASC")
-    Page<Course> findEnrolledCoursesByUserIdSortedByRating(@Param("userId") Long userId, Pageable pageable);
 
+    /**
+     * Finds a paginated list of all unique courses a user is enrolled in,
+     * regardless of the enrollment status or course success status.
+     *
+     * @param userId The ID of the user whose enrolled courses are to be found.
+     * @param pageable Pagination information.
+     * @return A paginated list of unique {@link Course} entities.
+     */
+//    @Query("SELECT DISTINCT me.module.course FROM ModuleEnrollment me WHERE me.user.id = :userId")
+//    Page<Course> findEnrolledCoursesByUserId(@Param("userId") Long userId, Pageable pageable);
     /**
      * Calculates the average progress percentage for a specific user within a specific course.
      * It does this by averaging the progress of all modules the user is enrolled in for that course.

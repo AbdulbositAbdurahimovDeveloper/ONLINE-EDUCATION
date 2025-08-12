@@ -87,7 +87,8 @@ public class AttachmentServiceImpl implements AttachmentService {
                 multipartFile.getContentType(),
                 multipartFile.getSize(),
                 minioKey,
-                bucketName
+                bucketName,
+                null
         );
 
         attachmentRepository.save(attachment);
@@ -110,7 +111,8 @@ public class AttachmentServiceImpl implements AttachmentService {
                 multipartFile.getContentType(),
                 multipartFile.getSize(),
                 minioKey,
-                bucketName
+                bucketName,
+                null
         );
 
         attachmentRepository.save(attachment);

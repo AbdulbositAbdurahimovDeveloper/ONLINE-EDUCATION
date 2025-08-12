@@ -54,29 +54,97 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
         return markup;
     }
 
+    /**
+     * "Mening Kurslarim" uchun sahifalangan klaviaturani yaratadi.
+     * Bu versiyada raqamli tugmalar har bir qatorda 5 tadan qilib joylashtiriladi.
+     * Metod imzosi o'zgarishsiz qoladi.
+     *
+     * @param coursesPage Kurslarning sahifalangan ro'yxati.
+     * @return To'g'ri formatlangan InlineKeyboardMarkup.
+     */
     @Override
     public InlineKeyboardMarkup myCoursesListPage(Page<Course> coursesPage) {
-        int currentPage = coursesPage.getNumber();
-        List<Course> courses = coursesPage.getContent();
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-        // Create the numbered buttons [1][2][3]...
-        List<InlineKeyboardButton> numberButtons = new ArrayList<>();
-        for (int i = 0; i < courses.size(); i++) {
-            int courseNumber = currentPage * coursesPage.getSize() + i + 1;
-            Course course = courses.get(i);
-            numberButtons.add(createButton(
+        List<Course> coursesOnPage = coursesPage.getContent();
+        int currentPage = coursesPage.getNumber();
+        int pageSize = coursesPage.getSize();
+
+        // 1. Barcha raqamli tugmalarni bitta ro'yxatga yig'ib olamiz
+        List<InlineKeyboardButton> allNumberButtons = new ArrayList<>();
+        for (int i = 0; i < coursesOnPage.size(); i++) {
+            int courseNumber = currentPage * pageSize + i + 1;
+            Course course = coursesOnPage.get(i);
+            allNumberButtons.add(createButton(
                     String.valueOf(courseNumber),
-                    Utils.CallbackData.MY_COURSE_VIEW_CALLBACK + course.getId()
+                    "mycourse:view:" + course.getId()
             ));
         }
 
-        // Use the generic pagination helper method
-        return createPaginationKeyboardWithNumbers(
-                coursesPage,
-                numberButtons, // The numbered buttons
-                Utils.CallbackData.MY_COURSE_LIST_PAGE_CALLBACK, // "mycourse:list:page:"
-                "student:main_menu" // Back button callback
-        );
+        // 2. YANGI YORDAMCHI METOD yordamida tugmalarni qatorlarga bo'lamiz
+        List<List<InlineKeyboardButton>> numberedButtonRows = arrangeButtonsInTwoRows(allNumberButtons);
+        keyboard.addAll(numberedButtonRows);
+
+        // 3. Sahifalash va "Orqaga" tugmalarini qo'shamiz
+        addPaginationControls(keyboard, coursesPage.getTotalPages(), currentPage, "mycourse:list:page:");
+        keyboard.add(List.of(createButton("⬅️ Bosh menyuga", "student:main_menu")));
+
+        markup.setKeyboard(keyboard);
+        return markup;
+    }
+
+    // --- YANGI, SODDALASHTIRILGAN VA TO'G'RI YORDAMCHI METOD ---
+
+    /**
+     * Arranges a list of buttons into a maximum of two rows.
+     * - If 5 or fewer buttons, they are all in one row.
+     * - If more than 5, they are split as evenly as possible into two rows.
+     *
+     * @param buttons The flat list of buttons to arrange.
+     * @return A list of rows (List<List<InlineKeyboardButton>>).
+     */
+    private List<List<InlineKeyboardButton>> arrangeButtonsInTwoRows(List<InlineKeyboardButton> buttons) {
+        List<List<InlineKeyboardButton>> resultRows = new ArrayList<>();
+        if (buttons == null || buttons.isEmpty()) {
+            return resultRows;
+        }
+
+        int totalButtons = buttons.size();
+
+        // 1-Qoida: Agar tugmalar soni 5 yoki undan kam bo'lsa, hammasini bitta qatorga joylash
+        if (totalButtons <= 5) {
+            resultRows.add(buttons);
+        } else {
+            // 2-Qoida: 5 tadan ko'p bo'lsa, ikkita qatorga bo'lish
+
+            // Birinchi qatordagi tugmalar sonini hisoblash
+            // Math.ceil() - sonni yuqoriga qarab yaxlitlaydi. Masalan, 7 / 2.0 = 3.5 -> 4
+            int firstRowSize = (int) Math.ceil(totalButtons / 2.0);
+
+            // Birinchi qatorni yaratish
+            List<InlineKeyboardButton> row1 = buttons.subList(0, firstRowSize);
+            resultRows.add(row1);
+
+            // Ikkinchi qatorni yaratish
+            List<InlineKeyboardButton> row2 = buttons.subList(firstRowSize, totalButtons);
+            resultRows.add(row2);
+        }
+
+        return resultRows;
+    }
+    private void addPaginationControls(List<List<InlineKeyboardButton>> keyboard, int totalPages, int currentPage, String pageCallbackPrefix) {
+        if (totalPages > 1) {
+            List<InlineKeyboardButton> navButtons = new ArrayList<>();
+            if (currentPage > 0) {
+                navButtons.add(createButton("⬅️ Oldingisi", pageCallbackPrefix + (currentPage - 1)));
+            }
+            navButtons.add(createButton((currentPage + 1) + "/" + totalPages, "noop"));
+            if (currentPage < totalPages - 1) {
+                navButtons.add(createButton("Keyingisi ➡️", pageCallbackPrefix + (currentPage + 1)));
+            }
+            keyboard.add(navButtons);
+        }
     }
 
 
@@ -230,7 +298,7 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
     }
 
     /**
-     * @param module 
+     * @param module
      * @return
      */
     @Override
