@@ -1,0 +1,91 @@
+databaseChangeLog:
+  - changeSet:
+      id: 320251208-1-create-quiz-attempt-and-answer-tables
+      author: Eldor04
+      comment: "Creating tables for quiz attempts and user answers to track user progress"
+      changes:
+        # 1-QADAM: quiz_attempts JADVALINI YARATISH
+        - createTable:
+            tableName: quiz_attempts
+            columns:
+              - column: { name: "id", type: "BIGINT", autoIncrement: true, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: "created_at", type: "TIMESTAMP WITHOUT TIME ZONE", defaultValueComputed: "CURRENT_TIMESTAMP", constraints: { nullable: false } }
+              - column: { name: "updated_at", type: "TIMESTAMP WITHOUT TIME ZONE" }
+              - column: { name: "user_id", type: "BIGINT", constraints: { nullable: false } }
+              - column: { name: "quiz_id", type: "BIGINT", constraints: { nullable: false } }
+              - column: { name: "start_time", type: "TIMESTAMP WITHOUT TIME ZONE", constraints: { nullable: false } }
+              - column: { name: "end_time", type: "TIMESTAMP WITHOUT TIME ZONE" }
+              - column: { name: "status", type: "VARCHAR(255)", constraints: { nullable: false } }
+              - column: { name: "score", type: "INTEGER", defaultValueNumeric: 0, constraints: { nullable: false } }
+              - column: { name: "total_questions", type: "INTEGER", constraints: { nullable: false } }
+              - column: { name: "percentage", type: "DOUBLE", defaultValueNumeric: 0.0, constraints: { nullable: false } }
+
+        # 2-QADAM: user_answers JADVALINI YARATISH
+        - createTable:
+            tableName: user_answers
+            columns:
+              - column: { name: "id", type: "BIGINT", autoIncrement: true, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: "created_at", type: "TIMESTAMP WITHOUT TIME ZONE", defaultValueComputed: "CURRENT_TIMESTAMP", constraints: { nullable: false } }
+              - column: { name: "updated_at", type: "TIMESTAMP WITHOUT TIME ZONE" }
+              - column: { name: "attempt_id", type: "BIGINT", constraints: { nullable: false } }
+              - column: { name: "question_id", type: "BIGINT", constraints: { nullable: false } }
+              - column: { name: "is_correct", type: "BOOLEAN", constraints: { nullable: false } }
+
+        # 3-QADAM: user_selected_options BOG'LOVCHI JADVALINI YARATISH (ManyToMany uchun)
+        - createTable:
+            tableName: user_selected_options
+            columns:
+              - column: { name: "user_answer_id", type: "BIGINT", constraints: { nullable: false } }
+              - column: { name: "answer_option_id", type: "BIGINT", constraints: { nullable: false } }
+
+        # 4-QADAM: BARCHA TASHQI KALITLARNI (FOREIGN KEYS) QO'SHISH
+        - addForeignKeyConstraint:
+            baseTableName: quiz_attempts
+            baseColumnNames: user_id
+            constraintName: fk_quiz_attempts_on_user
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE # User o'chirilsa, uning test urinishlari ham o'chiriladi
+        - addForeignKeyConstraint:
+            baseTableName: quiz_attempts
+            baseColumnNames: quiz_id
+            constraintName: fk_quiz_attempts_on_quiz
+            referencedTableName: quizzes
+            referencedColumnNames: id
+            onDelete: CASCADE # Quiz o'chirilsa, unga bo'lgan urinishlar ham o'chiriladi
+        - addForeignKeyConstraint:
+            baseTableName: user_answers
+            baseColumnNames: attempt_id
+            constraintName: fk_user_answers_on_attempt
+            referencedTableName: quiz_attempts
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: user_answers
+            baseColumnNames: question_id
+            constraintName: fk_user_answers_on_question
+            referencedTableName: questions
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: user_selected_options
+            baseColumnNames: user_answer_id
+            constraintName: fk_user_selected_options_on_user_answer
+            referencedTableName: user_answers
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: user_selected_options
+            baseColumnNames: answer_option_id
+            constraintName: fk_user_selected_options_on_answer_option
+            referencedTableName: answer_options
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+      rollback:
+        - dropTable:
+            tableName: user_selected_options
+        - dropTable:
+            tableName: user_answers
+        - dropTable:
+            tableName: quiz_attempts

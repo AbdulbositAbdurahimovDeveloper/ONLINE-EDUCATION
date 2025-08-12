@@ -67,7 +67,7 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> {
                     log.warn("User not found with username: {}", username);
-                    return new UsernameNotFoundException("User not found with username: " + username);
+                    return new EntityNotFoundException("User not found with username: " + username);
                 });
     }
 
