@@ -37,23 +37,19 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
     // --- DEPENDENCIES ---
     private final SendMsg sendMsg;
     private final MessageService messageService;
-    private final ModuleEnrollmentRepository moduleEnrollmentRepository;
     private final TelegramUserRepository telegramUserRepository;
     private final StudentInlineKeyboardService studentInlineKeyboardService;
     private final OnlineEducationBot onlineEducationBot;
     private final StudentReplyKeyboardService studentReplyKeyboardService;
     private final CourseRepository courseRepository;
-    private final ModuleRepository moduleRepository;
-    private final LessonRepository lessonRepository;
-    private final ContentRepository contentRepository;
-    private final PaymentRepository paymentRepository;
+    private final ModuleEnrollmentRepository moduleEnrollmentRepository;
 
-    // --- PUBLIC HANDLER METHOD ---
+    // --- PUBLIC METHODS (from Interface) ---
+
     @Override
     public void handleMessage(Message message) {
         Long chatId = message.getChatId();
         String text = message.getText();
-        Integer messageId = message.getMessageId();
 
         TelegramUser telegramUser = getOrCreateTelegramUser(chatId);
         if (telegramUser.getUser() == null) {
@@ -66,9 +62,8 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
 
         switch (text) {
             case Utils.START -> startMessage(chatId, profile);
-            case Utils.DASHBOARD -> dashboardMessage(user, profile, chatId, messageId);
+            case Utils.DASHBOARD -> dashboardMessage(user, profile, chatId);
             case Utils.ReplyButtons.STUDENT_MY_COURSES -> sendMyCoursesPage(user, chatId, 0);
-
             case Utils.ReplyButtons.STUDENT_ALL_COURSES -> sendAllCoursesPage(chatId, 0);
             case Utils.ReplyButtons.STUDENT_BALANCE -> sendBalanceMenu(chatId);
             case Utils.ReplyButtons.STUDENT_HELP -> askForSupportMessage(chatId);
@@ -77,93 +72,73 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
 
     @Override
     public void showMainMenu(User user, Long chatId) {
-//        telegramUserRepository.updateStateByChatId(chatId, UserState.STUDENT_MAIN_MENU);
-
         String welcomeMessage = messageService.getMessage(
                 BotMessage.START_MESSAGE_STUDENT,
-                user.getProfile().getFirstName() // Ismni User'dan olamiz
+                user.getProfile().getFirstName()
         );
 
         ReplyKeyboardMarkup replyKeyboardMarkup = studentReplyKeyboardService.studentMainMenu();
-        SendMessage sendMessage = sendMsg.sendMessage(chatId, welcomeMessage, replyKeyboardMarkup);
-        onlineEducationBot.myExecute(sendMessage);
+        SendMessage messageToSend = sendMsg.sendMessage(chatId, welcomeMessage, replyKeyboardMarkup);
+        onlineEducationBot.myExecute(messageToSend);
     }
-
 
     /**
      * {@inheritDoc}
      * Bu metod mavjud dashboard xabarini tahrirlash uchun ishlatiladi.
-     * Masalan, "Logout -> No" tugmasi bosilganda.
      */
     @Override
-    @Transactional(readOnly = true) // Bu metod faqat bazadan o'qiydi
+    @Transactional(readOnly = true)
     public void showDashboard(User user, Long chatId, Integer messageId) {
-        // 1. Foydalanuvchi profilini olamiz
         UserProfile profile = user.getProfile();
-
-        // 2. Dashboard uchun matnni tayyorlaymiz (bu metod sizda allaqachon mavjud)
         String dashboardText = prepareStudentDashboardText(user, profile);
-
-        // 3. "Logout" tugmasini yasaymiz (bu ham sizda mavjud)
         InlineKeyboardMarkup inlineKeyboardMarkup = studentInlineKeyboardService.dashboardMenu();
-
-        // 4. Mavjud xabarni yangi matn va tugmalar bilan tahrirlaymiz
         onlineEducationBot.myExecute(sendMsg.editMessage(chatId, messageId, dashboardText, inlineKeyboardMarkup));
     }
+
+    // --- MESSAGE HANDLERS (Private methods for `handleMessage`) ---
+
+    /**
+     * Handles the /start command, sends a welcome message and main menu.
+     */
     private void startMessage(Long chatId, UserProfile from) {
         telegramUserRepository.updateStateByChatId(chatId, UserState.STUDENT_MAIN_MENU);
         ReplyKeyboardMarkup replyKeyboardMarkup = studentReplyKeyboardService.studentMainMenu();
-        SendMessage sendMessage = sendMsg.sendMessage(
+        SendMessage messageToSend = sendMsg.sendMessage(
                 chatId,
                 messageService.getMessage(BotMessage.START_MESSAGE_STUDENT, from.getFirstName()),
                 replyKeyboardMarkup);
-        onlineEducationBot.myExecute(sendMessage);
+        onlineEducationBot.myExecute(messageToSend);
     }
 
-//    private void dashboardMessage(User user, UserProfile profile, Long chatId, Integer messageId) {
-//        // Dashboard is a one-time view, so no state change is needed.
-//        String dashboardText = prepareStudentDashboardText(user, profile);
-//        InlineKeyboardMarkup inlineKeyboardMarkup = studentInlineKeyboardService.dashboardMenu();
-//        SendMessage sendMessage = sendMsg.sendMessage(chatId, dashboardText, inlineKeyboardMarkup);
-//        onlineEducationBot.myExecute(sendMessage);
-//        onlineEducationBot.myExecute(sendMsg.editMarkup(chatId, messageId));
-//    }
-private void dashboardMessage(User user, UserProfile profile, Long chatId, Integer messageId) {
-    // Yangi metodni chaqiramiz, lekin u EditMessage o'rniga SendMessage qilishi kerak bo'ladi
-    // Keling, logikani to'g'ridan-to'g'ri shu yerda qoldirib, showDashboard'da tahrirlashni qilamiz.
+    /**
+     * Sends a new message containing the student's dashboard.
+     */
+    private void dashboardMessage(User user, UserProfile profile, Long chatId) {
+        String dashboardText = prepareStudentDashboardText(user, profile);
+        InlineKeyboardMarkup inlineKeyboardMarkup = studentInlineKeyboardService.dashboardMenu();
+        onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, dashboardText, inlineKeyboardMarkup));
+    }
 
-    String dashboardText = prepareStudentDashboardText(user, profile); // Bu metod sizda mavjud
-    InlineKeyboardMarkup inlineKeyboardMarkup = studentInlineKeyboardService.dashboardMenu();
-
-    // Bu joyda yangi xabar yuborilishi kerak, chunki /dashboard buyrug'i keldi
-    onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, dashboardText, inlineKeyboardMarkup));
-
-    // Eski xabarni (buyruqni) o'chirib yuborsak bo'ladi, ixtiyoriy
-    // bot.myExecute(sendMsg.deleteMessage(chatId, messageId));
-}
-
-    // Mavjud "sendMyCoursesPage" metodini to'liq yozamiz
+    /**
+     * Displays a paginated list of courses the student is enrolled in.
+     */
     private void sendMyCoursesPage(User user, Long chatId, int pageNumber) {
         telegramUserRepository.updateStateByChatId(chatId, UserState.STUDENT_VIEWING_MY_COURSES);
 
-        // 1. Ma'lumotlarni bazadan sahifalangan holda olamiz
         Pageable pageable = PageRequest.of(pageNumber, PAGE_SIZE, Sort.by("title"));
         Page<Course> coursePage = courseRepository.findDistinctEnrolledCoursesForUser(user.getId(), pageable);
 
         String messageText;
         InlineKeyboardMarkup keyboard;
 
-        // 2. Kurslar bor yoki yo'qligini tekshiramiz
         if (coursePage.isEmpty()) {
             messageText = messageService.getMessage(BotMessage.NO_ENROLLED_COURSES);
-            // Faqat "Bosh menyuga qaytish" tugmasini yasaymiz
             String backCallback = String.join(":",
                     Utils.CallbackData.STUDENT_PREFIX,
                     Utils.CallbackData.ACTION_BACK,
                     Utils.CallbackData.BACK_TO_MAIN_MENU);
             keyboard = studentInlineKeyboardService.createSingleButtonKeyboard("⬅️ " + Utils.InlineButtons.BACK_TO_MAIN_MENU_TEXT, backCallback);
         } else {
-            // 3. Xabar matni va tugmalarni tayyorlaymiz
             messageText = messageService.getMessage(
                     BotMessage.MY_COURSES_TITLE,
                     coursePage.getNumber() + 1,
@@ -171,14 +146,12 @@ private void dashboardMessage(User user, UserProfile profile, Long chatId, Integ
             );
             keyboard = studentInlineKeyboardService.myCoursesMenu(coursePage);
         }
-
-        // 4. Foydalanuvchiga yangi xabar yuboramiz
-        SendMessage sendMessage = sendMsg.sendMessage(chatId, messageText, keyboard);
-        onlineEducationBot.myExecute(sendMessage);
+        onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, messageText, keyboard));
     }
 
     private void sendAllCoursesPage(Long chatId, int pageNumber) {
-
+        // TODO: Implement logic for showing all available courses.
+        onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, "'Barcha kurslar' bo'limi ishlab chiqilmoqda."));
     }
 
     private void sendBalanceMenu(Long chatId) {
@@ -193,6 +166,12 @@ private void dashboardMessage(User user, UserProfile profile, Long chatId, Integ
         onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, "'Yordam' bo'limi ishlab chiqilmoqda."));
     }
 
+
+    // --- HELPER METHODS ---
+
+    /**
+     * Prepares the formatted text for the student's dashboard.
+     */
     private String prepareStudentDashboardText(User user, UserProfile profile) {
         Integer activeCoursesCount = moduleEnrollmentRepository.countActiveCoursesByUserId(user.getId());
         Double averageProgressDouble = moduleEnrollmentRepository.findAverageProgressByUserId(user.getId());
@@ -208,6 +187,9 @@ private void dashboardMessage(User user, UserProfile profile, Long chatId, Integ
         );
     }
 
+    /**
+     * Creates a simple text-based progress bar.
+     */
     private String createProgressBar(int percentage) {
         if (percentage < 0) percentage = 0;
         if (percentage > 100) percentage = 100;
@@ -216,6 +198,9 @@ private void dashboardMessage(User user, UserProfile profile, Long chatId, Integ
         return "█".repeat(filledBlocks) + "░".repeat(emptyBlocks);
     }
 
+    /**
+     * Retrieves an existing TelegramUser or creates a new one if not found.
+     */
     private TelegramUser getOrCreateTelegramUser(Long chatId) {
         return telegramUserRepository.findByChatId(chatId).orElseGet(() -> {
             log.info("Creating a new TelegramUser for chatId: {}", chatId);
