@@ -7,7 +7,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import uz.pdp.online_education.payload.ResponseDTO;
 import uz.pdp.online_education.payload.quiz.QuestionResponseDTO;
-import uz.pdp.online_education.payload.quiz.QuestionUpdateDTO;
+import uz.pdp.online_education.payload.quiz.QuestionUpdateWithAnswersDTO;
 import uz.pdp.online_education.service.interfaces.QuestionService;
 
 @RestController
@@ -27,10 +27,10 @@ public class QuestionController {
 
     @PutMapping("{id}")
     @PreAuthorize(value = "hasAnyRole('ADMIN','INSTRUCTOR')")
-    public ResponseEntity<ResponseDTO<?>> updateQuestion(@PathVariable Long id, @RequestBody @Valid QuestionUpdateDTO questionUpdateDTO) {
-        QuestionResponseDTO updatedQuestion = questionService.update(id, questionUpdateDTO);
-
-        return ResponseEntity.ok(ResponseDTO.success(updatedQuestion));
+    public ResponseEntity<QuestionResponseDTO> updateQuestionWithAnswers(
+            @PathVariable("id") Long questionId,
+            @Valid @RequestBody QuestionUpdateWithAnswersDTO updateDTO) {
+        return ResponseEntity.ok(questionService.updateWithAnswers(questionId, updateDTO));
     }
 
     @DeleteMapping("{id}")

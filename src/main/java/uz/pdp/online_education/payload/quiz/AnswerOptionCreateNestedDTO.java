@@ -12,7 +12,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class AnswerOptionCreateNestedDTO implements Serializable {
+public class AnswerOptionCreateNestedDTO implements Serializable, AnswerOptionData  {
 
     @NotBlank
     @Size(max = 1000)

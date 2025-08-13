@@ -40,4 +40,5 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     boolean existsByUserAndModuleId(User user, Long moduleId);
 
+    boolean existsByUser_IdAndModule_Id(Long id, Long id1);
 }

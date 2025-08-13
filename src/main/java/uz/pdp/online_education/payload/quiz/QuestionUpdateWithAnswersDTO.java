@@ -9,19 +9,20 @@ import lombok.NoArgsConstructor;
 import uz.pdp.online_education.enums.QuestionType;
 
 import java.io.Serializable;
+import java.util.List;
 
-/**
- * DTO for {@link uz.pdp.online_education.model.quiz.Question}
- */
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class QuestionUpdateDTO implements Serializable {
-
-    @Size(min = 3, max = 50)
+@Data
+public class QuestionUpdateWithAnswersDTO implements Serializable {
     @NotBlank
+    @Size(max = 2000)
     private String text;
 
     @NotNull
     private QuestionType type;
+
+    @NotNull
+    @Size(min = 2, message = "At least two answer options must be provided")
+    private List<AnswerOptionUpdateNestedDTO> options;
 }
