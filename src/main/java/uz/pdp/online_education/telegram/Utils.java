@@ -107,12 +107,49 @@ public interface Utils {
         String COURSES_PREFIX = "courses";
         String ADMIN_PREFIX = "admin";
 
-//        String ACTION_LIST = "list";
+        //        String ACTION_LIST = "list";
         String ACTION_SEARCH = "search";
         String ACTION_STATS = "stats";
         String ACTION_MAIN_MENU = "main_menu";
+
+        String ACTION_LOGOUT = "logout"; // Yangi
+        String ACTION_INIT = "init";     // Yangi
+        String ACTION_CONFIRM = "confirm"; // Yangi
+        String ACTION_CANCEL = "cancel";   // Yangi
 //        String ACTION_PAGE = "page";
 //        String ACTION_BACK = "back";
+    }
+
+    /**
+     * Defines constants and helper methods for constructing external website URLs.
+     * This centralizes all web routing logic, making it easy to update paths.
+     */
+    interface WebRoutes {
+        // --- URL Paths ---
+        String CHECKOUT_MODULE_PATH = "/checkout/module/";
+        String QUIZ_PATH = "/quiz/";
+
+        /**
+         * Generates a full URL for purchasing a specific module.
+         *
+         * @param baseUrl  The base URL of the website (e.g., "https://example.com").
+         * @param moduleId The ID of the module to be purchased.
+         * @return A complete URL string for the module checkout page.
+         */
+        static String generateModuleCheckoutUrl(String baseUrl, Long moduleId) {
+            return baseUrl + CHECKOUT_MODULE_PATH + moduleId;
+        }
+
+        /**
+         * Generates a full URL for taking a specific quiz.
+         *
+         * @param baseUrl The base URL of the website.
+         * @param quizId  The ID of the quiz.
+         * @return A complete URL string for the quiz page.
+         */
+        static String generateQuizUrl(String baseUrl, Long quizId) {
+            return baseUrl + QUIZ_PATH + quizId;
+        }
     }
 
 

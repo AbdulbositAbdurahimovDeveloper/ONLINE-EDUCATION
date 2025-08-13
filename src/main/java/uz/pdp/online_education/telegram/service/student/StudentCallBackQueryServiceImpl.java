@@ -23,6 +23,7 @@ import uz.pdp.online_education.telegram.config.controller.OnlineEducationBot;
 import uz.pdp.online_education.telegram.enums.BotMessage;
 import uz.pdp.online_education.telegram.mapper.SendMsg;
 import uz.pdp.online_education.telegram.service.TelegramUserService;
+import uz.pdp.online_education.telegram.service.UrlBuilderService;
 import uz.pdp.online_education.telegram.service.message.MessageService;
 import uz.pdp.online_education.telegram.service.student.template.StudentCallBackQueryService;
 import uz.pdp.online_education.telegram.service.student.template.StudentInlineKeyboardService;
@@ -46,6 +47,7 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
     private final SendMsg sendMsg;
     private final StudentInlineKeyboardService studentInlineKeyboardService;
     private final MessageService messageService;
+    private final UrlBuilderService urlBuilderService;
 
     // Repositories
     private final TelegramUserRepository telegramUserRepository;
@@ -108,17 +110,17 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
         }
 
         switch (step) {
-            case "init" -> {
+            case Utils.CallbackData.ACTION_INIT -> {
                 String confirmationText = messageService.getMessage(BotMessage.AUTH_LOGOUT_CONFIRMATION_TEXT);
                 InlineKeyboardMarkup confirmationKeyboard = studentInlineKeyboardService.logoutConfirmation();
                 bot.myExecute(sendMsg.editMessage(chatId, messageId, confirmationText, confirmationKeyboard));
             }
-            case "confirm" -> {
+            case Utils.CallbackData.ACTION_CONFIRM -> {
                 telegramUserService.unregistered(chatId);
                 String successText = messageService.getMessage(BotMessage.AUTH_LOGOUT_SUCCESS_TEXT);
                 bot.myExecute(sendMsg.editMessage(chatId, messageId, successText, null));
             }
-            case "cancel" -> studentProcessMessageService.showDashboard(user, chatId, messageId);
+            case Utils.CallbackData.ACTION_CANCEL -> studentProcessMessageService.showDashboard(user, chatId, messageId);
             default -> log.warn("Noma'lum chiqish qadami: {}", step);
         }
     }
@@ -154,7 +156,8 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
             }
             case Utils.CallbackData.ACTION_BUY -> { // mod:buy:{moduleId}
                 long moduleId = Long.parseLong(data[2]);
-                String url = SITE_URL + "/checkout/module/" + moduleId;
+//                String url = SITE_URL + "/checkout/module/" + moduleId;
+                String url = urlBuilderService.generateModuleCheckoutUrl(moduleId);
                 InlineKeyboardMarkup keyboard = studentInlineKeyboardService.createUrlButton("🛒 Saytda sotib olish", url);
                 bot.myExecute(sendMsg.editMessage(chatId, callbackQuery.getMessage().getMessageId(), "Ushbu modulni sotib olish uchun saytga o'ting:", keyboard));
             }
@@ -215,7 +218,8 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
                     log.info("Foydalanuvchiga video yuborish so'rovi keldi. File ID: {}", attachment.getTelegramFileId());
                 }
             } else if (content instanceof QuizContent quizContent) {
-                String url = SITE_URL + "/quiz/" + quizContent.getQuiz().getId();
+//                String url = SITE_URL + "/quiz/" + quizContent.getQuiz().getId();
+                String url = urlBuilderService.generateQuizUrl(quizContent.getQuiz().getId());
                 InlineKeyboardMarkup keyboard = studentInlineKeyboardService.createSingleButtonKeyboard("❓ Testni ishlash", url);
                 bot.myExecute(sendMsg.sendMessage(chatId, messageService.getMessage(BotMessage.QUIZ_REDIRECT_MESSAGE), keyboard));
             }
