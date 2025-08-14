@@ -123,6 +123,7 @@ public class ReviewServiceImpl implements ReviewService {
 
         // Emailga yuborish
         if (instructor.getProfile() != null && instructor.getProfile().getEmail() != null) {
+            //salomni alaykum, {instructorName}.\n\nSizning '{courseTitle}' nomli kursingizga {reviewerName} tomonidan {reviewType} sharh qoldirildi.\n\nSharh matni:\n{comment}
             emailService.sendSimpleNotification(instructor.getProfile().getEmail(), subject, message);
         }
 
