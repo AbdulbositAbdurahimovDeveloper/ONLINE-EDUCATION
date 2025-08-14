@@ -125,5 +125,58 @@ public class EmailServiceImpl implements EmailService {
             // va asosiy operatsiyaga ta'sir qilmasligi kerak.
         }
     }
+    // EmailServiceImpl klassining ichiga shu metodni qo'shing
+
+    @Async
+    @Override
+    public void sendSimpleNotification(String to, String subject, String text) {
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(text, false); // 'false' - bu oddiy matn ekanligini bildiradi
+            helper.setFrom(fromEmail);
+
+            mailSender.send(mimeMessage);
+            log.info("Successfully sent notification email to {}", to);
+        } catch (MessagingException e) {
+            log.error("Failed to send notification email to {}: {}", to, e.getMessage());
+        }
+    }
+
+    @Async
+    @Override
+    public void sendReviewNotification(String to, String subject, String body) {
+        try {
+            // 1. Thymeleaf kontekstini yaratamiz
+            Context context = new Context();
+            context.setVariable("subject", subject);
+            // Matndagi qator tashlashlarni (\n) HTML'dagi <br> ga o'giramiz
+            context.setVariable("body", body.replace("\n", "<br />"));
+            context.setVariable("platformUrl", platformUrl);
+            context.setVariable("currentYear", java.time.Year.now().getValue());
+
+            // 2. HTML shablonni String'ga aylantiramiz
+            String htmlContent = templateEngine.process("review-notification", context);
+
+            // 3. MimeMessage (HTML'li xabar) yaratish
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true); // 'true' - bu HTML ekanligini bildiradi
+            helper.setFrom(fromEmail);
+
+            // 4. Xabarni jo'natish
+            mailSender.send(mimeMessage);
+            log.info("Successfully sent review notification email to {}", to);
+
+        } catch (MessagingException e) {
+            log.error("Failed to send review notification email to {}: {}", to, e.getMessage());
+        }
+    }
 }
 
