@@ -1,5 +1,6 @@
 package uz.pdp.online_education.telegram.service.student;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -7,23 +8,29 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.Module;
-import uz.pdp.online_education.model.ModuleEnrollment;
 import uz.pdp.online_education.model.lesson.*;
+import uz.pdp.online_education.repository.LessonRepository;
 import uz.pdp.online_education.telegram.Utils;
+import uz.pdp.online_education.telegram.enums.BotMessage;
+import uz.pdp.online_education.telegram.service.message.MessageService;
 import uz.pdp.online_education.telegram.service.student.template.StudentInlineKeyboardService;
 
 import java.util.ArrayList;
 import java.util.List;
 
-
 @Service
+@RequiredArgsConstructor
 public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardService {
 
+    private final LessonRepository lessonRepository;
+    private final MessageService messageService;
+
     /**
-     * {@inheritDoc}
+     * Creates the keyboard for the dashboard message, including a "Logout" button.
      */
     @Override
     public InlineKeyboardMarkup dashboardMenu() {
+        // Tizimdan chiqish tugmasini yasash uchun yordamchi metodni chaqiramiz.
         return createSingleButtonKeyboard(
                 Utils.InlineButtons.LOGOUT_TEXT,
                 Utils.CallbackData.AUTH_LOGOUT_INIT_CALLBACK
@@ -31,286 +38,215 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
     }
 
     /**
-     * {@inheritDoc}
+     * Creates a confirmation keyboard for the logout action.
      */
     @Override
     public InlineKeyboardMarkup logoutConfirmation() {
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-
-        // Create the "Yes" and "No" buttons
+        // "Ha" va "Yo'q" tugmalarini yaratamiz.
         InlineKeyboardButton yesButton = createButton(
                 Utils.InlineButtons.LOGOUT_CONFIRM_YES_TEXT,
                 Utils.CallbackData.AUTH_LOGOUT_CONFIRM_CALLBACK
         );
-
         InlineKeyboardButton noButton = createButton(
                 Utils.InlineButtons.LOGOUT_CONFIRM_NO_TEXT,
                 Utils.CallbackData.AUTH_LOGOUT_CANCEL_CALLBACK
         );
 
-        // Place them side-by-side in a single row
-        markup.setKeyboard(List.of(List.of(yesButton, noButton)));
-
-        return markup;
-    }
-
-    @Override
-    public InlineKeyboardMarkup myCoursesListPage(Page<Course> coursesPage) {
-        int currentPage = coursesPage.getNumber();
-        List<Course> courses = coursesPage.getContent();
-
-        // Create the numbered buttons [1][2][3]...
-        List<InlineKeyboardButton> numberButtons = new ArrayList<>();
-        for (int i = 0; i < courses.size(); i++) {
-            int courseNumber = currentPage * coursesPage.getSize() + i + 1;
-            Course course = courses.get(i);
-            numberButtons.add(createButton(
-                    String.valueOf(courseNumber),
-                    Utils.CallbackData.MY_COURSE_VIEW_CALLBACK + course.getId()
-            ));
-        }
-
-        // Use the generic pagination helper method
-        return createPaginationKeyboardWithNumbers(
-                coursesPage,
-                numberButtons, // The numbered buttons
-                Utils.CallbackData.MY_COURSE_LIST_PAGE_CALLBACK, // "mycourse:list:page:"
-                "student:main_menu" // Back button callback
-        );
-    }
-
-
-    @Override
-    public InlineKeyboardMarkup courseModulesPage(Long courseId, List<ModuleEnrollment> enrollments) {
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-
-        // 1. Har bir modul uchun raqamli tugmalarni yaratish
-        List<InlineKeyboardButton> numberButtons = new ArrayList<>();
-        for (int i = 0; i < enrollments.size(); i++) {
-            Module module = enrollments.get(i).getModule();
-            int moduleNumber = i + 1;
-            numberButtons.add(createButton(
-                    String.valueOf(moduleNumber),
-                    "mymodule:view:" + module.getId() // Modulni ko'rish uchun callback
-            ));
-        }
-        if (!numberButtons.isEmpty()) {
-            keyboard.add(numberButtons);
-        }
-
-        // 2. Orqaga qaytish tugmasi
-        keyboard.add(List.of(createButton(
-                "⬅️ Mening Kurslarimga qaytish",
-                "mycourse:list:page:0" // "Mening Kurslarim"ning birinchi sahifasiga qaytish
-        )));
-
-        markup.setKeyboard(keyboard);
-        return markup;
+        // Tugmalarni bitta qatorga joylab, klaviaturani qaytaramiz.
+        return new InlineKeyboardMarkup(List.of(List.of(yesButton, noButton)));
     }
 
     /**
-     * {@inheritDoc}
+     * Builds a paginated menu for the student's enrolled courses.
      */
     @Override
-    public InlineKeyboardMarkup backToMyCourses() {
-        return createSingleButtonKeyboard(
-                Utils.InlineButtons.BACK_TO_MY_COURSES_TEXT,
-                Utils.CallbackData.BACK_TO_MY_COURSES_CALLBACK
-        );
+    @Transactional(readOnly = true)
+    public InlineKeyboardMarkup myCoursesMenu(Page<Course> coursePage) {
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        // 1. Har bir kurs uchun alohida tugma yaratamiz.
+        coursePage.getContent().forEach(course -> {
+            String buttonText = "🎓 " + course.getTitle();
+            String callbackData = String.join(":",
+                    Utils.CallbackData.MY_COURSE_PREFIX, Utils.CallbackData.ACTION_VIEW, course.getId().toString());
+            keyboard.add(List.of(createButton(buttonText, callbackData)));
+        });
+
+        // 2. Navigatsiya (sahifalash) tugmalarini qo'shamiz.
+        addPaginationButtons(keyboard, coursePage, Utils.CallbackData.MY_COURSE_PREFIX);
+
+        // 3. "Bosh menyuga qaytish" tugmasini qo'shamiz.
+        String backCallback = String.join(":",
+                Utils.CallbackData.STUDENT_PREFIX, Utils.CallbackData.ACTION_BACK, Utils.CallbackData.BACK_TO_MAIN_MENU);
+        keyboard.add(List.of(createButton("⬅️ " + Utils.InlineButtons.BACK_TO_MAIN_MENU_TEXT, backCallback)));
+
+        return new InlineKeyboardMarkup(keyboard);
     }
 
     /**
-     * {@inheritDoc}
+     * Builds a menu for the modules within a specific course.
      */
     @Override
-    public InlineKeyboardMarkup lessonListPage(Module module, List<Lesson> lessons, boolean isEnrolled) {
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+    @Transactional(readOnly = true)
+    public InlineKeyboardMarkup modulesMenu(Page<Module> modulePage, Long courseId, List<Long> enrolledModuleIds, boolean isEnrolledToFullCourse) {
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-        // 1. Agar foydalanuvchi a'zo bo'lmagan bo'lsa, "Sotib olish" tugmasini qo'shamiz.
-        if (!isEnrolled && module.getPrice() > 0) {
-            String buttonText = String.format("🚀 Modulni sotib olish (%d UZS)", module.getPrice());
-            keyboard.add(List.of(createButton(
-                    buttonText,
-                    "module:buy:" + module.getId()
-            )));
-        }
+        // Har bir modul uchun foydalanuvchining statusiga qarab tugma yaratamiz.
+        modulePage.getContent().forEach(module -> {
+            String buttonText;
+            String callbackData;
 
-        // 2. Darslar uchun raqamli navigatsiya tugmalarini yaratamiz.
-        List<InlineKeyboardButton> numberButtons = new ArrayList<>();
-        for (Lesson lesson : lessons) {
-            boolean canAccess = isEnrolled || lesson.isFree();
+            // Agar foydalanuvchi butun kursni sotib olgan bo'lsa, hamma modul ochiq.
+            if (isEnrolledToFullCourse || enrolledModuleIds.contains(module.getId())) {
+                buttonText = "✅ " + module.getTitle(); // To'liq kursga yoki shu modulga a'zo
+                callbackData = String.join(":", Utils.CallbackData.MODULE_PREFIX, Utils.CallbackData.ACTION_VIEW, module.getId().toString());
+            } else if (lessonRepository.existsByModuleAndIsFreeTrue(module)) {
+                buttonText = "🆓 " + module.getTitle(); // Modulda bepul dars bor
+                callbackData = String.join(":", Utils.CallbackData.MODULE_PREFIX, Utils.CallbackData.ACTION_VIEW, module.getId().toString());
+            } else {
+                buttonText = "🔒 " + module.getTitle(); // Yopiq modul
+                callbackData = String.join(":", Utils.CallbackData.MODULE_PREFIX, Utils.CallbackData.ACTION_BUY, module.getId().toString());
+            }
+            keyboard.add(List.of(createButton(buttonText, callbackData)));
+        });
 
-            // Tugmaga emoji qo'shish orqali holatini bildiramiz.
-            String buttonText = (canAccess ? "▶️ " : "🔒 ") + lesson.getOrderIndex();
+        // Navigatsiya va "orqaga" tugmalarini qo'shamiz.
+        addPaginationButtons(keyboard, modulePage, Utils.CallbackData.MODULE_PREFIX + ":" + courseId);
+        String backCallback = String.join(":", Utils.CallbackData.MY_COURSE_PREFIX, Utils.CallbackData.ACTION_LIST, Utils.CallbackData.ACTION_PAGE, "0");
+        keyboard.add(List.of(createButton("⬅️ Kurslar ro'yxatiga", backCallback)));
 
-            numberButtons.add(createButton(
-                    buttonText,
-                    canAccess ? "mylesson:view:" + lesson.getId() : "lesson:locked"
-            ));
-        }
-        if (!numberButtons.isEmpty()) {
-            keyboard.add(numberButtons);
-        }
-
-        // 3. "Orqaga" tugmasini to'g'ri manzil bilan yaratamiz.
-        keyboard.add(List.of(createButton(
-                "⬅️ Modullar ro'yxatiga qaytish",
-                "mycourse:view:" + module.getCourse().getId() // Module'dan courseId'ni olamiz.
-        )));
-
-        markup.setKeyboard(keyboard);
-        return markup;
+        return new InlineKeyboardMarkup(keyboard);
     }
 
+    /**
+     * Generates a menu for the lessons within a specific module.
+     */
     @Override
-    public InlineKeyboardMarkup lessonViewKeyboard(Long moduleId, String lessonUrlOnSite) {
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+    @Transactional(readOnly = true)
+    public InlineKeyboardMarkup lessonsMenu(Page<Lesson> lessonPage, Long moduleId, Long courseId, boolean isModuleEnrolled) {
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-        // Button to view the full lesson on the website
-        InlineKeyboardButton viewOnSiteButton = createButton("🌐 Darsni to'liq ko'rish (Saytda)", null);
-        viewOnSiteButton.setUrl(lessonUrlOnSite); // The URL is passed as a parameter
-        keyboard.add(List.of(viewOnSiteButton));
+        // Har bir dars uchun uning ochiq yoki yopiqligiga qarab tugma yaratamiz.
+        lessonPage.getContent().forEach(lesson -> {
+            String buttonText;
+            String callbackData;
 
-        // Button to go back to the list of lessons for the module
-        keyboard.add(List.of(createButton(
-                "⬅️ Darslar ro'yxatiga qaytish",
-                "mymodule:view:" + moduleId
-        )));
+            if (isModuleEnrolled || lesson.isFree()) {
+                buttonText = "📖 " + lesson.getTitle();
+                callbackData = String.join(":",
+                        Utils.CallbackData.LESSON_PREFIX, Utils.CallbackData.ACTION_VIEW, lesson.getId().toString());
+            } else {
+                buttonText = "🔒 " + lesson.getTitle();
+                callbackData = String.join(":",
+                        Utils.CallbackData.LESSON_PREFIX, Utils.CallbackData.ACTION_BUY, moduleId.toString());
+            }
+            keyboard.add(List.of(createButton(buttonText, callbackData)));
+        });
 
-        markup.setKeyboard(keyboard);
-        return markup;
+        // Navigatsiya va "orqaga" tugmalarini qo'shamiz.
+        String paginationBaseCallback = String.join(":", Utils.CallbackData.LESSON_PREFIX, moduleId.toString());
+        addPaginationButtons(keyboard, lessonPage, paginationBaseCallback);
+        String backCallback = String.join(":", Utils.CallbackData.MY_COURSE_PREFIX, Utils.CallbackData.ACTION_VIEW, courseId.toString());
+        keyboard.add(List.of(createButton("⬅️ Modullar ro'yxatiga", backCallback)));
+
+        return new InlineKeyboardMarkup(keyboard);
     }
 
+    /**
+     * Creates a menu that lists the content blocks of a specific lesson.
+     */
     @Override
-    @Transactional(readOnly = true) // Lesson'dan lazy bog'liqliklarni o'qish uchun
-    public InlineKeyboardMarkup lessonContentMenu(Lesson lesson) {
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+    @Transactional(readOnly = true)
+    public InlineKeyboardMarkup lessonContentsMenu(Lesson lesson, Long moduleId) {
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-        // Lesson'ga bog'langan barcha Content'larni aylanib chiqamiz
-        for (Content content : lesson.getContents()) {
-            InlineKeyboardButton button = new InlineKeyboardButton();
-            String buttonText = "❓ Noma'lum kontent";
+        // Darsning har bir kontent bloki uchun tugma yaratamiz.
+        lesson.getContents().forEach(content -> {
+            String icon = switch (content.getClass().getSimpleName()) {
+                case "TextContent" -> "📄";
+                case "AttachmentContent" -> "▶️";
+                case "QuizContent" -> "❓";
+                default -> "▫️";
+            };
+            String typeText = switch (content.getClass().getSimpleName()) {
+                case "TextContent" -> "Matn";
+                case "AttachmentContent" -> "Video/Fayl";
+                case "QuizContent" -> "Test";
+                default -> "Kontent";
+            };
 
-            if (content instanceof AttachmentContent) {
-                buttonText = "▶️ Asosiy Video Darslik";
-            } else if (content instanceof TextContent) {
-                buttonText = "📝 Darsning To'liq Matni";
-            } else if (content instanceof QuizContent) {
-                buttonText = "❓ Amaliy Mashg'ulot (Quiz)";
+            String buttonText = messageService.getMessage(BotMessage.LESSON_CONTENT_BUTTON_TEXT, icon, content.getBlockOrder(), typeText);
+            String callbackData = String.join(":", Utils.CallbackData.CONTENT_PREFIX, Utils.CallbackData.ACTION_VIEW, content.getId().toString());
+            keyboard.add(List.of(createButton(buttonText, callbackData)));
+        });
+
+        // "Darslar ro'yxatiga qaytish" tugmasini qo'shamiz.
+        String backCallback = String.join(":", Utils.CallbackData.MODULE_PREFIX, Utils.CallbackData.ACTION_VIEW, moduleId.toString());
+        keyboard.add(List.of(createButton("⬅️ Darslar ro'yxatiga", backCallback)));
+
+        return new InlineKeyboardMarkup(keyboard);
+    }
+
+    /**
+     * Creates a simple inline keyboard with a single button.
+     */
+    @Override
+    public InlineKeyboardMarkup createSingleButtonKeyboard(String text, String callbackData) {
+        // Yangi klaviatura obyekti yaratib, unga bitta tugma joylaymiz.
+        InlineKeyboardButton button = createButton(text, callbackData);
+        return new InlineKeyboardMarkup(List.of(List.of(button)));
+    }
+
+    /**
+     * Creates an inline keyboard with a single button that links to an external URL.
+     */
+    @Override
+    public InlineKeyboardMarkup createUrlButton(String text, String url) {
+        // URL uchun maxsus tugma yaratamiz.
+        InlineKeyboardButton button = new InlineKeyboardButton(text);
+        button.setUrl(url);
+        return new InlineKeyboardMarkup(List.of(List.of(button)));
+    }
+
+
+    // --- PRIVATE HELPER METHODS ---
+
+    /**
+     * A private helper method to add pagination buttons (Next, Previous) to a keyboard.
+     */
+    private void addPaginationButtons(List<List<InlineKeyboardButton>> keyboard, Page<?> page, String baseCallback) {
+        // Agar sahifalar soni 1 tadan ko'p bo'lsa, navigatsiya tugmalarini qo'shamiz.
+        if (page.getTotalPages() > 1) {
+            List<InlineKeyboardButton> row = new ArrayList<>();
+            int currentPage = page.getNumber();
+
+            // "Oldingi" tugmasi
+            if (page.hasPrevious()) {
+                String prevCallback = String.join(":",
+                        baseCallback, Utils.CallbackData.ACTION_LIST, Utils.CallbackData.ACTION_PAGE, String.valueOf(currentPage - 1));
+                row.add(createButton("⬅️ Oldingi", prevCallback));
             }
 
-            button.setText(buttonText);
-            button.setCallbackData("content:view:" + content.getId());
-            keyboard.add(List.of(button));
+            // Sahifa raqami ko'rsatkich
+            row.add(createButton(String.format("%d / %d", currentPage + 1, page.getTotalPages()), "do_nothing"));
+
+            // "Keyingi" tugmasi
+            if (page.hasNext()) {
+                String nextCallback = String.join(":",
+                        baseCallback, Utils.CallbackData.ACTION_LIST, Utils.CallbackData.ACTION_PAGE, String.valueOf(currentPage + 1));
+                row.add(createButton("Keyingi ➡️", nextCallback));
+            }
+            keyboard.add(row);
         }
-
-        // "Orqaga" tugmasini qo'shish
-        keyboard.add(List.of(createButton(
-                "⬅️ Darslar ro'yxatiga qaytish",
-                "mymodule:view:" + lesson.getModule().getId()
-        )));
-
-        markup.setKeyboard(keyboard);
-        return markup;
-    }
-
-    // Quiz uchun alohida klaviatura
-    @Override
-    public InlineKeyboardMarkup quizButton(Long quizId) {
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-        InlineKeyboardButton button = new InlineKeyboardButton("✍️ Testni Boshlash (Saytda)");
-        // TODO: Sayt manzilini application.yml'dan olish kerak
-        button.setUrl("http://your-site.com/quiz/" + quizId);
-        markup.setKeyboard(List.of(List.of(button)));
-        return markup;
     }
 
     /**
-     * @param module 
-     * @return
-     */
-    @Override
-    public InlineKeyboardMarkup buyOnlyKeyboard(Module module) {
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-
-        String buttonText = String.format("🚀 Modulni sotib olish (%d UZS)", module.getPrice());
-        keyboard.add(List.of(createButton(
-                buttonText,
-                "module:buy:" + module.getId()
-        )));
-
-        keyboard.add(List.of(createButton(
-                "⬅️ Modullar ro'yxatiga qaytish",
-                "mycourse:view:" + module.getCourse().getId()
-        )));
-
-        markup.setKeyboard(keyboard);
-        return markup;
-    }
-
-    // Add this new generic helper to your InlineKeyboardServiceImpl
-    private InlineKeyboardMarkup createPaginationKeyboardWithNumbers(Page<?> page, List<InlineKeyboardButton> numberButtons, String pageCallbackPrefix, String backCallback) {
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-
-        // Row for numbered buttons
-        if (!numberButtons.isEmpty()) {
-            keyboard.add(numberButtons);
-        }
-
-        // Row for prev/next buttons
-        List<InlineKeyboardButton> navButtons = new ArrayList<>();
-        if (page.hasPrevious()) {
-            navButtons.add(createButton("⬅️ Oldingisi", pageCallbackPrefix + (page.getNumber() - 1)));
-        }
-        navButtons.add(createButton((page.getNumber() + 1) + "/" + page.getTotalPages(), "noop"));
-        if (page.hasNext()) {
-            navButtons.add(createButton("Keyingisi ➡️", pageCallbackPrefix + (page.getNumber() + 1)));
-        }
-        if (!navButtons.isEmpty()) {
-            keyboard.add(navButtons);
-        }
-
-        // Row for back button
-        keyboard.add(List.of(createButton("⬅️ Bosh menyuga", backCallback)));
-
-        markup.setKeyboard(keyboard);
-        return markup;
-    }
-
-    /**
-     * A private helper method to create a single {@link InlineKeyboardButton}.
-     * This centralizes button creation.
-     *
-     * @param text         The text to be displayed on the button.
-     * @param callbackData The data to be sent when the button is pressed.
-     * @return A configured {@link InlineKeyboardButton} object.
+     * A private helper method to create a single InlineKeyboardButton.
      */
     private InlineKeyboardButton createButton(String text, String callbackData) {
+        // Tugma yaratish uchun markazlashtirilgan metod.
         InlineKeyboardButton button = new InlineKeyboardButton(text);
-        if (callbackData != null) {
-            button.setCallbackData(callbackData);
-        }
+        button.setCallbackData(callbackData);
         return button;
-    }
-
-    /**
-     * A private helper to create a keyboard with a single, centered button.
-     * Useful for simple actions like "Back".
-     *
-     * @param text         The button's text.
-     * @param callbackData The button's callback data.
-     * @return An {@link InlineKeyboardMarkup} with one button.
-     */
-    private InlineKeyboardMarkup createSingleButtonKeyboard(String text, String callbackData) {
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-        InlineKeyboardButton button = createButton(text, callbackData);
-        markup.setKeyboard(List.of(List.of(button)));
-        return markup;
     }
 }

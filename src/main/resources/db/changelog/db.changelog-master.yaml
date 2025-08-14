@@ -77,4 +77,8 @@ databaseChangeLog:
       file: db/changelog/changes/320250708-01-create-telegram-users-table.yaml
   - include:
       file: db/changelog/changes/3202500808-01-drop-selected-role-column.yaml
+  - include:
+      file: db/changelog/changes/320251008_01_add-telegram-file-id-to-attachment.yaml
+  - include:
+      file: db/changelog/changes/320251208-1-create-quiz-attempt-and-answer-tables.yaml
 

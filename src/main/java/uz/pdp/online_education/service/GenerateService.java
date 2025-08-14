@@ -431,7 +431,7 @@ public class GenerateService  {
         course.setDescription(faker.lorem().paragraph(3));
         course.setInstructor(instructor);
         course.setCategory(category);
-        course.setSuccess(faker.bool().bool());
+        course.setSuccess(true);
         log.debug("  Creating Course: '{}'", title);
         return course;
     }

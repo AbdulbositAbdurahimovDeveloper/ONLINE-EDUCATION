@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20251008_01_add-telegram-file-id-to-attachment # Bu o'zgarish uchun unikal ID
+      author: your_name # O'zingizning ismingiz yoki username'ingiz
+      changes:
+        - addColumn:
+            tableName: attachment # Jadval nomi
+            columns:
+              - column:
+                  name: telegram_file_id # Yangi ustun nomi
+                  type: VARCHAR(255) # Ma'lumot turi. file_id uchun varchar yetarli.
+                  constraints:
+                    nullable: true # Bu ustun bo'sh bo'lishi mumkin (eski fayllar uchun)
+      comment: "Adds a column to store the Telegram file_id for attachments."

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Katta Fayl Yuklash</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f4f9; }
+        .container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 400px; }
+        h1 { text-align: center; color: #333; }
+        input[type="file"] { display: block; width: 100%; margin-bottom: 1rem; padding: 0.5rem; }
+        button { width: 100%; padding: 0.75rem; background-color: #007bff; color: white; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
+        button:disabled { background-color: #ccc; }
+        .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 4px; margin-top: 1rem; display: none; }
+        .progress-bar { width: 0; height: 20px; background-color: #4caf50; border-radius: 4px; text-align: center; color: white; line-height: 20px; }
+        .message { margin-top: 1rem; text-align: center; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Fayl Yuklash Tizimi</h1>
+    <form id="uploadForm">
+        <input type="file" id="fileInput" required>
+        <button type="submit" id="uploadButton">Yuklash</button>
+    </form>
+    <div class="progress-container" id="progressContainer">
+        <div class="progress-bar" id="progressBar">0%</div>
+    </div>
+    <div class="message" id="message"></div>
+</div>
+
+<script>
+    const form = document.getElementById('uploadForm');
+    const fileInput = document.getElementById('fileInput');
+    const uploadButton = document.getElementById('uploadButton');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    const messageDiv = document.getElementById('message');
+
+    // Backend manzillari (o'zingiznikiga moslang)
+    const API_BASE_URL = 'http://localhost:8080/api/v1/attachments';
+    const GENERATE_URL_ENDPOINT = `${API_BASE_URL}/generate-upload-url`;
+    const CONFIRM_UPLOAD_ENDPOINT = `${API_BASE_URL}/confirm-upload`;
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const file = fileInput.files[0];
+        if (!file) {
+            showMessage('Iltimos, fayl tanlang.', 'error');
+            return;
+        }
+
+        uploadButton.disabled = true;
+        progressContainer.style.display = 'block';
+        progressBar.style.width = '0%';
+        progressBar.textContent = '0%';
+        showMessage('URL so\'ralmoqda...', '');
+
+        try {
+            // 1. Backend'dan yuklash uchun maxsus URL olamiz
+            const generateUrlResponse = await fetch(`${GENERATE_URL_ENDPOINT}?filename=${encodeURIComponent(file.name)}`, {
+                method: 'POST'
+            });
+
+            if (!generateUrlResponse.ok) {
+                throw new Error('Yuklash uchun URL olib bo\'lmadi.');
+            }
+            const { uploadUrl, minioKey } = await generateUrlResponse.json();
+            showMessage('Fayl MinIO\'ga yuklanmoqda...', '');
+
+            // 2. Faylni to'g'ridan-to'g'ri MinIO'ga yuklaymiz (AJAX orqali)
+            await uploadFileToMinio(file, uploadUrl);
+            showMessage('Yuklash tasdiqlanmoqda...', '');
+
+            // 3. Yuklanganlikni backend'ga tasdiqlaymiz
+            const confirmResponse = await fetch(CONFIRM_UPLOAD_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    minioKey: minioKey,
+                    originalName: file.name,
+                    contentType: file.type,
+                    size: file.size
+                })
+            });
+
+            if (!confirmResponse.ok) {
+                throw new Error('Faylni tasdiqlashda xatolik yuz berdi.');
+            }
+
+            const result = await confirmResponse.json();
+            showMessage(`Fayl muvaffaqiyatli yuklandi! ID: ${result.id}`, 'success');
+
+        } catch (error) {
+            showMessage(`Xatolik: ${error.message}`, 'error');
+        } finally {
+            uploadButton.disabled = false;
+        }
+    });
+
+    function uploadFileToMinio(file, url) {
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('PUT', url, true);
+
+            // Progressni kuzatish uchun
+            xhr.upload.onprogress = (event) => {
+                if (event.lengthComputable) {
+                    const percentComplete = Math.round((event.loaded / event.total) * 100);
+                    progressBar.style.width = percentComplete + '%';
+                    progressBar.textContent = percentComplete + '%';
+                }
+            };
+
+            xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    resolve(xhr.response);
+                } else {
+                    reject(new Error(`MinIO'ga yuklashda xatolik: ${xhr.statusText}`));
+                }
+            };
+
+            xhr.onerror = () => {
+                reject(new Error('Tarmoq xatoligi yuz berdi.'));
+            };
+
+            xhr.send(file);
+        });
+    }
+
+    function showMessage(msg, type) {
+        messageDiv.textContent = msg;
+        messageDiv.className = `message ${type}`;
+    }
+</script>
+
+</body>
+</html>

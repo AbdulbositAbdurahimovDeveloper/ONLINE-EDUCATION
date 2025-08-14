@@ -14,49 +14,53 @@ import java.util.List;
 public class StudentReplyKeyboardServiceImpl implements StudentReplyKeyboardService {
 
     /**
-     * Creates a base {@link ReplyKeyboardMarkup} with common settings.
-     * @return A pre-configured ReplyKeyboardMarkup object.
-     */
-    private ReplyKeyboardMarkup createBaseReplyKeyboard() {
-        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
-        replyKeyboardMarkup.setResizeKeyboard(true);
-        replyKeyboardMarkup.setSelective(true);
-        replyKeyboardMarkup.setOneTimeKeyboard(true);
-        return replyKeyboardMarkup;
-    }
-
-
-    /**
-     * {@inheritDoc}
      * Creates the main menu keyboard for the Student.
      * The layout is a 2x2 grid with the most common actions.
      */
     @Override
     public ReplyKeyboardMarkup studentMainMenu() {
-        // Step 1: Create a base keyboard with standard settings.
+        // 1. Standart sozlamalarga ega bo'lgan asosiy klaviatura yaratib olamiz.
         ReplyKeyboardMarkup replyKeyboardMarkup = createBaseReplyKeyboard();
 
-        // Step 2: Initialize the list that will hold all rows of buttons.
+        // 2. Tugmalar qatorlarini saqlash uchun ro'yxat (list) ochamiz.
         List<KeyboardRow> keyboardRows = new ArrayList<>();
 
-        // Step 3: Create the first row of buttons.
+        // 3. Birinchi qator tugmalarini yaratamiz.
         KeyboardRow row1 = new KeyboardRow();
         row1.add(new KeyboardButton(Utils.ReplyButtons.STUDENT_MY_COURSES));
         row1.add(new KeyboardButton(Utils.ReplyButtons.STUDENT_ALL_COURSES));
 
-        // Step 4: Create the second row of buttons.
+        // 4. Ikkinchi qator tugmalarini yaratamiz.
         KeyboardRow row2 = new KeyboardRow();
         row2.add(new KeyboardButton(Utils.ReplyButtons.STUDENT_BALANCE));
         row2.add(new KeyboardButton(Utils.ReplyButtons.STUDENT_HELP));
 
-        // Step 5: Add all rows to the keyboard list.
+        // 5. Yaratilgan qatorlarni umumiy ro'yxatga qo'shamiz.
         keyboardRows.add(row1);
         keyboardRows.add(row2);
 
-        // Step 6: Set the completed list of rows to the keyboard object.
+        // 6. Tugmalar ro'yxatini klaviaturaga o'rnatamiz.
         replyKeyboardMarkup.setKeyboard(keyboardRows);
 
-        // Step 7: Return the fully constructed keyboard.
+        // 7. Tayyor klaviaturani qaytaramiz.
+        return replyKeyboardMarkup;
+    }
+
+
+
+    /**
+     * Creates a base {@link ReplyKeyboardMarkup} with common settings
+     * to avoid code duplication.
+     * @return A pre-configured ReplyKeyboardMarkup object.
+     */
+    private ReplyKeyboardMarkup createBaseReplyKeyboard() {
+        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+        // Klaviaturani ekran o'lchamiga moslashtirish
+        replyKeyboardMarkup.setResizeKeyboard(true);
+        // Faqat shu foydalanuvchiga ko'rsatish
+        replyKeyboardMarkup.setSelective(true);
+        // Tugma bosilgandan so'ng klaviaturani yashirish
+        replyKeyboardMarkup.setOneTimeKeyboard(true);
         return replyKeyboardMarkup;
     }
 }

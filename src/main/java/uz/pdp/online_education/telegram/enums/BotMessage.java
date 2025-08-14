@@ -19,6 +19,28 @@ public enum BotMessage {
     // --- Student Messages ---
     START_MESSAGE_STUDENT("student.start-message"),
     DASHBOARD_STUDENT("student.dashboard"),
+    // --- Student Messages ---
+    AUTH_LOGOUT_CONFIRMATION_TEXT("auth.logout.confirmation-text"),
+    AUTH_LOGOUT_SUCCESS_TEXT("auth.logout.success-text"),
+
+    // --- Student "My Courses" Flow ---
+    MY_COURSES_TITLE("student.my-courses.title"),
+    NO_ENROLLED_COURSES("student.my-courses.no-courses-found"),
+    MODULES_LIST_TITLE("student.my-courses.modules-list-title"),
+    LESSONS_LIST_TITLE("student.my-courses.lessons-list-title"),
+    LESSON_DETAIL_TITLE("student.my-courses.lesson-detail.title"),
+    LESSON_CONTENT_BUTTON_TEXT("student.my-courses.lesson-detail.content-button-text"),
+    LESSON_LOCKED_MESSAGE("student.my-courses.lesson-locked"),
+    BUY_MODULE_BUTTON("student.my-courses.buy-module-button"),
+    QUIZ_REDIRECT_MESSAGE("student.my-courses.quiz-redirect"),
+
+    ALL_COURSES_CHOOSE_METHOD("student.all-courses.choose-method"),
+    ALL_COURSES_BY_CATEGORY_TITLE("student.all-courses.by-category.title"),
+    ALL_COURSES_BY_INSTRUCTOR_TITLE("student.all-courses.by-instructor.title"),
+    ALL_COURSES_LIST_TITLE("student.all-courses.list.title"),
+    ALL_COURSES_DETAIL_TITLE("student.all-courses.detail.title"),
+
+    /*
     STUDENT_MY_COURSES_HEADER("student.my-courses.header"),
     STUDENT_MY_COURSES_LIST_ITEM("student.my-courses.list-item"),
     STUDENT_MY_COURSES_NO_COURSES("student.my-courses.no-courses"),
@@ -32,6 +54,8 @@ public enum BotMessage {
     STUDENT_LESSON_MAIN_MENU("student.lesson.main-menu"),
     STUDENT_LESSON_QUIZ_TEXT("student.lesson.quiz-text"),
     STUDENT_LESSON_FULLY_PAID_MODULE("student.lesson.fully-paid-module"),
+
+     */
 
     // --- Instructor Messages ---
     START_MESSAGE_INSTRUCTOR("instructor.start-message"),

@@ -2,7 +2,7 @@ package uz.pdp.online_education.service.interfaces;
 
 import uz.pdp.online_education.payload.quiz.QuestionCreateWithAnswersDTO;
 import uz.pdp.online_education.payload.quiz.QuestionResponseDTO;
-import uz.pdp.online_education.payload.quiz.QuestionUpdateDTO;
+import uz.pdp.online_education.payload.quiz.QuestionUpdateWithAnswersDTO;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ public interface QuestionService {
 
     List<QuestionResponseDTO> getAllByQuizId(Long quizId);
 
-    QuestionResponseDTO update(Long id, QuestionUpdateDTO updateDTO);
+    QuestionResponseDTO updateWithAnswers(Long questionId, QuestionUpdateWithAnswersDTO updateDTO);
 
     void delete(Long id);
 

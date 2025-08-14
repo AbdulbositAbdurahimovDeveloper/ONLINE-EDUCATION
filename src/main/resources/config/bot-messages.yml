@@ -1,178 +1,106 @@
-# ======================================================
-# COMMON MESSAGES (for all users or general purposes)
-# ======================================================
+# =================================================================
+# --- UMUMIY XABARLAR (COMMON) ---
+# =================================================================
 common:
+  error:
+    unexpected: "😕 Kechirasiz, kutilmagan xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring."
+    user-not-found: "Xatolik: Foydalanuvchi topilmadi."
+  key-not-found: "Xatolik: Xabar kaliti topilmadi."
   welcome-first-time: |
     👋 Assalomu alaykum!
-    
+
     <b>Online Education</b> ta'lim platformasining rasmiy botiga xush kelibsiz!
-    
+
     Botning barcha imkoniyatlaridan 🔑 to‘liq foydalanish uchun, iltimos, saytdagi profilingizni ulang.
-    
+
     Quyidagi tugma sizni kirish yoki yangi akkaunt yaratish sahifasiga olib boradi.
 
   role-changed:
-    student: "🔄 Rolingiz muvaffaqiyatli <b>O‘quvchi (Student)</b> ga o'zgartirildi."
-    instructor: "🔄 Rolingiz muvaffaqiyatli <b>Instructor</b> ga o'zgartirildi."
-    admin: "🔄 Rolingiz muvaffaqiyatli <b>Administrator</b> ga o'zgartirildi."
+    student: "✅ Rolingiz 'Talaba'ga o'zgartirildi."
+    instructor: "✅ Rolingiz 'Instruktor'ga o'zgartirildi."
+    admin: "✅ Rolingiz 'Admin'ga o'zgartirildi."
 
-  error:
-    unexpected: "Kutilmagan xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring."
-    user-not-found: "Sizning profilingiz topilmadi. Iltimos, avval saytdan ro'yxatdan o'ting."
 
-  key-not-found: "Xabar topilmadi."
+# =================================================================
+# --- AUTENTIFIKATSIYA VA ROLLAR (AUTH & ROLES) ---
+# =================================================================
+auth:
+  logout:
+    confirmation-text: "❓ Rostdan ham akkauntingizdan chiqmoqchimisiz? Bu amal sizning Telegram hisobingizni veb-saytdagi profilingizdan uzadi."
+    success-text: "✅ Muvaffaqiyatli chiqdingiz! Botdan qayta foydalanish uchun /start buyrug'ini bosing va telefon raqamingizni yuboring."
 
-# ======================================================
-# STUDENT MESSAGES
-# ======================================================
+
+# =================================================================
+# --- TALABA (STUDENT) BO'LIMI ---
+# =================================================================
 student:
-  start-message: |
-    👋 <b>Assalomu alaykum, hurmatli %s!</b>
-    
-    📚 Siz <b>Online Education</b> platformamizga muvaffaqiyatli ulandingiz.
-
+  start-message: "Qayta ko'rishib turganimizdan xursandmiz, %s! Quyidagi bo'limlardan birini tanlang."
   dashboard: |
-    🎓 Shaxsiy Kabinet
+    👤 *Profil:* %s
+    📧 *Email:* %s
+    🔑 *Login:* %s
+    🔰 *Rol:* %s
     
-    <b>PROFIL MA'LUMOTLARI:</b>
-    
-    👤 Ism-Familiya: <b>%s</b>
-    📧 Email: <b>%s</b>
-    🔑 Username: <b>@%s</b>
-    🔐 Rol: <b>%s</b>
-    
-    <b>O'QUV JARAYONI:</b>
-    
-    📚 <b>Aktiv Kurslar: %d ta</b>
-       <i>(Hozirda shu kurslarni o'qiyapsiz)</i>
+    *Umumiy statistika:*
+    🎓 *Aktiv kurslar:* %d ta
+    📊 *O'zlashtirish:* %d%% %s
+    ✅ *Tugatilgan modullar:* %d ta
 
-    📊 <b>Umumiy O'zlashtirish: %d%%</b>
-       [%s]
-
-    🏆 <b>Yakunlangan Modullar: %d ta</b>
-       <i>(Bu sizning yutuqlaringiz!)</i>
+  # "Mening Kurslarim" Oqimi (My Courses Flow)
   my-courses:
-    header: |
-      📚 <b>Mening Kurslarim</b>  
-      <i>(Sahifa %d / %d)</i>  
+    title: "📚 *Siz obuna bo'lgan kurslar* (Sahifa: %d / %d)"
+    no-courses-found: "😔 Siz hali hech qanday kursga obuna bo'lmabsiz. 'Barcha kurslar' bo'limidan o'zingizga mos kursni tanlashingiz mumkin."
+    modules-list-title: "📖 *%s* kursining modullari (Sahifa: %d / %d)" # %s -> Kurs nomi
+    lessons-list-title: "📄 *%s* modulining darslari (Sahifa: %d / %d)" # %s -> Modul nomi
+    lesson-detail:
+      title: |
+        *Dars: %s*
 
-      <i>Siz a'zo bo'lgan kurslar ro'yxati. Davom ettirish uchun raqamni tanlang:</i>
+        %s
+        
+        Quyidagi kontent bloklaridan birini tanlang:
+      content-button-text: "%s %d. %s" # {icon} {order}. {typeText}
+    lesson-locked: "🔒 Bu darsni ko'rish uchun '%s' modulini sotib olishingiz kerak."
+    buy-module-button: "🛒 Sotib olish"
+    quiz-redirect: "❓ Testni ishlash uchun, iltimos, saytdagi shaxsiy kabinetingizga o'ting yoki quyidagi havoladan foydalaning:"
+  # ...
+  all-courses:
+    choose-method: "Kurslarni qanday usulda qidirmoqchisiz? Marhamat, quyidagilardan birini tanlang:"
+    by-category:
+      title: "🗂 *Kategoriyalar ro'yxati* (Sahifa: %d / %d)"
+    by-instructor:
+      title: "👨‍🏫 *Mualliflar ro'yxati* (Sahifa: %d / %d)"
+    list:
+      title: "🎓 *%s* (Sahifa: %d / %d)" # %s -> Kategoriya yoki Muallif nomi
+    detail:
+      title: |
+        *Kurs: %s*
 
-    list-item: |
-      <b>%d.</b> %s  
-      <i>Umumiy o'zlashtirish:</i> <b>%d%%</b>  
-      <code>%s</code>
+        %s
 
-    no-courses: |
-      😔 Siz hali hech qanday kursga a'zo bo'lmabsiz.  
-      
-      🎓 <b>Barcha Kurslar</b> bo'limidan o'zingizga mos kursni tanlashingiz mumkin!
+        👨‍🏫 *Muallif:* %s
+        ⭐ *Reyting:* %.1f (%d ta izoh)
+        📚 *Modullar soni:* %d ta
 
-  course-modules:
-    header: |
-      📚 <b>Kurs:</b> %s  
 
-      <i>Davom ettirish uchun modulni tanlang:</i>
-
-    list-item: |
-      <b>%d.</b> %s  (✅ %d%%)  
-      <code>%s</code>
-
-    no-modules: |
-      ❌ Kechirasiz, bu kursda hali modullar mavjud emas.
-
-  lesson:
-    content-header: |
-      📖 <b>Dars:</b> %s  
-
-      <i>Quyida darsning asosiy mazmuni keltirilgan.</i>  
-      <i>To'liq versiya va qo'shimcha materiallarni saytdan topishingiz mumkin.</i>
-
-    main-menu: |
-      📖 <b>Dars: %s</b>
-      
-      <b>Asosiy mavzu:</b>
-      %s
-      
-      _Quyidagi bo'limlardan birini tanlang:_
-    quiz-text: "Testni bajarish va bilimingizni sinash uchun saytdagi sahifaga o'ting."
-
-    fully-paid-module: |
-      🔒 <b>Modul: %s</b>
-      
-      Ushbu modul to'liq pullik va unda bepul darslar mavjud emas.
-      
-      Darslarni ko'rishni boshlash uchun, iltimos, avval modulni sotib oling.    
-
-# ======================================================
-# INSTRUCTOR MESSAGES
-# ======================================================
+# =================================================================
+# --- INSTRUKTOR (INSTRUCTOR) BO'LIMI ---
+# =================================================================
 instructor:
-  start-message: |
-    👋 <b>Assalomu alaykum, muallim %s!</b>
-    
-    🎓 Siz <b>Online Education</b> platformamizda instructor sifatida tanildingiz.
-
+  start-message: "Instruktor paneliga xush kelibsiz, %s!"
   dashboard: |
-    👨‍🏫 <b>Instructor Paneli</b>
-    
-    _Assalomu alaykum, <b>%s</b>!_
+    *Instruktor Dashboard*
+    (Bu yerda instruktor uchun statistika bo'ladi)
 
-    <b>SIZNING SHAXSIY KO'RSATKICHLARINGIZ:</b>
-    🎓 Jami o'quvchilaringiz: <b>%d</b>
-    📚 Aktiv kurslaringiz: <b>%d</b>
-    📈 Bu oydagi daromadingiz: <b>%s</b>
-    ⭐ Umumiy reytingingiz: <b>%s</b>
-
-    <b>SO'NGGI YANGILIKLAR:</b>
-    ➕ Yangi kurslaringizga yozilganlar (bugun): <b>%d</b>
-    💬 Yangi sharh/savollar: <b>%d</b>
-    🎯 Kursni yakunlaganlar (bu hafta): <b>%d</b>
-
-# ======================================================
-# ADMIN MESSAGES
-# ======================================================
+# =================================================================
+# --- ADMIN BO'LIMI ---
+# =================================================================
 admin:
-  start-message: |
-    👋 <b>Assalomu alaykum, admin!</b>
-    
-    🔐 Siz platformaning administratorisiz.
-    👨‍💻 Quyidagi imkoniyatlar sizga taqdim etilgan:
-    • Foydalanuvchilarni boshqarish
-    • Kurslar va instructorlarni tahrirlash
-    • Statistika va tizim monitoringi
-    
-    ⚙️ Admin komandalarini ko‘rish uchun /admin buyrug‘idan foydalaning.
-
+  start-message: "Admin paneliga xush kelibsiz, %s!"
   dashboard: |
-    🛡️ <b>Administrator Boshqaruv Paneli</b>
-    
-    Assalomu alaykum, <b>%s</b>!
-    _So'nggi ma'lumotlar yangilandi: <b>%s</b>_
-
-    <b>UMUMIY STATISTIKA:</b>
-    👤 Jami foydalanuvchilar: <b>%d</b>
-    👨‍🏫 Jami instructor'lar: <b>%d</b>
-    📚 Mavjud kurslar: <b>%d</b>
-    💰 Bu oydagi daromad: <b>%s</b>
-
-    <b>BUGUNGI FAOLLIK:</b>
-    ➕ Yangi foydalanuvchilar: <b>%d</b>
-    🎓 Yangi kurs sotuvlari: <b>%d</b>
-    💬 Yordam so'rovlari: <b>%d</b> (Yangi)
-
-  users-menu: |
-    <b>Foydalanuvchilarni boshqarish</b>
-    
-    Quyidagi amallardan birini tanlang:
-
-  courses-menu: |
-    <b>Kurslarni boshqarish</b>
-    
-    Quyidagi amallardan birini tanlang:
-
+    *Admin Dashboard*
+    (Bu yerda admin uchun umumiy ma'lumotlar bo'ladi)
+  users-menu: "Foydalanuvchilarni boshqarish menyusi."
+  courses-menu: "Kurslarni boshqarish menyusi."
   broadcast:
-    init: |
-      Barcha foydalanuvchilarga yuboriladigan xabar matnini kiriting.
-      
-      <i>Xabarga rasm, video yoki fayl biriktirishingiz mumkin. Bekor qilish uchun /cancel yozing.</i>
+    init: "Barcha foydalanuvchilarga yuborish uchun xabaringizni kiriting:"

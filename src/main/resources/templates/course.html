@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <title>Kurs yaratish</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; }
+        input, textarea, button { width: 100%; padding: 8px; margin: 8px 0; }
+        label { font-weight: bold; display: block; margin-top: 10px; }
+        .success { color: green; }
+        .error { color: red; }
+        hr { margin: 20px 0; }
+    </style>
+</head>
+<body>
+<h1>Kurs yaratish</h1>
+
+<label for="token">Bearer Token</label>
+<input type="text" id="token" placeholder="Bearer tokeningizni kiriting" required>
+
+<hr>
+
+<form id="courseForm">
+    <label for="title">Kurs sarlavhasi</label>
+    <input type="text" id="title" name="title" required minlength="2" maxlength="150">
+
+    <label for="description">Tavsif</label>
+    <textarea id="description" name="description" maxlength="1000"></textarea>
+
+    <label for="categoryId">Kategoriya ID</label>
+    <input type="number" id="categoryId" name="categoryId" required>
+
+    <label for="file">Kurs ikonka (thumbnail)</label>
+    <input type="file" id="file" name="file" accept="image/*" required>
+
+    <button type="button" id="uploadBtn">Ikonka yuklash</button>
+
+    <p id="uploadStatus"></p>
+
+    <input type="hidden" id="thumbnailId" name="thumbnailId">
+
+    <button type="submit">Kurs yaratish</button>
+</form>
+
+<div id="result"></div>
+
+<script>
+    const API_BASE = "http://localhost:8080/api/v1";
+
+    function getAuthHeader() {
+        const token = document.getElementById('token').value.trim();
+        if (!token) {
+            throw new Error("Bearer token kiritilmagan");
+        }
+        return { "Authorization": "Bearer " + token };
+    }
+
+    document.getElementById('uploadBtn').addEventListener('click', async () => {
+        const fileInput = document.getElementById('file');
+        if (!fileInput.files.length) {
+            alert("Fayl tanlang!");
+            return;
+        }
+        const file = fileInput.files[0];
+
+        try {
+            // 1-QADAM: upload URL olish
+            const genRes = await fetch(`${API_BASE}/attachments/generate-upload-url?filename=${encodeURIComponent(file.name)}`, {
+                method: "POST",
+                headers: getAuthHeader()
+            });
+            if (!genRes.ok) throw new Error("Upload URL olishda xatolik");
+            const uploadData = await genRes.json();
+            const uploadUrl = uploadData.uploadUrl || uploadData.data?.uploadUrl;
+            const minioKey = uploadData.minioKey || uploadData.data?.minioKey;
+
+            if (!uploadUrl || !minioKey) throw new Error("Upload URL yoki minioKey topilmadi");
+
+            // 2-QADAM: Faylni MinIO'ga yuklash
+            const putRes = await fetch(uploadUrl, {
+                method: "PUT",
+                body: file
+            });
+            if (!putRes.ok) throw new Error("Fayl yuklashda xatolik");
+
+            // 3-QADAM: confirm-upload
+            const confirmRes = await fetch(`${API_BASE}/attachments/confirm-upload`, {
+                method: "POST",
+                headers: {
+                    ...getAuthHeader(),
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    minioKey: minioKey,
+                    originalName: file.name,
+                    contentType: file.type,
+                    size: file.size
+                })
+            });
+            if (!confirmRes.ok) throw new Error("Confirm upload xatolik");
+            const confirmData = await confirmRes.json();
+            const thumbnailId = confirmData.data?.id;
+            if (!thumbnailId) throw new Error("thumbnailId olinmadi");
+
+            document.getElementById('thumbnailId').value = thumbnailId;
+            document.getElementById('uploadStatus').textContent = `✅ Yuklandi. thumbnailId: ${thumbnailId}`;
+            document.getElementById('uploadStatus').className = "success";
+        } catch (err) {
+            document.getElementById('uploadStatus').textContent = `❌ ${err.message}`;
+            document.getElementById('uploadStatus').className = "error";
+        }
+    });
+
+    document.getElementById('courseForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const title = document.getElementById('title').value.trim();
+        const description = document.getElementById('description').value.trim();
+        const categoryId = parseInt(document.getElementById('categoryId').value);
+        const thumbnailId = parseInt(document.getElementById('thumbnailId').value);
+
+        if (!thumbnailId) {
+            alert("Avval ikonka yuklang!");
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE}/courses`, {
+                method: "POST",
+                headers: {
+                    ...getAuthHeader(),
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ title, description, thumbnailId, categoryId })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "Kurs yaratishda xatolik");
+            document.getElementById('result').textContent = `✅ Kurs yaratildi: ID ${data.data?.id}`;
+            document.getElementById('result').className = "success";
+        } catch (err) {
+            document.getElementById('result').textContent = `❌ ${err.message}`;
+            document.getElementById('result').className = "error";
+        }
+    });
+</script>
+</body>
+</html>

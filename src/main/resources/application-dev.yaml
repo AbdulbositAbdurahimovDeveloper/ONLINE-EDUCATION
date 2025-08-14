@@ -104,3 +104,4 @@ telegram:
     username: ${TELEGRAM_BOT_USERNAME}
     webhook-path: ${TELEGRAM_BOT_PATH}
     chat-id: ${TELEGRAM_BOT_CHAT_ID}
+    channel-id: ${TELEGRAM_BOT_CHANNEL}

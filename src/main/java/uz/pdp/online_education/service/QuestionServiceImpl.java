@@ -11,16 +11,18 @@ import uz.pdp.online_education.model.lesson.Lesson;
 import uz.pdp.online_education.model.quiz.AnswerOption;
 import uz.pdp.online_education.model.quiz.Question;
 import uz.pdp.online_education.model.quiz.Quiz;
-import uz.pdp.online_education.payload.quiz.AnswerOptionCreateNestedDTO;
-import uz.pdp.online_education.payload.quiz.QuestionCreateWithAnswersDTO;
-import uz.pdp.online_education.payload.quiz.QuestionResponseDTO;
-import uz.pdp.online_education.payload.quiz.QuestionUpdateDTO;
+import uz.pdp.online_education.payload.quiz.*;
 import uz.pdp.online_education.repository.PaymentRepository;
 import uz.pdp.online_education.repository.QuestionRepository;
 import uz.pdp.online_education.repository.QuizRepository;
 import uz.pdp.online_education.service.interfaces.QuestionService;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -55,9 +57,9 @@ public class QuestionServiceImpl implements QuestionService {
         return questionMapper.toDto(savedQuestion);
     }
 
-    private void validateAnswerOptions(QuestionType type, List<AnswerOptionCreateNestedDTO> options) {
+    private void validateAnswerOptions(QuestionType type, List<? extends AnswerOptionData> options) {
         long correctOptionsCount = options.stream()
-                .filter(AnswerOptionCreateNestedDTO::getIsCorrect)
+                .filter(AnswerOptionData::getIsCorrect) // isCorrect() o'rniga getIsCorrect()
                 .count();
 
         if (type == QuestionType.SINGLE_CHOICE && correctOptionsCount != 1) {
@@ -88,15 +90,53 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    public QuestionResponseDTO update(Long id, QuestionUpdateDTO updateDTO) {
-        Question question = questionRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Question not found with id: " + id));
+    @Transactional
+    public QuestionResponseDTO updateWithAnswers(Long questionId, QuestionUpdateWithAnswersDTO updateDTO) {
+        // 0. Biznes qoidalarini avvaldan tekshiramiz
+        validateAnswerOptions(updateDTO.getType(), updateDTO.getOptions());
 
+        // 1. Asosiy savolni bazadan uning o'zining ID'si orqali topamiz
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new EntityNotFoundException("Question not found with id: " + questionId));
+
+        // 2. Savolning o'zini yangilaymiz
         question.setText(updateDTO.getText());
         question.setType(updateDTO.getType());
 
-        return questionMapper.toDto(questionRepository.save(question));
+        // 3. Javoblarni sinxronizatsiya qilamiz (bu logika to'g'ri edi)
+        Map<Long, AnswerOption> existingOptionsMap = question.getOptions().stream()
+                .collect(Collectors.toMap(AnswerOption::getId, Function.identity()));
+
+        Set<Long> dtoOptionIds = updateDTO.getOptions().stream()
+                .map(AnswerOptionUpdateNestedDTO::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        // O'CHIRISH: Bazada bor, DTO'da yo'q javoblarni o'chiramiz
+        question.getOptions().removeIf(option -> !dtoOptionIds.contains(option.getId()));
+
+        // YANGILASH va QO'SHISH
+        for (AnswerOptionUpdateNestedDTO optionDto : updateDTO.getOptions()) {
+            if (optionDto.getId() != null) {
+                // Yangilash
+                AnswerOption existingOption = existingOptionsMap.get(optionDto.getId());
+                if (existingOption != null) {
+                    existingOption.setText(optionDto.getText());
+                    existingOption.setCorrect(optionDto.getIsCorrect());
+                }
+            } else {
+                // Yangi qo'shish
+                AnswerOption newOption = new AnswerOption();
+                newOption.setText(optionDto.getText());
+                newOption.setCorrect(optionDto.getIsCorrect());
+                question.addOption(newOption);
+            }
+        }
+
+        // O'zgarishlar @Transactional tufayli avtomatik saqlanadi
+        return questionMapper.toDto(question);
     }
+
 
     @Override
     public void delete(Long id) {
@@ -108,9 +148,9 @@ public class QuestionServiceImpl implements QuestionService {
 
     @Override
     @Transactional(readOnly = true) // To'lovlar ro'yxatini yuklash uchun tranzaksiya kerak
-    public boolean isUserQuestionBought(String username, Long quizId) {
-        Question question = questionRepository.findById(quizId)
-                .orElseThrow(() -> new EntityNotFoundException("Question not found with id: " + quizId));
+    public boolean isUserQuestionBought(String username, Long questionId) {
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new EntityNotFoundException("Question not found with id: " + questionId));
 
         Lesson lesson = question.getQuiz().getQuizContent().getLesson();
 

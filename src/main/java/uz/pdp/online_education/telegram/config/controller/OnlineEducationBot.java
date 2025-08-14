@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramWebhookBot;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageMedia;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -108,5 +109,13 @@ public class OnlineEducationBot extends TelegramWebhookBot {
         assert method != null;
         log.warn("MyExecute(BotApiMethod<Message>) was called with a method that does not return a Message. Method: {}", method.getClass().getSimpleName());
         return null;
+    }
+
+    public void myExecute(EditMessageMedia editMessageMedia) {
+        try {
+            execute(editMessageMedia);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -80,6 +80,7 @@ public class UpdateDispatcherService {
             } catch (TelegramApiException e) {
                 throw new RuntimeException(e);
             }
+            return;
 
         }
         Long chatId = getUserChatId(update);
