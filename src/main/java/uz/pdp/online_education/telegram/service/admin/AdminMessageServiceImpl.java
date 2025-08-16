@@ -5,10 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import uz.pdp.online_education.exceptions.EntityNotFoundException;
+import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.model.UserProfile;
 import uz.pdp.online_education.payload.AdminDashboardDTO;
 import uz.pdp.online_education.repository.TelegramUserRepository;
@@ -18,6 +19,7 @@ import uz.pdp.online_education.telegram.config.controller.OnlineEducationBot;
 import uz.pdp.online_education.telegram.enums.BotMessage;
 import uz.pdp.online_education.telegram.enums.UserState;
 import uz.pdp.online_education.telegram.mapper.SendMsg;
+import uz.pdp.online_education.telegram.model.TelegramUser;
 import uz.pdp.online_education.telegram.service.admin.template.AdminMessageService;
 import uz.pdp.online_education.telegram.service.admin.template.InlineKeyboardService;
 import uz.pdp.online_education.telegram.service.admin.template.ReplyKeyboardService;
@@ -52,10 +54,21 @@ public class AdminMessageServiceImpl implements AdminMessageService {
         Long chatId = message.getChatId();
         String text = message.getText();
 
+        TelegramUser telegramUser = getOrCreateTelegramUser(chatId);
+
+        if (telegramUser.getUser() == null) {
+            onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, "Please authenticate first."));
+            return;
+        }
+
+        User user = telegramUser.getUser();
+        UserProfile profile = user.getProfile();
+
+
         // Route commands and button presses to their respective handlers
         switch (text) {
-            case Utils.START -> sendAdminWelcomeMessage(chatId);
-            case Utils.DASHBOARD -> sendDashboardMessage(chatId);
+            case Utils.START -> sendAdminWelcomeMessage(chatId, profile);
+            case Utils.DASHBOARD -> sendDashboardMessage(chatId,user, profile);
             case Utils.ReplyButtons.ADMIN_USERS -> sendUsersMainMenu(chatId);
             case Utils.ReplyButtons.ADMIN_COURSES -> sendCoursesMainMenu(chatId);
             case Utils.ReplyButtons.ADMIN_SEND_MESSAGE -> initiateBroadcast(chatId);
@@ -69,12 +82,12 @@ public class AdminMessageServiceImpl implements AdminMessageService {
      * @param chatId The admin's chat ID.
      */
     @Override
-    public void sendAdminWelcomeMessage(Long chatId) {
+    public void sendAdminWelcomeMessage(Long chatId, UserProfile profile) {
         telegramUserRepository.updateStateByChatId(chatId, UserState.ADMIN_MAIN_MENU);
         ReplyKeyboardMarkup keyboard = replyKeyboardService.adminMainMenu();
         SendMessage sendMessage = sendMsg.sendMessage(
                 chatId,
-                messageService.getMessage(BotMessage.START_MESSAGE_ADMIN),
+                messageService.getMessage(BotMessage.START_MESSAGE_ADMIN,profile.getFirstName()),
                 keyboard
         );
         onlineEducationBot.myExecute(sendMessage);
@@ -128,10 +141,7 @@ public class AdminMessageServiceImpl implements AdminMessageService {
         onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, statsText));
     }
 
-    private void sendDashboardMessage(Long chatId) {
-        UserProfile profile = telegramUserRepository.findByChatId(chatId)
-                .orElseThrow(() -> new RuntimeException("User profile not found for dashboard."))
-                .getUser().getProfile();
+    private void sendDashboardMessage(Long chatId, User user, UserProfile profile) {
 
         AdminDashboardDTO stats = userRepository.getAdminDashboardStats();
         String dashboardText = formatDashboardText(profile.getFirstName() + " " + profile.getLastName(), stats);
@@ -180,5 +190,15 @@ public class AdminMessageServiceImpl implements AdminMessageService {
                 stats.getSalesToday(),
                 stats.getNewSupportTickets()
         );
+    }
+
+    private TelegramUser getOrCreateTelegramUser(Long chatId) {
+        return telegramUserRepository.findByChatId(chatId).orElseGet(() -> {
+            log.info("Creating a new TelegramUser for chatId: {}", chatId);
+            TelegramUser newTelegramUser = new TelegramUser();
+            newTelegramUser.setChatId(chatId);
+            newTelegramUser.setUserState(UserState.UNREGISTERED);
+            return telegramUserRepository.save(newTelegramUser);
+        });
     }
 }
