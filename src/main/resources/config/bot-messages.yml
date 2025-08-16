@@ -98,9 +98,11 @@ instructor:
 admin:
   start-message: "Admin paneliga xush kelibsiz, %s!"
   dashboard: |
-    *Admin Dashboard*
-    (Bu yerda admin uchun umumiy ma'lumotlar bo'ladi)
-  users-menu: "Foydalanuvchilarni boshqarish menyusi."
-  courses-menu: "Kurslarni boshqarish menyusi."
-  broadcast:
-    init: "Barcha foydalanuvchilarga yuborish uchun xabaringizni kiriting:"
+    👤 *Profil:* %s
+    📧 *Email:* %s
+    🔑 *Login:* %s
+    🔰 *Rol:* %s
+
+    *Umumiy statistika:*
+    👥 *Jami foydalanuvchilar:* %d ta
+    📚 *Jami kurslar:* %d ta

@@ -4,11 +4,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
+import uz.pdp.online_education.model.UserProfile;
 import uz.pdp.online_education.repository.TelegramUserRepository;
 import uz.pdp.online_education.telegram.Utils;
 import uz.pdp.online_education.telegram.config.controller.OnlineEducationBot;
 import uz.pdp.online_education.telegram.enums.UserState;
 import uz.pdp.online_education.telegram.mapper.SendMsg;
+import uz.pdp.online_education.telegram.model.TelegramUser;
 import uz.pdp.online_education.telegram.service.admin.template.AdminCallBackQueryService;
 import uz.pdp.online_education.telegram.service.admin.template.AdminMessageService;
 
@@ -57,6 +59,14 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
 
         // Step 2: Let the AdminMessageService handle sending the welcome message,
         // as it also resets the state and sends the correct ReplyKeyboard.
-        adminMessageService.sendAdminWelcomeMessage(chatId);
+        TelegramUser telegramUser = telegramUserRepository.findByChatId(chatId).orElseGet(() -> {
+            TelegramUser newTelegramUser = new TelegramUser();
+            newTelegramUser.setChatId(chatId);
+            newTelegramUser.setUserState(UserState.UNREGISTERED);
+            return telegramUserRepository.save(newTelegramUser);
+        });
+
+        UserProfile profile = telegramUser.getUser().getProfile();
+        adminMessageService.sendAdminWelcomeMessage(chatId, profile);
     }
 }
