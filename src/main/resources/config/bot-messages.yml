@@ -160,17 +160,20 @@ instructor:
 admin:
   start-message: "Admin paneliga xush kelibsiz, <b>%s</b>."
   dashboard: |
-    👤 *Profil:* %s
-    📧 *Email:* %s
-    🔑 *Login:* %s
-    🔰 *Rol:* %s
+    
+    📊 Shaxsiy Kabinet
+    
+    👤 Ism-sharif: %s
+    📧 Email: %s
+    🔑 Login: %s
+    🔰 Role: %s
 
-    *Umumiy statistika:*
-    👥 *Jami foydalanuvchilar:* %d ta
-    📚 *Jami kurslar:* %d ta
-    <b>⚙️ Admin Paneli</b>
+    Umumiy statistika:
+    👥 Jami foydalanuvchilar: %d ta
+    📚 Jami kurslar: %d ta
+    ⚙️ Admin Paneli
 
-    <i>Bu yerda platformaning umumiy statistikasi va boshqaruv vositalari joylashgan.</i>
+
   users-menu: "👤 Foydalanuvchilarni boshqarish bo'limi."
   courses-menu: "📚 Kurslarni boshqarish bo'limi."
   broadcast:
