@@ -157,16 +157,7 @@ public class AttachmentController {
         attachmentService.delete(id);
         return ResponseEntity.ok(ResponseDTO.success("Attachment deleted"));
     }
-
-
-
-
-
-
-
-
-
-
-
-
+    /**
+     * Delete an icon by filename.
+     */
 }
