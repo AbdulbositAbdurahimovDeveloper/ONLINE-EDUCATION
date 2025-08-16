@@ -12,12 +12,20 @@ import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import uz.pdp.online_education.model.Attachment;
-import uz.pdp.online_education.model.Course;
+import uz.pdp.online_education.model.*;
 import uz.pdp.online_education.model.Module;
-import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.model.lesson.*;
+import uz.pdp.online_education.payload.CategoryInfo;
+import uz.pdp.online_education.payload.FilterDTO;
+import uz.pdp.online_education.payload.PageDTO;
+import uz.pdp.online_education.payload.UserInfo;
+import uz.pdp.online_education.payload.course.CourseDetailDTO;
+import uz.pdp.online_education.payload.enrollment.ModuleEnrollmentRequestDTO;
+import uz.pdp.online_education.payload.enrollment.ModuleEnrollmentResponseDTO;
+import uz.pdp.online_education.payload.lesson.LessonResponseDTO;
+import uz.pdp.online_education.payload.module.ModuleDetailDTO;
 import uz.pdp.online_education.repository.*;
+import uz.pdp.online_education.service.interfaces.*;
 import uz.pdp.online_education.telegram.Utils;
 import uz.pdp.online_education.telegram.config.controller.OnlineEducationBot;
 import uz.pdp.online_education.telegram.enums.BotMessage;
@@ -30,12 +38,21 @@ import uz.pdp.online_education.telegram.service.student.template.StudentInlineKe
 import uz.pdp.online_education.telegram.service.student.template.StudentProcessMessageService;
 
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryService {
 
+    private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
+    private final CourseService courseService;
+    private final UserRepository userRepository;
+    private final ModuleService moduleService;
+    private final PaymentService paymentService;
+    private final LessonService lessonService;
+    private final ModuleEnrollmentService moduleEnrollmentService;
     // --- DEPENDENCIES ---
     @Value("${telegram.bot.webhook-path}")
     private String SITE_URL;
@@ -66,11 +83,10 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
         Long chatId = callbackQuery.getMessage().getChatId();
         Integer messageId = callbackQuery.getMessage().getMessageId();
         String queryData = callbackQuery.getData();
+        String callbackQueryId = callbackQuery.getId();
 
         // Foydalanuvchini topish, topilmasa xatolik berish
-        User user = telegramUserRepository.findByChatId(chatId)
-                .orElseThrow(() -> new RuntimeException("User not found for callback. ChatID: " + chatId))
-                .getUser();
+        User user = telegramUserRepository.findByChatId(chatId).orElseThrow(() -> new RuntimeException("User not found for callback. ChatID: " + chatId)).getUser();
 
         // Callback so'roviga javob berish (loading animatsiyasini to'xtatish)
         bot.myExecute(new AnswerCallbackQuery(callbackQuery.getId()));
@@ -81,13 +97,17 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
 
             // Callback prefixiga qarab tegishli handler'ga yo'naltirish
             switch (prefix) {
+                case Utils.CallbackData.DELETED -> bot.myExecute(sendMsg.deleteMessage(chatId, messageId));
                 case Utils.CallbackData.AUTH_PREFIX -> handleAuthCallback(user, chatId, messageId, data);
                 case Utils.CallbackData.MY_COURSE_PREFIX -> handleMyCourseCallback(user, chatId, messageId, data);
-                case Utils.CallbackData.MODULE_PREFIX -> handleModuleCallback(user, chatId, messageId, data, callbackQuery);
-                case Utils.CallbackData.LESSON_PREFIX -> handleLessonCallback(user, chatId, messageId, data, callbackQuery);
+                case Utils.CallbackData.MODULE_PREFIX ->
+                        handleModuleCallback(user, chatId, messageId, data, callbackQuery);
+                case Utils.CallbackData.LESSON_PREFIX ->
+                        handleLessonCallback(user, chatId, messageId, data, callbackQuery);
                 case Utils.CallbackData.CONTENT_PREFIX -> handleContentCallback(user, chatId, data, callbackQuery);
                 case Utils.CallbackData.STUDENT_PREFIX -> handleStudentGeneralCallback(user, chatId, messageId, data);
-                case Utils.CallbackData.ALL_COURSES_PREFIX -> handleAllCoursesCallback(user, chatId, messageId, data);
+                case Utils.CallbackData.ALL_COURSES_PREFIX ->
+                        handleAllCoursesCallback(user, chatId, messageId, data, queryData, callbackQueryId);
             }
         } catch (Exception e) {
             log.error("Callbackni qayta ishlashda xatolik yuz berdi: Query='{}'", queryData, e);
@@ -120,7 +140,8 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
                 String successText = messageService.getMessage(BotMessage.AUTH_LOGOUT_SUCCESS_TEXT);
                 bot.myExecute(sendMsg.editMessage(chatId, messageId, successText, null));
             }
-            case Utils.CallbackData.ACTION_CANCEL -> studentProcessMessageService.showDashboard(user, chatId, messageId);
+            case Utils.CallbackData.ACTION_CANCEL ->
+                    studentProcessMessageService.showDashboard(user, chatId, messageId);
             default -> log.warn("Noma'lum chiqish qadami: {}", step);
         }
     }
@@ -184,16 +205,14 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
                 Module moduleToBuy = moduleRepository.findById(moduleId).orElse(null);
                 if (moduleToBuy == null) {
                     AnswerCallbackQuery method = new AnswerCallbackQuery(callbackQuery.getId());
-                    method.setText( "Xatolik: Bunday modul topilmadi.");
+                    method.setText("Xatolik: Bunday modul topilmadi.");
                     method.setShowAlert(true);
                     bot.myExecute(method);
                     return;
                 }
                 String messageText = messageService.getMessage(BotMessage.LESSON_LOCKED_MESSAGE, moduleToBuy.getTitle());
                 String purchaseUrl = SITE_URL + "/checkout/module/" + moduleId;
-                InlineKeyboardMarkup keyboard = studentInlineKeyboardService.createUrlButton(
-                        messageService.getMessage(BotMessage.BUY_MODULE_BUTTON), purchaseUrl
-                );
+                InlineKeyboardMarkup keyboard = studentInlineKeyboardService.createUrlButton(messageService.getMessage(BotMessage.BUY_MODULE_BUTTON), purchaseUrl);
                 bot.myExecute(sendMsg.deleteMessage(chatId, messageId));
                 bot.myExecute(sendMsg.sendMessage(chatId, messageText, keyboard));
             }
@@ -210,7 +229,8 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
             if (content == null) return;
 
             if (content instanceof TextContent textContent) {
-                bot.myExecute(sendMsg.sendMessage(chatId, textContent.getText()));
+                InlineKeyboardMarkup inlineKeyboardMarkup = studentInlineKeyboardService.createSingleButtonKeyboard("❌ o`chirish", Utils.CallbackData.DELETED);
+                bot.myExecute(sendMsg.sendMessage(chatId, textContent.getText(), inlineKeyboardMarkup));
             } else if (content instanceof AttachmentContent attachmentContent) {
                 Attachment attachment = attachmentContent.getAttachment();
                 if (attachment != null && attachment.getTelegramFileId() != null) {
@@ -220,7 +240,8 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
             } else if (content instanceof QuizContent quizContent) {
 //                String url = SITE_URL + "/quiz/" + quizContent.getQuiz().getId();
                 String url = urlBuilderService.generateQuizUrl(quizContent.getQuiz().getId());
-                InlineKeyboardMarkup keyboard = studentInlineKeyboardService.createSingleButtonKeyboard("❓ Testni ishlash", url);
+//                InlineKeyboardMarkup keyboard = studentInlineKeyboardService.createSingleButtonKeyboard("❓ Testni ishlash", url);
+                InlineKeyboardMarkup keyboard = studentInlineKeyboardService.createQuizContent("❓ Testni ishlash", url);
                 bot.myExecute(sendMsg.sendMessage(chatId, messageService.getMessage(BotMessage.QUIZ_REDIRECT_MESSAGE), keyboard));
             }
         }
@@ -239,17 +260,467 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
     /**
      * "Barcha kurslar" bo'limi bilan bog'liq callback'larni boshqaradi.
      */
-    private void handleAllCoursesCallback(User user, Long chatId, Integer messageId, String[] data) {
-        // TODO: Bu bo'limning logikasi hali implementatsiya qilinmagan.
-        // Kerakli amallar:
-        // 1. Kategoriyalar ro'yxatini ko'rsatish
-        // 2. Instruktorlar ro'yxatini ko'rsatish
-        // 3. Tanlangan kategoriya/instruktor bo'yicha kurslarni chiqarish
-        log.warn("Hali tayyor bo'lmagan 'Barcha kurslar' bo'limiga murojaat qilindi. Query: {}", String.join(":", data));
-        AnswerCallbackQuery method = new AnswerCallbackQuery(String.valueOf(messageId));
-        method.setText( "Bu bo'lim hozircha ishlab chiqilmoqda.");
-        method.setShowAlert(true);
-        bot.myExecute(method);
+    private void handleAllCoursesCallback(User user, Long chatId, Integer messageId, String[] data, String queryData, String callbackQueryId) {
+        String type = data[1];
+//        int pageNumber = Integer.parseInt(data[3]);
+
+        switch (type) {
+            case Utils.CallbackData.CATEGORY -> showAllCourses_Categories(chatId, messageId, Integer.parseInt(data[3]));
+            case Utils.CallbackData.INSTRUCTOR ->
+                    showAllCourses_Instructors(chatId, messageId, Integer.parseInt(data[3]));
+            case Utils.CallbackData.ACTION_LIST -> showAllCourse(chatId, messageId, data, queryData);
+            case Utils.CallbackData.MODULE_PREFIX -> showAllCourseModules(user, chatId, messageId, data, queryData);
+            case Utils.CallbackData.LESSON_PREFIX ->
+                    showAllCourseModuleLessons(user, chatId, messageId, data, queryData);
+            case Utils.CallbackData.CONTENT_PREFIX ->
+                    sendAllCoursesLessonContent(user, chatId, messageId, data, queryData, callbackQueryId);
+            case Utils.CallbackData.ACTION_SUBSCRIPTION ->
+                    userModuleSubscription(user, chatId, messageId, data, queryData, callbackQueryId);
+            case Utils.CallbackData.ACTION_BUY -> userModuleBuy(user, chatId, messageId, data, queryData);
+            case Utils.CallbackData.ACTION_BACK -> sendAllCoursesPage(chatId, messageId);
+        }
+    }
+
+    private void userModuleBuy(User user, Long chatId, Integer messageId, String[] data, String queryData) {
+        System.out.println(queryData);
+
+        String type = data[2];
+        Long id = Long.valueOf(data[4]);
+        String datum = data[3];
+
+        if (type.equals(Utils.CallbackData.ACTION_VIEW)) {
+            ModuleDetailDTO moduleDetailDTO = moduleService.read(id);
+            String message = String.format(
+                    """
+                            📦 <b>%s</b>
+                            
+                            📝 %s
+                            
+                            📚 Darslar soni: %d ta
+                            👥 O‘quvchilar: %d ta
+                            💵 Narxi: %d so‘m
+                            
+                            👉 Modulni sotib olish uchun quyidagi tugmani bosing:""",
+                    moduleDetailDTO.getTitle(),
+                    moduleDetailDTO.getDescription(),
+                    moduleDetailDTO.getLessonCount(),
+                    moduleDetailDTO.getModuleEnrollmentsCount(),
+                    moduleDetailDTO.getPrice()
+            );
+
+            InlineKeyboardMarkup inlineKeyboardMarkup = studentInlineKeyboardService.buildPurchaseButton(id, datum);
+            bot.myExecute(sendMsg.editMessage(chatId, messageId, message, inlineKeyboardMarkup));
+        } else {
+
+            String join = String.join(":",
+                    Utils.CallbackData.ALL_COURSES_PREFIX,
+                    Utils.CallbackData.LESSON_PREFIX,
+                    datum,
+                    id.toString(),
+                    Utils.CallbackData.ACTION_PAGE,
+                    "0"
+            );
+            String[] split = join.split(":");
+            showAllCourseModuleLessons(user, chatId, messageId, split, queryData);
+
+        }
+
+    }
+
+    private void userModuleSubscription(User user, Long chatId, Integer messageId, String[] data, String queryData, String callbackQueryId) {
+
+        System.out.println(queryData);
+
+        String type = data[2];
+        Long id = Long.valueOf(data[4]);
+        String datum = data[3];
+
+        switch (type) {
+            case Utils.CallbackData.ACTION_VIEW -> {
+
+                ModuleDetailDTO moduleDetailDTO = moduleService.read(id);
+
+                String msg = String.format(
+                        "📦 <b>%s</b>\n━━━━━━━━━━━━━━━━\n📚 %d ta dars\n👥 %d ta o‘quvchi\n💵 %d so‘m\n━━━━━━━━━━━━━━━━\n📖 Tavsif:\n%s\n━━━━━━━━━━━━━━━━\n👉 Obuna bo‘lishni xohlaysizmi?",
+                        moduleDetailDTO.getTitle(),
+                        moduleDetailDTO.getLessonCount(),
+                        moduleDetailDTO.getModuleEnrollmentsCount(),
+                        moduleDetailDTO.getPrice() / 100,
+                        moduleDetailDTO.getDescription()
+                );
+
+                InlineKeyboardMarkup inlineKeyboardMarkup = studentInlineKeyboardService.buildYesNoKeyboard(id, datum);
+                bot.myExecute(sendMsg.editMessage(chatId, messageId, msg, inlineKeyboardMarkup));
+                return;
+            }
+            case Utils.CallbackData.ACTION_CANCEL -> {
+
+                AnswerCallbackQuery answerCallbackQuery = sendMsg.answerCallbackQuery(callbackQueryId, "Obuna Bomadingiz");
+
+                bot.myExecute(answerCallbackQuery);
+
+
+            }
+            case Utils.CallbackData.ACTION_CONFIRM -> {
+
+                ModuleEnrollmentResponseDTO enrollUser = moduleEnrollmentService.enrollUser(new ModuleEnrollmentRequestDTO(user.getId(), id));
+
+                AnswerCallbackQuery answerCallbackQuery = sendMsg.answerCallbackQuery(callbackQueryId, "Obuna boldingiz");
+
+                bot.myExecute(answerCallbackQuery);
+            }
+
+        }
+        String join = String.join(":",
+                Utils.CallbackData.ALL_COURSES_PREFIX,
+                Utils.CallbackData.LESSON_PREFIX,
+                datum,
+                id.toString(),
+                Utils.CallbackData.ACTION_PAGE,
+                "0"
+        );
+        String[] split = join.split(":");
+        showAllCourseModuleLessons(user, chatId, messageId, split, queryData);
+
+
+    }
+
+    private void sendAllCoursesLessonContent(User user, Long chatId, Integer messageId, String[] data, String queryData, String callbackQueryId) {
+
+
+        System.out.printf(queryData);
+        String datum = data[2];
+        Long id = Long.parseLong(data[3]);
+
+        LessonResponseDTO lessonResponseDTO = lessonService.read(id);
+
+        System.out.println(lessonResponseDTO);
+
+        Lesson lesson = lessonRepository.findById(id).orElseThrow(() -> new RuntimeException("Lesson Not Found"));
+        Module module = moduleRepository.findById(lessonResponseDTO.getModuleId()).orElse(null);
+        String title = module.getTitle();
+        String courseTitle = module.getCourse().getTitle();
+
+        boolean exists = paymentRepository.existsByUserAndModuleId(user, lessonResponseDTO.getModuleId());
+
+        if (exists || lessonResponseDTO.isFree()
+        ) {
+
+            String lessonTemplate = String.format("""
+                            📚 Kurs: %s
+                            📦 Modul: %s
+                            🎓 Dars: %s
+                            
+                            📝 %s
+                            """,
+                    courseTitle,
+                    title,
+                    lessonResponseDTO.getTitle(),
+                    lessonResponseDTO.getContent());
+
+            String backCallback = String.join(":",
+                    Utils.CallbackData.ALL_COURSES_PREFIX,
+                    Utils.CallbackData.LESSON_PREFIX,
+                    datum,
+                    lessonResponseDTO.getModuleId().toString(),
+                    Utils.CallbackData.ACTION_PAGE,
+                    "0"
+            );
+            InlineKeyboardMarkup inlineKeyboardMarkup = studentInlineKeyboardService.lessonContentsMenu(lesson, module.getId(), backCallback);
+            bot.myExecute(sendMsg.editMessage(chatId, messageId, lessonTemplate, inlineKeyboardMarkup));
+
+        } else {
+
+            bot.myExecute(sendMsg.answerCallbackQuery(callbackQueryId, "Dasrni korish uchun sotib olisng!"));
+
+        }
+
+
+    }
+
+    private void showAllCourseModuleLessons(User user, Long chatId, Integer messageId, String[] data, String queryData) {
+        System.out.println(queryData);
+
+        String datum = data[2];
+        Long id = Long.parseLong(data[3]);
+        int pageNum = Integer.parseInt(data[5]);
+
+        PageDTO<LessonResponseDTO> lessonResponseDTOPageDTO =
+                moduleService.readLessons(id, pageNum, 10);
+
+        List<LessonResponseDTO> lessons = lessonResponseDTOPageDTO.getContent();
+
+        boolean purchased = paymentRepository.existsByUserAndModuleId(user, id);
+        boolean hasSubscription = moduleEnrollmentRepository.existsByUserAndModuleId(user, id);
+
+        String header = messageService.getMessage(
+                BotMessage.LESSON_LIST_TITLE,
+                lessons.size()
+        );
+
+        StringBuilder list = new StringBuilder();
+        for (int i = 0; i < lessons.size(); i++) {
+            LessonResponseDTO l = lessons.get(i);
+
+            String status = null;
+            if (!purchased) {
+                status = l.isFree()
+                        ? messageService.getMessage(BotMessage.LESSON_STATUS_FREE)
+                        : messageService.getMessage(BotMessage.LESSON_STATUS_PAID);
+
+            } else {
+                status = "ochiq";
+            }
+
+            list.append(
+                    messageService.getMessage(
+                            BotMessage.LESSON_LIST_ITEM,
+                            i + 1,
+                            l.getTitle(),
+                            status
+                    )
+            ).append("\n\n");
+        }
+
+        Long course = Objects.requireNonNull(moduleRepository.findCourseByModuleId(id).orElse(null)).getId();
+        String finalMessage = header + "\n" + list;
+        String backButton = String.join(":", Utils.CallbackData.ALL_COURSES_PREFIX, Utils.CallbackData.MODULE_PREFIX, datum, course.toString(), Utils.CallbackData.ACTION_PAGE, "0");
+        InlineKeyboardMarkup inlineKeyboardMarkup = studentInlineKeyboardService.allCourseLessons(lessonResponseDTOPageDTO, backButton, id, datum, purchased, hasSubscription);
+
+        bot.myExecute(sendMsg.editMessage(chatId, messageId, finalMessage, inlineKeyboardMarkup));
+
+    }
+
+    private void showAllCourseModules(User user, Long chatId, Integer messageId, String[] data, String queryData) {
+
+        Long id = Long.valueOf(data[3]);
+
+        String datum = data[2];
+        String[] split = datum.split("\\.");
+        String incOrCat = split[0];
+        String incOrCatId = split[1];
+        int pageNumber = Integer.parseInt(data[5]);
+
+        Course course = courseRepository.findById(id).orElse(null);
+        if (course == null) return;
+
+        PageDTO<ModuleDetailDTO> modulePageDTO = moduleService.read(id, pageNumber, 10);
+
+        int number = 1;
+        StringBuilder listBuilder = new StringBuilder();
+
+        for (ModuleDetailDTO m : modulePageDTO.getContent()) {
+            boolean purchased = paymentRepository.existsByUserAndModuleId(user, m.getId());
+            boolean hasSubscription = moduleEnrollmentRepository.existsByUserAndModuleId(user, m.getId());
+
+            String statusIcon;
+            String statusText;
+
+            if (hasSubscription && purchased) {
+                // 1 - Obuna va sotib olgan
+                statusIcon = "✅";
+                statusText = messageService.getMessage(BotMessage.MODULE_STATUS_SUB_AND_PURCHASED); // "Obuna + Sotib olingan"
+            } else if (hasSubscription) {
+                // 2 - Obuna, lekin sotib olinmagan
+                statusIcon = "📖";
+                statusText = messageService.getMessage(BotMessage.MODULE_STATUS_SUB_ONLY); // "Faqat obuna"
+            } else {
+                // 3 - Obunasi yo'q, sotib olinmagan
+                statusIcon = "🔒";
+                statusText = messageService.getMessage(BotMessage.MODULE_STATUS_LOCKED); // "Yopiq"
+            }
+
+            listBuilder.append(
+                    messageService.getMessage(
+                            BotMessage.COURSE_MODULES_LIST_ITEM,
+                            Utils.Numbering.toCircled(number++),
+                            m.getTitle(),
+                            String.valueOf(m.getLessonCount()),
+                            m.getModuleEnrollmentsCount()
+                    )
+            ).append(" ").append(statusIcon).append(" ").append(statusText).append("\n\n");
+        }
+
+
+        String message = messageService.getMessage(
+                BotMessage.COURSE_MODULES_LIST,
+                course.getTitle(), // "%s" — kurs nomi
+                String.valueOf(modulePageDTO.getTotalPages()),
+                String.valueOf(modulePageDTO.getPageNumber()),
+                listBuilder.toString().trim()
+        );
+
+        String backButton = String.join(":",
+                Utils.CallbackData.ALL_COURSES_PREFIX,
+                Utils.CallbackData.ACTION_LIST,
+                incOrCat,
+                incOrCatId,
+                Utils.CallbackData.ACTION_PAGE,
+                "0"
+        );
+
+        InlineKeyboardMarkup inlineKeyboardMarkup = studentInlineKeyboardService.allCourseModules(
+                modulePageDTO, backButton, id, datum
+        );
+
+        bot.myExecute(sendMsg.editMessage(chatId, messageId, message, inlineKeyboardMarkup));
+    }
+
+
+    private void sendAllCoursesPage(Long chatId, Integer messageId) {
+        String message = messageService.getMessage(BotMessage.ALL_COURSES_ENTRY_TEXT);
+        InlineKeyboardMarkup inlineKeyboardMarkup = studentInlineKeyboardService.selectCategoryAndInstructor();
+        bot.myExecute(sendMsg.editMessage(chatId, messageId, message, inlineKeyboardMarkup));
+    }
+
+    private void showAllCourse(Long chatId, Integer messageId, String[] data, String queryData) {
+
+        String type = data[2];
+        Long id = Long.valueOf(data[3]);
+        int pageNumber = Integer.parseInt(data[5]);
+        String backButton = null;
+
+        FilterDTO filterDTO = new FilterDTO();
+        if (type.equals(Utils.CallbackData.CATEGORY)) {
+
+            Category category = categoryRepository.findById(id).orElse(null);
+            if (category == null || category.getName() == null) {
+                showAllCourses_Categories(chatId, messageId, 0);
+            }
+
+            filterDTO.setCategoryTitle(List.of(Objects.requireNonNull(category).getName()));
+            backButton = String.join(":", Utils.CallbackData.ALL_COURSES_PREFIX, Utils.CallbackData.CATEGORY, Utils.CallbackData.ACTION_PAGE, "0");
+
+
+        } else if (type.equals(Utils.CallbackData.INSTRUCTOR)) {
+
+            User user = userRepository.findById(id).orElse(null);
+            if (user == null) {
+                showAllCourses_Instructors(chatId, messageId, 0);
+            }
+            filterDTO.setInstructorName(List.of(Objects.requireNonNull(user).getProfile().getFirstName(), user.getProfile().getLastName()));
+//            backButton = String.join(":", Utils.CallbackData.ALL_COURSES_PREFIX, Utils.CallbackData.ACTION_LIST, Utils.CallbackData.INSTRUCTOR, user.getId().toString(), Utils.CallbackData.ACTION_PAGE, "0");
+            backButton = String.join(":", Utils.CallbackData.ALL_COURSES_PREFIX, Utils.CallbackData.INSTRUCTOR, Utils.CallbackData.ACTION_PAGE, "0");
+
+
+        }
+
+        PageDTO<CourseDetailDTO> courses = courseService.filter(filterDTO, pageNumber, 10);
+        InlineKeyboardMarkup inlineKeyboardMarkup = studentInlineKeyboardService.allCoursesMenu(courses, backButton, type, id);
+
+
+        int number = 1;
+        StringBuilder listBuilder = new StringBuilder();
+        for (CourseDetailDTO c : courses.getContent()) {
+            listBuilder.append(
+//            int originalRating = course.getRating(); // Faraz qilaylik, bu 8
+
+                    // 2. Yordamchi metodimiz orqali uni 5 ballik tizimga o'giramiz
+//            int fivePointRating = mapRatingToFivePointScale(originalRating); // Natija: 4
+
+                    // 3. Yana bir yordamchi metod bilan yulduzchalarni yasaymiz
+//            String stars = generateStars(fivePointRating); // Natija: "⭐⭐⭐⭐☆"
+                    messageService.getMessage(
+                            BotMessage.ALL_COURSES_COURSE_LIST_ITEM,
+                            Utils.Numbering.toCircled(number++),
+                            c.getTitle(),
+                            String.format("%.1f", c.getReviewSummary().getAverageRating()),
+                            String.valueOf(c.getReviewSummary().getCount()),
+                            String.valueOf(c.getModulesCount())
+                    )
+            ).append("\n\n");
+        }
+
+        String message = messageService.getMessage(
+                BotMessage.ALL_COURSES_COURSES_LIST,
+                String.valueOf(courses.getTotalPages()),
+                String.valueOf(courses.getPageNumber()),
+                listBuilder.toString().trim()
+        );
+
+
+        bot.myExecute(sendMsg.editMessage(chatId, messageId, message, inlineKeyboardMarkup));
+
+//        System.out.println(courses);
+
+
+    }
+
+    /**
+     * Another helper method to generate a star emoji string based on a count.
+     *
+     * @param count The number of stars to generate (1 to 5).
+     * @return A string of star emojis (e.g., "⭐⭐⭐⭐").
+     */
+    private String generateStars(int count) {
+        if (count < 1) return "☆☆☆☆☆"; // Reyting yo'q bo'lsa
+        if (count > 5) count = 5; // 5 dan oshmasligi kerak
+
+        String filledStar = "⭐";
+        String emptyStar = "☆";
+
+        return filledStar.repeat(count) + emptyStar.repeat(5 - count);
+    }
+
+    /**
+     * Foydalanuvchiga kategoriyalar ro'yxatini ko'rsatadi.
+     */
+    private void showAllCourses_Categories(Long chatId, Integer messageId, int pageNum) {
+        Pageable pageable = PageRequest.of(pageNum, 10);
+        // Bizga kurslari bor kategoriyalar va ularning soni kerak.
+        Page<CategoryInfo> categoryPage = categoryRepository.findCategoriesWithCourseCount(pageable);
+
+        // 1. Ro'yxatni yasash uchun StringBuilder
+        StringBuilder listBuilder = new StringBuilder();
+        List<CategoryInfo> categories = categoryPage.getContent();
+        for (int i = 0; i < categories.size(); i++) {
+            CategoryInfo category = categories.get(i);
+            // "list-item" shablonini ishlatamiz: "▫️ <b>%s</b> — <i>%d ta kurs</i>"
+            String listItem = messageService.getMessage(BotMessage.ALL_COURSES_LIST_ITEM, category.getName(), category.getCourseCount());
+            // Ro'yxatga raqam qo'shamiz
+            listBuilder.append(Utils.Numbering.toCircled(i + 1)).append(". ").append(listItem).append("\n\n");
+        }
+
+        // 2. Yakuniy matnni asosiy shablon bilan birlashtiramiz
+        // "categories-list" shabloni: "🗂 <b>Kategoriyalar ro'yxati</b> ... Sahifa: %d / %d\n\n%s\n\n..."
+        String finalText = messageService.getMessage(BotMessage.ALL_COURSES_CATEGORIES_LIST, categoryPage.getNumber() + 1, categoryPage.getTotalPages(), listBuilder.toString() // Yasagan ro'yxatimizni %s o'rniga qo'yamiz
+        );
+
+        // 3. Klaviatura yasaymiz
+        InlineKeyboardMarkup keyboard = studentInlineKeyboardService.allCourses_categoriesMenu(categoryPage);
+
+        // 4. Xabarni tahrirlaymiz
+        bot.myExecute(sendMsg.editMessage(chatId, messageId, finalText, keyboard)); // ParseMode'ni HTML ga o'zgartiramiz
+    }
+
+
+    /**
+     * Foydalanuvchiga mentorlar (instruktorlar) ro'yxatini ko'rsatadi.
+     */
+    private void showAllCourses_Instructors(Long chatId, Integer messageId, int pageNum) {
+        Pageable pageable = PageRequest.of(pageNum, 10);
+        // Kamida bitta tasdiqlangan kursi bor mentorlarni olamiz
+        Page<UserInfo> instructorPage = userRepository.findInstructorsWithSuccessfulCourses(pageable);
+
+        // 1. Ro'yxatni yasash
+        StringBuilder listBuilder = new StringBuilder();
+        List<UserInfo> instructors = instructorPage.getContent();
+        for (int i = 0; i < instructors.size(); i++) {
+            UserInfo instructor = instructors.get(i);
+            String fullName = instructor.getFirstName() + " " + instructor.getLastName();
+
+            String listItem = messageService.getMessage(BotMessage.ALL_COURSES_LIST_ITEM, fullName, instructor.getCourseCount());
+            listBuilder.append(Utils.Numbering.toCircled(i + 1)).append(". ").append(listItem).append("\n\n");
+        }
+
+        // 2. Yakuniy matnni birlashtiramiz
+        String finalText = messageService.getMessage(BotMessage.ALL_COURSES_MENTORS_LIST, instructorPage.getNumber() + 1, instructorPage.getTotalPages(), listBuilder.toString());
+
+        // 3. Klaviatura yasaymiz
+        InlineKeyboardMarkup keyboard = studentInlineKeyboardService.allCourses_instructorsMenu(instructorPage);
+
+        // 4. Xabarni tahrirlaymiz
+        bot.myExecute(sendMsg.editMessage(chatId, messageId, finalText, keyboard)); // ParseMode'ni HTML ga o'zgartiramiz
     }
 
     // --- UI/SCREEN METHODS (Private methods for displaying information) ---
@@ -313,7 +784,8 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
         if (lesson == null) return;
 
         String text = messageService.getMessage(BotMessage.LESSON_DETAIL_TITLE, lesson.getTitle(), lesson.getContent() != null ? lesson.getContent() : "");
-        InlineKeyboardMarkup keyboard = studentInlineKeyboardService.lessonContentsMenu(lesson, lesson.getModule().getId());
+        String backCallback = String.join(":", Utils.CallbackData.MODULE_PREFIX, Utils.CallbackData.ACTION_VIEW, lesson.getModule().getId().toString());
+        InlineKeyboardMarkup keyboard = studentInlineKeyboardService.lessonContentsMenu(lesson, lesson.getModule().getId(), backCallback);
         bot.myExecute(sendMsg.editMessage(chatId, messageId, text, keyboard));
     }
 

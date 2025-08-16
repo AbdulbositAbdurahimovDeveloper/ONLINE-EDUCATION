@@ -25,7 +25,7 @@ public class AttachmentController {
         return ResponseEntity.ok(ResponseDTO.success(attachmentDTO));
     }
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ResponseDTO<AttachmentDTO>> create(@RequestPart("file") MultipartFile multipartFile) {
         AttachmentDTO attachmentDTO = attachmentService.create(multipartFile);
         return ResponseEntity.ok(ResponseDTO.success(attachmentDTO));
@@ -46,7 +46,7 @@ public class AttachmentController {
     @GetMapping("/temp-link/{id}")
     public ResponseEntity<?> tempLink(@PathVariable Long id,
                                       @RequestParam(defaultValue = "1") Integer minute) {
-       String presignedObjectUrl = attachmentService.tempLink(id, minute);
+        String presignedObjectUrl = attachmentService.tempLink(id, minute);
         return new ResponseEntity<>(presignedObjectUrl, HttpStatus.OK);
     }
 
