@@ -1,5 +1,7 @@
 package uz.pdp.online_education.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,40 +21,58 @@ public class FaqsController {
 
     private final FaqService faqService;
 
+
+    @Operation(summary = "Get all FAQs", description = "Fetches the list of all frequently asked questions (public endpoint).")
     @GetMapping
     public ResponseEntity<ResponseDTO<List<FaqDTO>>> getAll() {
         return ResponseEntity.ok(ResponseDTO.success(faqService.getAll()));
     }
 
+
+    @Operation(summary = "Get FAQ by ID", description = "Fetches a specific FAQ by its ID (public endpoint).")
     @GetMapping("/{id}")
-    public ResponseEntity<ResponseDTO<FaqDTO>> getById(@PathVariable Long id) {
+    public ResponseEntity<ResponseDTO<FaqDTO>> getById(
+            @Parameter(description = "FAQ ID", example = "1") @PathVariable Long id) {
         return ResponseEntity.ok(ResponseDTO.success(faqService.getById(id)));
     }
 
+
+    @Operation(summary = "Create a new FAQ", description = "Creates a new FAQ. Accessible only by ADMIN or INSTRUCTOR.")
     @PostMapping
-    @PreAuthorize(value = "hasAnyRole('ADMIN','INSTRUCTOR')")
-    public ResponseEntity<ResponseDTO<FaqDTO>> create(@RequestBody @Valid FaqRequestDTO dto) {
+    @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
+    public ResponseEntity<ResponseDTO<FaqDTO>> create(
+            @Valid @RequestBody FaqRequestDTO dto) {
         return ResponseEntity.ok(ResponseDTO.success(faqService.create(dto)));
     }
 
+
+    @Operation(summary = "Update an FAQ", description = "Updates an existing FAQ. Accessible only by ADMIN or INSTRUCTOR.")
     @PutMapping("/{id}")
-    @PreAuthorize(value = "hasAnyRole('ADMIN','INSTRUCTOR')")
-    public ResponseEntity<ResponseDTO<FaqDTO>> update(@PathVariable Long id, @RequestBody @Valid FaqRequestDTO dto) {
+    @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
+    public ResponseEntity<ResponseDTO<FaqDTO>> update(
+            @Parameter(description = "FAQ ID", example = "1") @PathVariable Long id,
+            @Valid @RequestBody FaqRequestDTO dto) {
         return ResponseEntity.ok(ResponseDTO.success(faqService.update(id, dto)));
     }
 
+
+    @Operation(summary = "Delete an FAQ", description = "Deletes a specific FAQ by ID. Accessible only by ADMIN or INSTRUCTOR.")
     @DeleteMapping("/{id}")
-    @PreAuthorize(value = "hasAnyRole('ADMIN','INSTRUCTOR')")
-    public ResponseEntity<ResponseDTO<String>> delete(@PathVariable Long id) {
+    @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
+    public ResponseEntity<ResponseDTO<String>> delete(
+            @Parameter(description = "FAQ ID", example = "1") @PathVariable Long id) {
         faqService.delete(id);
         return ResponseEntity.ok(ResponseDTO.success("Faq deleted"));
     }
+
+
+    @Operation(summary = "Swap FAQ display order", description = "Changes the display order of an FAQ by providing a new order value.")
     @PatchMapping("/swap-order")
-    public ResponseEntity<ResponseDTO<String>> swapDisplayOrder(@RequestParam Long faqId,
-                                                                @RequestParam int newDisplayOrder) {
+    public ResponseEntity<ResponseDTO<String>> swapDisplayOrder(
+            @Parameter(description = "FAQ ID", example = "1") @RequestParam Long faqId,
+            @Parameter(description = "New display order", example = "3") @RequestParam int newDisplayOrder) {
         faqService.swapDisplayOrder(faqId, newDisplayOrder);
         return ResponseEntity.ok(ResponseDTO.success("Display orders swapped successfully"));
     }
-
 
 }
