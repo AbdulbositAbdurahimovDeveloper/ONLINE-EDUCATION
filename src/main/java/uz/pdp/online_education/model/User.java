@@ -49,6 +49,9 @@ public class User extends AbsLongEntity implements UserDetails {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private TelegramUser telegramUser;
 
+    @OneToMany(mappedBy = "instructor", fetch = FetchType.LAZY)
+    private List<Course> courses;
+
     private boolean deleted = false;
 
     private boolean enabled = false;

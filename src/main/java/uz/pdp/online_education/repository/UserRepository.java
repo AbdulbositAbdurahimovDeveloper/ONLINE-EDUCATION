@@ -54,4 +54,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "HAVING count(co.id) > 0 " +
             "ORDER BY up.firstName")
     Page<UserInfo> findInstructorsWithCourseCount(Pageable pageable);
+
+    /**
+     * Kamida bitta tasdiqlangan (success=true) kursi bor bo'lgan instruktorlarni,
+     * ularning tasdiqlangan kurslari soni bilan birga, sahifalangan holda qaytaradi.
+     *
+     * @param pageable Sahifalash va saralash ma'lumotlari
+     * @return UserInfo DTO'laridan iborat Page obyekti
+     */
+    @Query("SELECT u.id as id, up.firstName as firstName, up.lastName as lastName, count(co.id) as courseCount " +
+            "FROM users u JOIN u.profile up JOIN u.courses co " +
+            "WHERE u.role = 'INSTRUCTOR' AND co.success = true " +
+            "GROUP BY u.id, up.firstName, up.lastName " +
+            "ORDER BY count(co.id) DESC, up.firstName ASC")
+    Page<UserInfo> findInstructorsWithSuccessfulCourses(Pageable pageable);
 }

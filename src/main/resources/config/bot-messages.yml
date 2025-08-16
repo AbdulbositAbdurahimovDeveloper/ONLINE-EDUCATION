@@ -1,106 +1,169 @@
 # =================================================================
-# --- UMUMIY XABARLAR (COMMON) ---
+# Telegram Bot uchun Xabarlar Markazi (Kalitlar O'zgartirilmagan)
+# Formatlash qoidalari: <b>, <i>, <code>
 # =================================================================
+
+# --- UMUMIY XABARLAR (COMMON) ---
 common:
   error:
-    unexpected: "😕 Kechirasiz, kutilmagan xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring."
-    user-not-found: "Xatolik: Foydalanuvchi topilmadi."
-  key-not-found: "Xatolik: Xabar kaliti topilmadi."
+    unexpected: "😕 Kechirasiz, kutilmagan texnik nosozlik yuz berdi. Jamoamiz bu haqida xabardor qilindi. Iltimos, birozdan so'ng qayta urinib ko'ring."
+    user-not-found: "❌ Bunday foydalanuvchi topilmadi. Ma'lumotlar to'g'riligini tekshiring."
+  key-not-found: "Xatolik: Xabar kaliti topilmadi (developer uchun)." # Bu xabarni ko'rsangiz, MessageService'dagi kalitni tekshiring.
   welcome-first-time: |
-    👋 Assalomu alaykum!
+    👋 <b>Online Education platformasiga xush kelibsiz!</b>
 
-    <b>Online Education</b> ta'lim platformasining rasmiy botiga xush kelibsiz!
+    Botning barcha imkoniyatlaridan to'liq foydalanish uchun, iltimos, saytdagi profilingiz orqali tizimga kiring.
 
-    Botning barcha imkoniyatlaridan 🔑 to‘liq foydalanish uchun, iltimos, saytdagi profilingizni ulang.
-
-    Quyidagi tugma sizni kirish yoki yangi akkaunt yaratish sahifasiga olib boradi.
-
+    👇 Quyidagi tugma sizni <b>kirish</b> yoki <b>yangi akkaunt yaratish</b> sahifasiga olib boradi.
   role-changed:
-    student: "✅ Rolingiz 'Talaba'ga o'zgartirildi."
-    instructor: "✅ Rolingiz 'Instruktor'ga o'zgartirildi."
-    admin: "✅ Rolingiz 'Admin'ga o'zgartirildi."
+    student: "✅ Rolingiz muvaffaqiyatli <b>Talaba</b>ga o'zgartirildi."
+    instructor: "✅ Rolingiz muvaffaqiyatli <b>Instruktor</b>ga o'zgartirildi."
+    admin: "✅ Rolingiz muvaffaqiyatli <b>Admin</b>ga o'zgartirildi."
 
-
-# =================================================================
-# --- AUTENTIFIKATSIYA VA ROLLAR (AUTH & ROLES) ---
-# =================================================================
+# --- AUTENTIFIKATSIYA (AUTH & ROLES) ---
 auth:
   logout:
-    confirmation-text: "❓ Rostdan ham akkauntingizdan chiqmoqchimisiz? Bu amal sizning Telegram hisobingizni veb-saytdagi profilingizdan uzadi."
-    success-text: "✅ Muvaffaqiyatli chiqdingiz! Botdan qayta foydalanish uchun /start buyrug'ini bosing va telefon raqamingizni yuboring."
+    confirmation-text: "❓ <b>Tasdiqlash</b>\n\nRostdan ham profilingizdan chiqmoqchimisiz? Bu amal Telegram hisobingizni saytdagi akkauntingizdan uzadi."
+    success-text: "✅ Siz tizimdan muvaffaqiyatli chiqdingiz. Qayta kirish uchun /start buyrug'ini bosing."
 
-
-# =================================================================
 # --- TALABA (STUDENT) BO'LIMI ---
-# =================================================================
 student:
-  start-message: "Qayta ko'rishib turganimizdan xursandmiz, %s! Quyidagi bo'limlardan birini tanlang."
+  start-message: "Assalomu alaykum, <b>%s</b>! Quyidagi bo'limlardan birini tanlang."
   dashboard: |
-    👤 *Profil:* %s
-    📧 *Email:* %s
-    🔑 *Login:* %s
-    🔰 *Rol:* %s
-    
-    *Umumiy statistika:*
-    🎓 *Aktiv kurslar:* %d ta
-    📊 *O'zlashtirish:* %d%% %s
-    ✅ *Tugatilgan modullar:* %d ta
+    <b>📊 Shaxsiy Kabinet</b>
 
-  # "Mening Kurslarim" Oqimi (My Courses Flow)
+    👤 <b>Ism-sharif:</b> %s
+    📧 <b>Email:</b> <code>%s</code>
+    🔑 <b>Login:</b> <code>%s</code>
+    🔰 <b>Rol:</b> <i>%s</i>
+
+    <b>📈 Umumiy statistika:</b>
+    🎓 Aktiv kurslar: <b>%d ta</b>
+    📊 O'zlashtirish: <b>%d%%</b> %s
+    ✅ Tugatilgan modullar: <b>%d ta</b>
   my-courses:
-    title: "📚 *Siz obuna bo'lgan kurslar* (Sahifa: %d / %d)"
-    no-courses-found: "😔 Siz hali hech qanday kursga obuna bo'lmabsiz. 'Barcha kurslar' bo'limidan o'zingizga mos kursni tanlashingiz mumkin."
-    modules-list-title: "📖 *%s* kursining modullari (Sahifa: %d / %d)" # %s -> Kurs nomi
-    lessons-list-title: "📄 *%s* modulining darslari (Sahifa: %d / %d)" # %s -> Modul nomi
+    title: "📚 <b>Sizning kurslaringiz</b>\n<i>Sahifa: %d / %d</i>"
+    no-courses-found: "😔 Siz hali hech qanday kursga yozilmagansiz.\n\n<i>'Barcha kurslar' bo'limidan o'zingizga mosini tanlashingiz mumkin.</i>"
+    modules-list-title: "📖 <b>%s</b>\n<i>Modullar ro'yxati (Sahifa: %d / %d)</i>"
+    lessons-list-title: "📄 <b>%s</b>\n<i>Darslar ro'yxati (Sahifa: %d / %d)</i>"
     lesson-detail:
-      title: |
-        *Dars: %s*
-
-        %s
-        
-        Quyidagi kontent bloklaridan birini tanlang:
+      title: "<b>Dars: %s</b>\n\n%s\n\n👇 Quyidagi amallardan birini tanlang:"
       content-button-text: "%s %d. %s" # {icon} {order}. {typeText}
-    lesson-locked: "🔒 Bu darsni ko'rish uchun '%s' modulini sotib olishingiz kerak."
+    lesson-locked: "🔒 Bu darsni ko'rish uchun <b>'%s'</b> modulini sotib olishingiz kerak."
     buy-module-button: "🛒 Sotib olish"
-    quiz-redirect: "❓ Testni ishlash uchun, iltimos, saytdagi shaxsiy kabinetingizga o'ting yoki quyidagi havoladan foydalaning:"
-  # ...
+    quiz-redirect: "❓ Testni ishlash uchun, iltimos, veb-saytdagi shaxsiy kabinetingizga o'ting yoki quyidagi havoladan foydalaning:"
+#  all-courses:
+#    choose-method: "Kurslarni qidirish usulini tanlang:"
+#    by-category:
+#      title: "🗂 <b>Kategoriyalar</b>\n<i>Sahifa: %d / %d</i>"
+#    by-instructor:
+#      title: "👨‍🏫 <b>Mualliflar</b>\n<i>Sahifa: %d / %d</i>"
+#    list:
+#      title: "🎓 <b>%s</b>\n<i>Kurslar ro'yxati (Sahifa: %d / %d)</i>"
+#    detail:
+#      title: |
+#        <b>%s</b>
+#
+#        %s
+#
+#        👨‍🏫 <b>Muallif:</b> %s
+#        ⭐ <b>Reyting:</b> %.1f (%d ta izoh)
+#        📚 <b>Modullar soni:</b> %d ta
+
   all-courses:
-    choose-method: "Kurslarni qanday usulda qidirmoqchisiz? Marhamat, quyidagilardan birini tanlang:"
-    by-category:
-      title: "🗂 *Kategoriyalar ro'yxati* (Sahifa: %d / %d)"
-    by-instructor:
-      title: "👨‍🏫 *Mualliflar ro'yxati* (Sahifa: %d / %d)"
-    list:
-      title: "🎓 *%s* (Sahifa: %d / %d)" # %s -> Kategoriya yoki Muallif nomi
-    detail:
-      title: |
-        *Kurs: %s*
+    entry-text: |
+      📚 <b>Barcha kurslar</b>
 
-        %s
+      Siz barcha kurslar bo'limidasiz. Davom etish uchun yo'nalish tanlang:
 
-        👨‍🏫 *Muallif:* %s
-        ⭐ *Reyting:* %.1f (%d ta izoh)
-        📚 *Modullar soni:* %d ta
+      1️⃣ 👨‍🏫 <b>Mentor darslari</b> — sevimli mentorlaringiz tayyorlagan darslar to'plami.
+      2️⃣ 🗂 <b>Kategoriya bo'yicha</b> — sizni qiziqtirgan yo'nalishdagi barcha kurslar.
+
+      💡 Istalgan vaqtda ortga qaytib boshqa yo'nalishni tanlashingiz mumkin.
+      👇 Tugmalardan birini bosing va o'rganishni boshlang! 🚀
+    mentor-lessons-button: "👨‍🏫 Mentor darslari"
+    categories-button: "🗂 Kategoriyalar"
+
+    mentors-list: |
+      👨‍🏫 <b>Mentorlar ro'yxati</b>  
+      <i>Sahifa: %d / %d</i>
+
+      %s
+      🔽 Tanlash uchun tegishli tugmani bosing.
+    categories-list: |
+      🗂 <b>Kategoriyalar ro'yxati</b>  
+      <i>Sahifa: %d / %d</i>
+
+      %s
+      🔽 Tanlash uchun tegishli tugmani bosing.
+    list-item: "▫️ <b>%s</b> — <i>%d ta kurs</i>"
+
+    courses-list: |
+      🎓 <b>Kurslar ro'yxati</b>  
+      <i>Sahifa: %s / %s</i>
+
+      %s
+
+      🔽 Tanlash uchun tegishli tugmani bosing.
+    course-list-item: "%s <b>%s</b> — ⭐ %s (%s ta izoh) | 📚 %s ta modul"
+
+  course-modules:
+    modules-list: |
+      📦 <b>"%s" kursidagi modullar</b>  
+      <i>Sahifa: %s / %s</i>
+
+      %s
+
+      📌 Modulni tanlash uchun tegishli tugmani bosing.
+    module-list-item: "%s <b>%s</b> — 📚 %s ta dars | 👥 %s ta o‘quvchi"
+    status:
+      sub_and_purchased: "✅ Obuna + Sotib olingan"
+      sub_only: "📖 Faqat obuna"
+      locked: "🔒 Yopiq"
+
+  lesson:
+    list-item: "%d. 🎯 <b>%s</b> %s"
+    status-free: "🆓"
+    status-paid: "💳"
+    list-title: |
+      📚 <b>Modul darslari</b>
+      Topilgan darslar soni: %d
+
+#  lesson:
+#    status-free: "🆓 Bepul"
+#    status-paid: "💳 Pullik"
+#    content-locked: "Kontent yopilgan"
+#    content-item: "%d. %s — %s"
+#    details-with-contents: |
+#      📖 <b>%s</b> (Tartib raqami: %s)
+#      Tavsif: %s
+#      Holat: %s
+#      Kontentlar:
+#      %s
 
 
-# =================================================================
+
+
+
+
+
+
 # --- INSTRUKTOR (INSTRUCTOR) BO'LIMI ---
-# =================================================================
 instructor:
-  start-message: "Instruktor paneliga xush kelibsiz, %s!"
+  start-message: "Salom, <b>%s</b>! Instruktor paneliga xush kelibsiz."
   dashboard: |
-    *Instruktor Dashboard*
-    (Bu yerda instruktor uchun statistika bo'ladi)
+    <b>💼 Instruktor Paneli</b>
+    
+    <i>Bu yerda sizning kurslaringiz, o'quvchilaringiz va daromadlaringiz haqida umumiy ma'lumotlar bo'ladi.</i>
 
-# =================================================================
 # --- ADMIN BO'LIMI ---
-# =================================================================
 admin:
-  start-message: "Admin paneliga xush kelibsiz, %s!"
+  start-message: "Admin paneliga xush kelibsiz, <b>%s</b>."
   dashboard: |
-    *Admin Dashboard*
-    (Bu yerda admin uchun umumiy ma'lumotlar bo'ladi)
-  users-menu: "Foydalanuvchilarni boshqarish menyusi."
-  courses-menu: "Kurslarni boshqarish menyusi."
+    <b>⚙️ Admin Paneli</b>
+
+    <i>Bu yerda platformaning umumiy statistikasi va boshqaruv vositalari joylashgan.</i>
+  users-menu: "👤 Foydalanuvchilarni boshqarish bo'limi."
+  courses-menu: "📚 Kurslarni boshqarish bo'limi."
   broadcast:
-    init: "Barcha foydalanuvchilarga yuborish uchun xabaringizni kiriting:"
+    init: "📤 Barcha foydalanuvchilarga yuboriladigan xabar matnini kiriting (HTML formatlash mumkin):"

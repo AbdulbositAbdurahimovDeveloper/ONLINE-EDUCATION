@@ -1,5 +1,6 @@
 package uz.pdp.online_education.telegram.mapper;
 
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
@@ -17,7 +18,9 @@ public interface SendMsg {
     SendMessage sendMessage(String chatId, String message);
 
     SendMessage sendMessage(Long chatId, String message, ReplyKeyboard keyboard);
-    DeleteMessage deleteMessage(Long string, Integer messageId);
+
+    DeleteMessage deleteMessage(Long chatId, Integer messageId);
+
     SendMessage sendReplyKeyboardRemove(Long chatId, String text);
 
     EditMessageText editMessage(Long chatId, Integer messageId, String menuText, InlineKeyboardMarkup keyboard);
@@ -28,22 +31,27 @@ public interface SendMsg {
 
     /**
      * Xabardagi rasmni, sarlavhani (caption) va tugmalarni bir vaqtda tahrirlaydi.
-     * @param chatId Kimga yuborilishi
+     *
+     * @param chatId    Kimga yuborilishi
      * @param messageId Qaysi xabar tahrirlanishi
-     * @param fileId Rasmning telegramdagi file_id si
-     * @param caption Rasm ostidagi matn
-     * @param keyboard Yangi inline tugmalar
+     * @param fileId    Rasmning telegramdagi file_id si
+     * @param caption   Rasm ostidagi matn
+     * @param keyboard  Yangi inline tugmalar
      * @return Tayyor EditMessageMedia obyekti
      */
     EditMessageMedia editMessageMedia(Long chatId, Integer messageId, String fileId, String caption, InlineKeyboardMarkup keyboard);
 
     /**
      * Rasm, sarlavha va tugmalar bilan xabar yuboradi.
-     * @param chatId Kimga yuborilishi
-     * @param file Rasm (InputFile)
-     * @param caption Rasm ostidagi matn
+     *
+     * @param chatId   Kimga yuborilishi
+     * @param file     Rasm (InputFile)
+     * @param caption  Rasm ostidagi matn
      * @param keyboard Inline tugmalar
      * @return Tayyor SendPhoto obyekti
      */
     SendPhoto sendPhoto(Long chatId, InputFile file, String caption, InlineKeyboardMarkup keyboard);
+
+    AnswerCallbackQuery answerCallbackQuery(String callbackQueryId, String text);
+
 }

@@ -11,6 +11,7 @@ import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.Module;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface ModuleRepository extends JpaRepository<Module, Long> {
@@ -42,4 +43,14 @@ public interface ModuleRepository extends JpaRepository<Module, Long> {
     Page<Module> findAllByCourse(Course course, Pageable pageable);
 
     long countByCourse(Course course);
+
+    /**
+     * Finds the parent Course entity for a given module ID.
+     * This query directly navigates from the Module entity to its associated Course.
+     *
+     * @param moduleId The ID of the module.
+     * @return An Optional containing the {@link Course} if the module exists, otherwise an empty Optional.
+     */
+    @Query("SELECT m.course FROM modules m WHERE m.id = :moduleId")
+    Optional<Course> findCourseByModuleId(@Param("moduleId") Long moduleId);
 }

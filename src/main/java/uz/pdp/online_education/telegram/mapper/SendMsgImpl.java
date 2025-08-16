@@ -1,6 +1,7 @@
 package uz.pdp.online_education.telegram.mapper;
 
 import org.springframework.stereotype.Service;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
@@ -75,9 +76,10 @@ public class SendMsgImpl implements SendMsg {
 
     /**
      * PRIMARY METHOD: Creates a fully configured EditMessageText object.
-     * @param chatId The target chat ID.
-     * @param messageId The ID of the message to be edited.
-     * @param newText The new text for the message.
+     *
+     * @param chatId      The target chat ID.
+     * @param messageId   The ID of the message to be edited.
+     * @param newText     The new text for the message.
      * @param newKeyboard The new inline keyboard for the message.
      * @return A configured {@link EditMessageText} object.
      */
@@ -93,9 +95,10 @@ public class SendMsgImpl implements SendMsg {
 
     /**
      * OVERLOADED: Edits only the text of a message, leaving the keyboard unchanged.
-     * @param chatId The target chat ID.
+     *
+     * @param chatId    The target chat ID.
      * @param messageId The ID of the message to be edited.
-     * @param newText The new text for the message.
+     * @param newText   The new text for the message.
      * @return A configured {@link EditMessageText} object.
      */
     @Override
@@ -104,7 +107,7 @@ public class SendMsgImpl implements SendMsg {
     }
 
     @Override
-    public EditMessageReplyMarkup editMarkup(Long chatId, Integer messageId){
+    public EditMessageReplyMarkup editMarkup(Long chatId, Integer messageId) {
         EditMessageReplyMarkup editMessageReplyMarkup = new EditMessageReplyMarkup();
         editMessageReplyMarkup.setChatId(chatId.toString());
         editMessageReplyMarkup.setMessageId(messageId);
@@ -139,4 +142,13 @@ public class SendMsgImpl implements SendMsg {
         return sendPhoto;
     }
 
+    /**
+     * @param callbackQueryId
+     * @param text
+     * @return
+     */
+    @Override
+    public AnswerCallbackQuery answerCallbackQuery(String callbackQueryId, String text) {
+        return AnswerCallbackQuery.builder().callbackQueryId(callbackQueryId).text(text).build();
+    }
 }
