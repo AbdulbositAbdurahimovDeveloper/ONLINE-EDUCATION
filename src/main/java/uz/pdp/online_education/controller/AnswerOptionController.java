@@ -33,14 +33,12 @@ public class AnswerOptionController {
             @ApiResponse(responseCode = "403", description = "You are not authorized to perform this action"),
             @ApiResponse(responseCode = "404", description = "Answer option with the given ID was not found")
     })
-
     @DeleteMapping("/{optionId}")
     @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
     public ResponseEntity<ResponseDTO<?>> deleteAnswerOption(
             @Parameter(description = "ID of the answer option to be deleted", example = "5")
             @PathVariable Long optionId
-    )
-    {
+    ) {
         answerOptionService.delete(optionId);
         return ResponseEntity.ok(ResponseDTO.success("Answer option deleted successfully"));
     }
