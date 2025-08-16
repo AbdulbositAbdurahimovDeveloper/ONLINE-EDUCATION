@@ -1,5 +1,8 @@
 package uz.pdp.online_education.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,24 +18,27 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/quiz-questions")
 @RequiredArgsConstructor
+@Tag(name = "Quiz Question Controller", description = "APIs for managing quiz questions with answer options")
 public class QuizQuestionController {
 
     private final QuestionService questionService;
 
-
     @PostMapping
     @PreAuthorize(value = "hasAnyRole('ADMIN','INSTRUCTOR')")
+    @Operation(summary = "Create quiz question with answers", description = "Create a new quiz question along with its answer options")
+    @ApiResponse(responseCode = "200", description = "Quiz question created successfully")
     public ResponseEntity<ResponseDTO<?>> createQuestionWithAnswers(
             @Valid @RequestBody QuestionCreateWithAnswersDTO createDTO) {
         QuestionResponseDTO createdQuestion = questionService.createWithAnswers(createDTO);
         return ResponseEntity.ok(ResponseDTO.success(createdQuestion));
     }
 
-    @GetMapping("{quizId}")
+    @GetMapping("/{quizId}")
     @PreAuthorize(value = "hasAnyRole('ADMIN','INSTRUCTOR')")
+    @Operation(summary = "Get all questions by quiz ID", description = "Retrieve all questions and their answers for a specific quiz")
+    @ApiResponse(responseCode = "200", description = "Quiz questions retrieved successfully")
     public ResponseEntity<ResponseDTO<?>> getAllQuestionsByQuizId(@PathVariable Long quizId) {
         List<QuestionResponseDTO> questions = questionService.getAllByQuizId(quizId);
         return ResponseEntity.ok(ResponseDTO.success(questions));
     }
-
 }
