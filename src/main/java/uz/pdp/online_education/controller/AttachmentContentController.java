@@ -90,15 +90,6 @@ public class AttachmentContentController {
             @Parameter(description = "ID of the attachment content to be deleted", example = "7")
             @PathVariable Long id
     )
-
-
-
-
-
-
-
-
-
     {
         attachmentContentService.delete(id);
         return ResponseEntity.ok(ResponseDTO.success("Content deleted successfully"));
