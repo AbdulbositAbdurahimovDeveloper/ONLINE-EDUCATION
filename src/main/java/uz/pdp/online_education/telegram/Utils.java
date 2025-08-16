@@ -47,6 +47,8 @@ public interface Utils {
         String COURSE_SEARCH_TEXT = "🔎 Kurs qidirish";
 
         String BACK_TO_MY_COURSES_TEXT = "⬅️ Mening Kurslarimga qaytish";
+        String PAGINATION_PREVIOUS_TEXT = "⬅️ Oldingi";
+        String PAGINATION_NEXT_TEXT = "Keyingi ➡️";
     }
 
     // --- INLINE KEYBOARD CALLBACK DATA PREFIXES ---
@@ -70,6 +72,11 @@ public interface Utils {
         String ACTION_PAGE = "p";           // Sahifa
         String ACTION_BACK = "b";           // Orqaga
         String ACTION_BUY = "buy";          // Sotib olish
+        String ACTION_SUBSCRIPTION = "subs";// obuna bolish
+        String DELETED = "deleted";
+
+        String CATEGORY = "cat";            // Category
+        String INSTRUCTOR = "ins";          // instructor
 
         // --- BACK TARGETS ---
         String BACK_TO_MAIN_MENU = "main";
@@ -107,12 +114,101 @@ public interface Utils {
         String COURSES_PREFIX = "courses";
         String ADMIN_PREFIX = "admin";
 
-//        String ACTION_LIST = "list";
+        //        String ACTION_LIST = "list";
         String ACTION_SEARCH = "search";
         String ACTION_STATS = "stats";
         String ACTION_MAIN_MENU = "main_menu";
+
+        String ACTION_LOGOUT = "logout"; // Yangi
+        String ACTION_INIT = "init";     // Yangi
+        String ACTION_CONFIRM = "confirm"; // Yangi
+        String ACTION_CANCEL = "cancel";   // Yangi
 //        String ACTION_PAGE = "page";
 //        String ACTION_BACK = "back";
+    }
+
+    /**
+     * Contains static final String constants for number-related emojis.
+     * These are ready-to-use in message texts for lists, steps, or highlighting numbers.
+     */
+    interface NumberEmojis {
+        String ONE = "1️⃣";
+        String TWO = "2️⃣";
+        String THREE = "3️⃣";
+        String FOUR = "4️⃣";
+        String FIVE = "5️⃣";
+        String SIX = "6️⃣";
+        String SEVEN = "7️⃣";
+        String EIGHT = "8️⃣";
+        String NINE = "9️⃣";
+        String ZERO = "0️⃣";
+        String TEN = "🔟";
+
+        // Aylana shaklidagi raqamlar ham foydali bo'lishi mumkin
+        String CIRCLED_ONE = "①";
+        String CIRCLED_TWO = "②";
+        String CIRCLED_THREE = "③";
+        String CIRCLED_FOUR = "④";
+        String CIRCLED_FIVE = "⑤";
+        String CIRCLED_SIX = "⑥";
+        String CIRCLED_SEVEN = "⑦";
+        String CIRCLED_EIGHT = "⑧";
+        String CIRCLED_NINE = "⑨";
+        String CIRCLED_TEN = "⑩";
+    }
+
+    /**
+     * Provides utility methods for converting numbers into decorative emoji strings.
+     * Useful for creating visually appealing lists, steps, or counters.
+     */
+    interface Numbering {
+        // Asosiy emoji raqamlar (0-9)
+        String[] DIGIT_EMOJIS = {"0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"};
+
+        // Aylana shaklidagi raqamlar (1-20)
+        String[] CIRCLED_NUMBERS = {
+                "", "①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩",
+                "⑪", "⑫", "⑬", "⑭", "⑮", "⑯", "⑰", "⑱", "⑲", "⑳"
+        };
+
+        /**
+         * Converts any integer into a string of square number emojis.
+         * For example, 123 becomes "1️⃣2️⃣3️⃣".
+         *
+         * @param number The integer to convert.
+         * @return A string representation of the number using emojis.
+         */
+        static String toEmoji(int number) {
+            if (number < 0) {
+                return String.valueOf(number); // Manfiy sonlarni o'zini qaytaramiz
+            }
+
+            StringBuilder emojiString = new StringBuilder();
+            String numberStr = String.valueOf(number);
+
+            for (char digit : numberStr.toCharArray()) {
+                int digitValue = Character.getNumericValue(digit);
+                emojiString.append(DIGIT_EMOJIS[digitValue]);
+            }
+//            return emojiString.toString();
+            return String.valueOf(number);
+        }
+
+        /**
+         * Converts an integer (from 1 to 20) into a circled number character.
+         * If the number is outside this range, it returns the number followed by a dot (e.g., "21.").
+         *
+         * @param number The integer to convert (ideally between 1 and 20).
+         * @return A circled number string, or a formatted string for numbers outside the range.
+         */
+        static String toCircled(int number) {
+            if (number >= 1 && number <= 20) {
+                return CIRCLED_NUMBERS[number];
+//                return String.valueOf(number);
+            }
+            // Agar raqam 1-20 oralig'ida bo'lmasa, oddiy formatda qaytaramiz
+            return number + ".";
+        }
     }
 
 

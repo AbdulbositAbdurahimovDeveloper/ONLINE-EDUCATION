@@ -31,7 +31,7 @@ public class Comment extends AbsLongEntity {
     
     // --- POLIMORFIK BOG'LANISHNI SIMULYATSIYA QILISH ---
     // Har bir komment yo kursga, yo darsga tegishli bo'ladi. Bittasi har doim NULL.
-    
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_id")
     private Course course;
@@ -47,7 +47,7 @@ public class Comment extends AbsLongEntity {
 
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> replies = new ArrayList<>();
-    
+
     // Yaratishda qaysi turdagi komment ekanligini aniqlash uchun
     @Transient // Bu maydon bazaga saqlanmaydi
     private String commentableType; // "course" yoki "lesson"

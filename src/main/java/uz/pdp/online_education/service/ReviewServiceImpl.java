@@ -11,7 +11,9 @@ import uz.pdp.online_education.payload.review.ReviewCreateDTO;
 import uz.pdp.online_education.payload.review.ReviewDTO;
 import uz.pdp.online_education.payload.review.ReviewUpdateDTO;
 import uz.pdp.online_education.repository.*;
+import uz.pdp.online_education.service.interfaces.EmailService;
 import uz.pdp.online_education.service.interfaces.ReviewService;
+import uz.pdp.online_education.service.interfaces.TelegramService;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +28,39 @@ public class ReviewServiceImpl implements ReviewService {
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
     private final ReviewMapper reviewMapper;
+    private final EmailService emailService; // Email servisni inject qilamiz
+    private final TelegramService telegramService;
+
+//    @Override
+//    @Transactional
+//    public ReviewDTO create(ReviewCreateDTO dto, User currentUser) {
+//        Course course = courseRepository.findById(dto.getCourseId())
+//                .orElseThrow(() -> new EntityNotFoundException("Course not found"));
+//
+//        Optional<Review> optionalReview = reviewRepository.findByCourseIdAndUserId(course.getId(), currentUser.getId());
+//
+//        Review review;
+//
+//        if (optionalReview.isPresent()) {
+//            // Review mavjud, update qilamiz
+//            review = optionalReview.get();
+//            review.setRating(dto.getRating());
+//            review.setComment(dto.getComment());
+//            log.info("Review updated with id: {}", review.getId());
+//        } else {
+//            // Review mavjud emas, yangi yaratamiz
+//            review = new Review(dto.getRating(),
+//                    dto.getComment(),
+//                    course,
+//                    currentUser
+//            );
+//            review = reviewRepository.save(review);
+//            log.info("Review created with id: {}", review.getId());
+//        }
+//
+//        return reviewMapper.toDto(review);
+//
+//    }
 
     @Override
     @Transactional
@@ -36,25 +71,66 @@ public class ReviewServiceImpl implements ReviewService {
         Optional<Review> optionalReview = reviewRepository.findByCourseIdAndUserId(course.getId(), currentUser.getId());
 
         Review review;
+        boolean isNewReview;
 
         if (optionalReview.isPresent()) {
-            // Review mavjud, update qilamiz
+            // Sharh mavjud, uni yangilaymiz
             review = optionalReview.get();
             review.setRating(dto.getRating());
             review.setComment(dto.getComment());
             log.info("Review updated with id: {}", review.getId());
+            isNewReview = false;
         } else {
-            // Review mavjud emas, yangi yaratamiz
-            review = new Review(dto.getRating(),
+            // Sharh mavjud emas, yangisini yaratamiz
+            review = new Review(
+                    dto.getRating(),
                     dto.getComment(),
                     course,
                     currentUser
             );
             review = reviewRepository.save(review);
             log.info("Review created with id: {}", review.getId());
+            isNewReview = true;
         }
 
+        // Kurs muallifiga xabar yuborish mantiqi
+        sendNotificationToInstructor(course, currentUser,dto, isNewReview);
+
         return reviewMapper.toDto(review);
+    }
+
+    private void sendNotificationToInstructor(Course course, User reviewer, ReviewCreateDTO dto, boolean isNewReview) {
+        User instructor = course.getInstructor();
+
+
+        // Xabar matnini tayyorlash
+        String reviewerName = (reviewer.getProfile() != null && reviewer.getProfile().getFirstName() != null)
+                ? reviewer.getProfile().getFirstName()
+                : reviewer.getUsername();
+        String subject = isNewReview ? "Yangi sharh" : "Sharh yangilandi";
+        String message = String.format(
+                "Assalomu alaykum, %s.\n\n" +
+                        "Sizning '%s' nomli kursingizga %s tomonidan %s sharh qoldirildi.\n\n" +
+                        "Sharh matni:\n%s",
+                (instructor.getProfile() != null ? instructor.getProfile().getFirstName() : instructor.getUsername()),
+                course.getTitle(),
+                reviewerName,
+                (isNewReview ? "yangi" : "yangilangan"),
+                dto.getComment() != null ? dto.getComment() : "(Sharh matni yo‘q)"
+        );
+
+
+
+        // Emailga yuborish
+        if (instructor.getProfile() != null && instructor.getProfile().getEmail() != null) {
+            //salomni alaykum, {instructorName}.\n\nSizning '{courseTitle}' nomli kursingizga {reviewerName} tomonidan {reviewType} sharh qoldirildi.\n\nSharh matni:\n{comment}
+            emailService.sendSimpleNotification(instructor.getProfile().getEmail(), subject, message);
+        }
+
+        // Telegramga yuborish
+        if (instructor.getTelegramUser() != null && instructor.getTelegramUser().getChatId() != null) {
+            telegramService.sendNotification(String.valueOf(instructor.getTelegramUser().getChatId()), message);
+        }
     }
 
     @Override

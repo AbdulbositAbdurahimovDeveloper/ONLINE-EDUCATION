@@ -8,4 +8,6 @@ public interface EmailService {
 
 
     void sendPaymentReceipt(Payment payment);
+
+    void sendSimpleNotification(String to, String subject, String text);
 }

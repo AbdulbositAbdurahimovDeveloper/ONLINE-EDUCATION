@@ -5,6 +5,12 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.Module;
 import uz.pdp.online_education.model.lesson.Lesson;
+import uz.pdp.online_education.payload.CategoryInfo;
+import uz.pdp.online_education.payload.PageDTO;
+import uz.pdp.online_education.payload.UserInfo;
+import uz.pdp.online_education.payload.course.CourseDetailDTO;
+import uz.pdp.online_education.payload.lesson.LessonResponseDTO;
+import uz.pdp.online_education.payload.module.ModuleDetailDTO;
 
 import java.util.List;
 
@@ -44,9 +50,9 @@ public interface StudentInlineKeyboardService {
      * It displays module buttons with different icons (e.g., locked, unlocked, free) based on the user's enrollment status.
      * Also includes pagination and a "back" button to return to the course list.
      *
-     * @param modulePage           A {@link Page} object of modules for the current page.
-     * @param courseId             The ID of the parent course, used for the "back" button callback.
-     * @param enrolledModuleIds    A list of module IDs the user is explicitly enrolled in.
+     * @param modulePage             A {@link Page} object of modules for the current page.
+     * @param courseId               The ID of the parent course, used for the "back" button callback.
+     * @param enrolledModuleIds      A list of module IDs the user is explicitly enrolled in.
      * @param isEnrolledToFullCourse A boolean flag indicating if the user has purchased the entire course.
      * @return An {@link InlineKeyboardMarkup} for navigating modules.
      */
@@ -72,7 +78,7 @@ public interface StudentInlineKeyboardService {
      * @param moduleId The ID of the parent module, used for the "back" button callback.
      * @return An {@link InlineKeyboardMarkup} listing the available content blocks for the lesson.
      */
-    InlineKeyboardMarkup lessonContentsMenu(Lesson lesson, Long moduleId);
+    InlineKeyboardMarkup lessonContentsMenu(Lesson lesson, Long moduleId,String  backCallback);
 
     /**
      * Creates a simple inline keyboard with a single button.
@@ -93,4 +99,23 @@ public interface StudentInlineKeyboardService {
      * @return An {@link InlineKeyboardMarkup} with a single URL button.
      */
     InlineKeyboardMarkup createUrlButton(String text, String url);
+
+    InlineKeyboardMarkup selectCategoryAndInstructor();
+
+
+    InlineKeyboardMarkup allCourses_categoriesMenu(Page<CategoryInfo> categoryPage);
+
+    InlineKeyboardMarkup allCourses_instructorsMenu(Page<UserInfo> instructorPage);
+
+    InlineKeyboardMarkup allCoursesMenu(PageDTO<CourseDetailDTO> categoryPageDTO, String backButton, String type, Long id);
+
+    InlineKeyboardMarkup allCourseModules(PageDTO<ModuleDetailDTO> modulePageDTO, String backButton, Long id, String datum);
+
+    InlineKeyboardMarkup allCourseLessons(PageDTO<LessonResponseDTO> lessonResponseDTOPageDTO, String backButton, Long id, String datum, boolean purchased, boolean queryData);
+
+    InlineKeyboardMarkup buildYesNoKeyboard(Long id, String datum);
+
+    InlineKeyboardMarkup buildPurchaseButton(Long id, String datum);
+
+    InlineKeyboardMarkup createQuizContent(String s, String url);
 }

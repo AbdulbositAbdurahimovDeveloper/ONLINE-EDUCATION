@@ -9,6 +9,8 @@ import uz.pdp.online_education.payload.course.CourseCreateDTO;
 import uz.pdp.online_education.payload.course.CourseDetailDTO;
 import uz.pdp.online_education.payload.course.CourseUpdateDTO;
 
+import java.util.List;
+
 public interface CourseService {
 
     PageDTO<CourseDetailDTO> filter(FilterDTO filterDTO, Integer page, Integer size);
@@ -24,4 +26,6 @@ public interface CourseService {
     void updateSuccess(Long id);
 
     void delete(Long id);
+
+
 }

@@ -63,8 +63,8 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
         switch (text) {
             case Utils.START -> startMessage(chatId, profile);
             case Utils.DASHBOARD -> dashboardMessage(user, profile, chatId);
-            case Utils.ReplyButtons.STUDENT_MY_COURSES -> sendMyCoursesPage(user, chatId, 0);
-            case Utils.ReplyButtons.STUDENT_ALL_COURSES -> sendAllCoursesPage(chatId, 0);
+            case Utils.ReplyButtons.STUDENT_MY_COURSES -> sendMyCoursesPage(user, chatId);
+            case Utils.ReplyButtons.STUDENT_ALL_COURSES -> sendAllCoursesPage(chatId);
             case Utils.ReplyButtons.STUDENT_BALANCE -> sendBalanceMenu(chatId);
             case Utils.ReplyButtons.STUDENT_HELP -> askForSupportMessage(chatId);
         }
@@ -122,10 +122,10 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
     /**
      * Displays a paginated list of courses the student is enrolled in.
      */
-    private void sendMyCoursesPage(User user, Long chatId, int pageNumber) {
+    private void sendMyCoursesPage(User user, Long chatId) {
         telegramUserRepository.updateStateByChatId(chatId, UserState.STUDENT_VIEWING_MY_COURSES);
 
-        Pageable pageable = PageRequest.of(pageNumber, PAGE_SIZE, Sort.by("title"));
+        Pageable pageable = PageRequest.of(0, PAGE_SIZE, Sort.by("title"));
         Page<Course> coursePage = courseRepository.findDistinctEnrolledCoursesForUser(user.getId(), pageable);
 
         String messageText;
@@ -149,9 +149,13 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
         onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, messageText, keyboard));
     }
 
-    private void sendAllCoursesPage(Long chatId, int pageNumber) {
-        // TODO: Implement logic for showing all available courses.
-        onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, "'Barcha kurslar' bo'limi ishlab chiqilmoqda."));
+
+    public void sendAllCoursesPage(Long chatId) {
+
+        String message = messageService.getMessage(BotMessage.ALL_COURSES_ENTRY_TEXT);
+        InlineKeyboardMarkup inlineKeyboardMarkup = studentInlineKeyboardService.selectCategoryAndInstructor();
+        onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, message, inlineKeyboardMarkup));
+
     }
 
     private void sendBalanceMenu(Long chatId) {
