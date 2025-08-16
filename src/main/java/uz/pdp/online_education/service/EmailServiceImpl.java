@@ -155,7 +155,7 @@ public class EmailServiceImpl implements EmailService {
             context.setVariable("subject", subject);
             // Matndagi qator tashlashlarni (\n) HTML'dagi <br> ga o'giramiz
             context.setVariable("body", body.replace("\n", "<br />"));
-            context.setVariable("platformUrl", platformUrl);
+            context.setVariable("platformUrl", "platformUrl");
             context.setVariable("currentYear", java.time.Year.now().getValue());
 
             // 2. HTML shablonni String'ga aylantiramiz

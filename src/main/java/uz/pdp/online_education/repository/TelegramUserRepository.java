@@ -37,4 +37,5 @@ public interface TelegramUserRepository extends JpaRepository<TelegramUser, Long
     @Query("UPDATE telegram_users tu SET tu.user = NULL, tu.userState = 'UNREGISTERED' WHERE tu.chatId = :chatId")
     void unregisterUserByChatId(@Param("chatId") Long chatId);
 
+
 }
