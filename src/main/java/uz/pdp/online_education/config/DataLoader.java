@@ -23,7 +23,7 @@ public class DataLoader implements CommandLineRunner {
     private final TelegramUserRepository telegramUserRepository;
 
 
-    @Value("${telegram.bot.chat-id}")
+//    @Value("${telegram.bot.chat-id}")
     private Long chatId;
 
     public DataLoader(UserRepository userRepository, PasswordEncoder passwordEncoder, @Lazy TelegramUserRepository telegramUserRepository) {
