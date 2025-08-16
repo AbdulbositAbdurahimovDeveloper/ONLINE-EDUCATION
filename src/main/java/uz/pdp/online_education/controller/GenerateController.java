@@ -19,40 +19,65 @@ public class GenerateController {
 
     private final GenerateService generateService;
 
+    /**
+     * Generates a list of demo courses with modules.
+     *
+     * @param count number of courses to generate (max 100)
+     * @return list of generated CourseDetailDTO
+     */
     @GetMapping("/course/{count}")
     public ResponseEntity<ResponseDTO<?>> generateCourse(@PathVariable int count) {
-
         if (count > 100) {
-            count = 100;
+            count = 100; // Limit to prevent excessive generation
         }
 
         List<CourseDetailDTO> courseDetailDTOS = generateService.generateCoursesAndModules(count);
-
         return ResponseEntity.ok(ResponseDTO.success(courseDetailDTOS));
     }
 
+    /**
+     * Generates demo full-stack courses with modules and contents.
+     *
+     * @param count number of full courses to generate
+     * @return success response
+     */
     @GetMapping("/full-course/{count}")
     public ResponseEntity<ResponseDTO<?>> generateCoursesAndModules(@PathVariable int count) {
         generateService.generateFullStackCourses(count);
-        return ResponseEntity.ok(ResponseDTO.success("created"));
+        return ResponseEntity.ok(ResponseDTO.success("Full courses generated successfully"));
     }
 
-    @GetMapping("user/student/{count}")
+    /**
+     * Generates demo student users.
+     *
+     * @param count number of students to generate
+     * @return success response
+     */
+    @GetMapping("/user/student/{count}")
     public ResponseEntity<ResponseDTO<?>> generateStudents(@PathVariable int count) {
         generateService.generateUserStudent(count);
-        return ResponseEntity.ok(ResponseDTO.success("created"));
+        return ResponseEntity.ok(ResponseDTO.success("Students generated successfully"));
     }
 
-    @GetMapping("payment")
+    /**
+     * Generates demo payments for students.
+     *
+     * @return success response
+     */
+    @GetMapping("/payment")
     public ResponseEntity<ResponseDTO<?>> generatePayments() {
         generateService.generateStudentPayments();
-        return ResponseEntity.ok(ResponseDTO.success("created"));
+        return ResponseEntity.ok(ResponseDTO.success("Payments generated successfully"));
     }
-    @GetMapping("review")
+
+    /**
+     * Generates demo course reviews.
+     *
+     * @return success response
+     */
+    @GetMapping("/review")
     public ResponseEntity<ResponseDTO<?>> generateCourseReviews() {
         generateService.generateCourseReviews();
-        return ResponseEntity.ok(ResponseDTO.success("created"));
+        return ResponseEntity.ok(ResponseDTO.success("Course reviews generated successfully"));
     }
-
-
 }

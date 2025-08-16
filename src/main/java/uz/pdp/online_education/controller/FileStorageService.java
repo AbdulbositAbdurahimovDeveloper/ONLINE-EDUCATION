@@ -25,71 +25,78 @@ public class FileStorageService {
     private final Path iconStorageLocation;
 
     public FileStorageService(FileStorageProperties fileStorageProperties) {
-        // Asosiy 'uploads' papkasiga yo'l
+        // Base folder path, e.g. "uploads"
         Path rootLocation = Paths.get(fileStorageProperties.getBaseFolder());
-        
-        // Ikonkalar uchun alohida 'uploads/icons' papkasiga yo'l
+
+        // Sub-folder specifically for icons: "uploads/icons"
         this.iconStorageLocation = rootLocation.resolve("icons");
     }
 
     /**
-     * Dastur ishga tushganda papkalar mavjudligini tekshiradi va yaratadi.
+     * Initializes directories when the application starts.
+     * Ensures the icon storage folder exists.
      */
     @PostConstruct
     public void init() {
         try {
             Files.createDirectories(iconStorageLocation);
         } catch (IOException e) {
-            throw new FileStorageException("Could not create the directory where the uploaded files will be stored.", e);
+            throw new FileStorageException(
+                    "Could not create the directory where the uploaded files will be stored.", e
+            );
         }
     }
 
     /**
-     * Ikonka faylini saqlash uchun metod.
-     * @param file Administrator yuklagan fayl
-     * @return Saqlangan faylning unikal nomi
+     * Stores an uploaded icon file.
+     *
+     * @param file the uploaded file (must not be empty)
+     * @return the generated unique file name
      */
     public String storeIcon(MultipartFile file) {
         if (file.isEmpty()) {
             throw new FileStorageException("Failed to store empty file.");
         }
 
-        // Fayl nomini xavfli belgilardan tozalash
+        // Sanitize file name
         String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
         if (originalFilename.contains("..")) {
-            throw new FileStorageException("Cannot store file with relative path outside current directory " + originalFilename);
+            throw new FileStorageException(
+                    "Cannot store file with relative path outside current directory: " + originalFilename
+            );
         }
-        
-        // Fayl kengaytmasini olish (masalan, .png)
+
+        // Extract file extension (e.g., ".png")
         String extension = "";
         int i = originalFilename.lastIndexOf('.');
         if (i > 0) {
             extension = originalFilename.substring(i);
         }
 
-        // Unikal fayl nomini generatsiya qilish
+        // Generate a unique file name
         String uniqueFileName = UUID.randomUUID().toString() + extension;
 
         try {
-            // Faylni saqlash uchun to'liq yo'l
+            // Define target path for saving the file
             Path targetLocation = this.iconStorageLocation.resolve(uniqueFileName);
-            
-            // Faylni serverga nusxalash
+
+            // Copy the file content to server storage
             try (InputStream inputStream = file.getInputStream()) {
                 Files.copy(inputStream, targetLocation, StandardCopyOption.REPLACE_EXISTING);
             }
 
             return uniqueFileName;
         } catch (IOException e) {
-            throw new FileStorageException("Failed to store file " + originalFilename, e);
+            throw new FileStorageException("Failed to store file: " + originalFilename, e);
         }
     }
 
     /**
-     * Faylni nomi bo'yicha yuklab olish uchun metod.
-     * Bu metodni '/api/open/file/icons/{filename}' endpoint'i chaqiradi.
-     * @param filename Fayl nomi
-     * @return Faylning o'zi (Resource)
+     * Loads an icon file as a Resource by its filename.
+     * Used by endpoint: GET `/api/open/file/icons/{filename}`
+     *
+     * @param filename the file name to load
+     * @return the file as a Resource
      */
     public Resource loadIconAsResource(String filename) {
         try {
@@ -98,10 +105,10 @@ public class FileStorageService {
             if (resource.exists()) {
                 return resource;
             } else {
-                throw new EntityNotFoundException("File not found " + filename);
+                throw new EntityNotFoundException("File not found: " + filename);
             }
         } catch (MalformedURLException ex) {
-            throw new EntityNotFoundException("File not found " + filename);
+            throw new EntityNotFoundException("File not found: " + filename);
         }
     }
 }
