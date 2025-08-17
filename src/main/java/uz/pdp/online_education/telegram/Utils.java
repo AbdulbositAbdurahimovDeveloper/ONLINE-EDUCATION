@@ -99,6 +99,13 @@ public interface Utils {
         String COURSE_LIST_CALLBACK = "courses:list:page:0";
         String COURSE_ADD_CALLBACK = "courses:add:init";
         String COURSE_SEARCH_CALLBACK = "courses:search:init";
+
+
+        String BALANCE_PENDING_PAYMENTS = "balance_pending";
+        String BALANCE_PAYMENT_HISTORY = "balance_history";
+
+        String BALANCED = "balanced";
+
 //
 //        // --- TAYYOR CALLBACK SATRLARI (to'liq ko'rinishda) ---
 //        String AUTH_LOGOUT_INIT_CALLBACK = AUTH_PREFIX + ":logout:init";       // "auth:logout:init"

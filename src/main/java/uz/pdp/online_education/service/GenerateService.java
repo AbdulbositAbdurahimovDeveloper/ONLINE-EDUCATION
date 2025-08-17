@@ -60,7 +60,7 @@ public class GenerateService  {
     private static final List<String> INSTRUCTOR_USERNAMES = Arrays.asList(
             "prof.alimov", "sarah.jenkins", "coding_guru_aziz", "design.master.davis",
             "math_expert_uz", "elena.petrova", "kenji.tanaka_dev", "dr_michael_chen",
-            "laura.sullivan_teaches", "ali.valiyev92"
+            "laura.sullivan_teaches", "instructor"
     );
 
     private static final List<String> CATEGORY_NAMES = List.of(
@@ -70,7 +70,7 @@ public class GenerateService  {
     );
 
     private static final List<Long> PREDEFINED_PRICES_IN_SOM = Arrays.asList(
-            420_000L, 500_000L, 700_000L, 1_400_000L, 1_500_000L
+            100_000L, 200_000L, 300_000L, 400_000L, 500_000L
     );
     //</editor-fold>
 

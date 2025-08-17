@@ -8,6 +8,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.Module;
+import uz.pdp.online_education.model.Payment;
 import uz.pdp.online_education.model.lesson.*;
 import uz.pdp.online_education.payload.CategoryInfo;
 import uz.pdp.online_education.payload.PageDTO;
@@ -779,6 +780,146 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
         inlineKeyboardMarkup.setKeyboard(buttons);
         return inlineKeyboardMarkup;
     }
+
+    /**
+     * "Balans/To'lovlar" bo'limi uchun klaviaturani (tugmalarni) yaratadi.
+     *
+     * @param hasPendingPayments Foydalanuvchida to'lanmagan modullar bor-yo'qligi.
+     * @param pendingCount       To'lanmagan modullar soni.
+     * @return Tayyor InlineKeyboardMarkup obyekti.
+     */
+    @Override
+    public InlineKeyboardMarkup createBalanceMenuKeyboard(boolean hasPendingPayments, int pendingCount) {
+        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
+
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+        List<InlineKeyboardButton> firstRow = new ArrayList<>();
+
+        // 1-qatorni yig'amiz
+        if (hasPendingPayments) {
+            // Agar to'lanmagan kurs bo'lsa, "Kutilayotgan to'lovlar" tugmasini qo'shamiz
+            String buttonText = messageService.getMessage(BotMessage.BALANCE_BUTTON_PENDING, pendingCount);
+            firstRow.add(createButton(buttonText, String.join(":", Utils.CallbackData.BALANCED, Utils.CallbackData.BALANCE_PENDING_PAYMENTS, Utils.CallbackData.ACTION_PAGE, "0")));
+        }
+
+        // "To'lovlar tarixi" tugmasini har doim qo'shamiz
+        String historyButtonText = messageService.getMessage(BotMessage.BALANCE_BUTTON_HISTORY);
+        firstRow.add(createButton(historyButtonText, String.join(":", Utils.CallbackData.BALANCED, Utils.CallbackData.BALANCE_PAYMENT_HISTORY, Utils.CallbackData.ACTION_PAGE, "0")));
+
+        rows.add(firstRow);
+
+        // 2-qator (Orqaga tugmasi)
+        List<InlineKeyboardButton> secondRow = new ArrayList<>();
+        String backButtonText = messageService.getMessage(BotMessage.BALANCE_BUTTON_BACK);
+        secondRow.add(createButton(backButtonText, String.join(":", Utils.CallbackData.STUDENT_PREFIX, Utils.CallbackData.ACTION_BACK, Utils.CallbackData.BACK_TO_MAIN_MENU)));
+
+        rows.add(secondRow);
+
+        keyboardMarkup.setKeyboard(rows);
+        return keyboardMarkup;
+    }
+
+    /**
+     * @param payments
+     * @return
+     */
+    @Override
+    public InlineKeyboardMarkup userPaymentsHistory(Page<Payment> payments) {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        // Sahifalash tugmalari
+        String paginationBaseCallback = String.join(":",
+                Utils.CallbackData.BALANCED,
+                Utils.CallbackData.BALANCE_PAYMENT_HISTORY
+        );
+
+        List<InlineKeyboardButton> paginationRow = createPaginationRow(payments, paginationBaseCallback);
+        if (!paginationRow.isEmpty()) {
+            keyboard.add(paginationRow);
+        }
+
+        // Orqaga tugmasi
+        keyboard.add(List.of(
+                createButton("⬅️ Orqaga", String.join(":", Utils.CallbackData.BALANCED, Utils.CallbackData.ACTION_BACK))
+        ));
+
+        inlineKeyboardMarkup.setKeyboard(keyboard);
+        return inlineKeyboardMarkup;
+    }
+
+    public InlineKeyboardMarkup userPendingPaymentsKeyboard(Page<Module> modules) {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        int index = 1;
+
+        for (Module module : modules.getContent()) {
+            String buttonText = String.valueOf(index++);
+
+            String callbackData = String.join(":",
+                    Utils.CallbackData.BALANCED,
+                    Utils.CallbackData.ACTION_VIEW,
+                    module.getId().toString()            );
+
+            row.add(createButton(buttonText, callbackData));
+        }
+
+        // Barcha tugmalar bitta qatorda
+        if (!row.isEmpty()) {
+            keyboard.add(row);
+        }
+
+        // Sahifalash tugmalari
+        String paginationBaseCallback = String.join(":",
+                Utils.CallbackData.BALANCED,
+                Utils.CallbackData.BALANCE_PENDING_PAYMENTS
+        );
+
+        List<InlineKeyboardButton> paginationRow = createPaginationRow(modules, paginationBaseCallback);
+        if (!paginationRow.isEmpty()) {
+            keyboard.add(paginationRow);
+        }
+
+        keyboard.add(List.of(
+                createButton("⬅️ Orqaga", String.join(":", Utils.CallbackData.BALANCED, Utils.CallbackData.ACTION_BACK))
+        ));
+
+        inlineKeyboardMarkup.setKeyboard(keyboard);
+        return inlineKeyboardMarkup;
+    }
+
+    /**
+     * @param module 
+     * @return
+     */
+    @Override
+    // 🔹 Tugmalarni tayyorlab, tayyor InlineKeyboardMarkup qaytaradi
+    public InlineKeyboardMarkup buildModuleButtons(Module module) {
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+
+        // 1-qator: sotib olish tugmasi
+        String buyCallback = String.join(":",
+                Utils.CallbackData.BALANCED,
+                Utils.CallbackData.ACTION_BUY,
+                module.getId().toString()
+        );
+//        rows.add(List.of(new InlineKeyboardButton("✅ Sotib olish").setCallbackData(buyCallback)));
+        rows.add(List.of(createButton("✅ Sotib olish", buyCallback)));
+
+        // 2-qator: orqaga tugmasi
+//        rows.add(List.of(new InlineKeyboardButton("⬅️ Orqaga")
+//                .setCallbackData(Utils.CallbackData.BALANCE_PENDING_PAYMENTS)));
+        rows.add(List.of(createButton("⬅️ Orqaga",String.join(":",
+                Utils.CallbackData.BALANCED,
+                Utils.CallbackData.BALANCE_PENDING_PAYMENTS,
+                Utils.CallbackData.ACTION_PAGE,
+                "0"
+        ))));
+        return new InlineKeyboardMarkup(rows);
+    }
+
 
     // --- PRIVATE HELPER METHODS ---
 

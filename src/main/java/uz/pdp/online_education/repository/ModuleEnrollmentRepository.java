@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import uz.pdp.online_education.model.Course;
+import uz.pdp.online_education.model.Module;
 import uz.pdp.online_education.model.ModuleEnrollment;
 import uz.pdp.online_education.model.User;
 
@@ -104,4 +105,21 @@ public interface ModuleEnrollmentRepository extends JpaRepository<ModuleEnrollme
     long countByUserAndCourse(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     boolean existsByUserAndModuleId(User user, Long moduleId);
+
+    // 3-so'rov: Foydalanuvchining to'lov qilmagan modullarini topish
+    @Query("SELECT me.module FROM module_enrollments me WHERE me.user.id = :userId AND me.module.id NOT IN " +
+            "(SELECT p.module.id FROM payment p WHERE p.user.id = :userId AND p.status = uz.pdp.online_education.enums.TransactionStatus.SUCCESS)")
+    List<Module> findUnpaidModulesByUserId(@Param("userId") Long userId);
+
+    /**
+     * Berilgan foydalanuvchi uchun yozilgan, lekin hali muvaffaqiyatli to'lov qilinmagan
+     * barcha modullarni sahifalangan va saralangan holda topadi.
+     *
+     * @param userId   Foydalanuvchi IDsi
+     * @param pageable Sahifalash va saralash uchun ma'lumotlar (masalan, PageRequest.of(0, 5, Sort.by("module.title")))
+     * @return To'lanmagan modullar sahifasi (Page<Module>)
+     */
+    @Query("SELECT me.module FROM module_enrollments me WHERE me.user.id = :userId AND me.module.id NOT IN " +
+            "(SELECT p.module.id FROM payment p WHERE p.user.id = :userId AND p.status = uz.pdp.online_education.enums.TransactionStatus.SUCCESS)")
+    Page<Module> findUnpaidModulesByUserId(@Param("userId") Long userId, Pageable pageable);
 }

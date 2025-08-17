@@ -3,9 +3,6 @@ package uz.pdp.online_education.model;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
-import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.SQLRestriction;
-import uz.pdp.online_education.enums.EnrollmentStatus;
 import uz.pdp.online_education.model.Abs.AbsLongEntity;
 
 @AllArgsConstructor

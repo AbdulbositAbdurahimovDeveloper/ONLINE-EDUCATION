@@ -59,6 +59,14 @@ public enum BotMessage {
     LESSON_STATUS_PAID("student.lesson.status-paid"),
     LESSON_LIST_TITLE("student.lesson.list-title"),
 
+    BALANCE_INFO_WITH_PENDING_PAYMENT("student.balance_info.with_pending_payment"),
+    BALANCE_INFO_NO_PENDING_PAYMENT("student.balance_info.no_pending_payment"),
+
+    BALANCE_BUTTON_PENDING("student.balance_info.button_pending_payments"),
+    BALANCE_BUTTON_HISTORY("student.balance_info.button_payment_history"),
+    BALANCE_BUTTON_BACK("student.balance_info.button_back_to_menu"),
+
+
 //    LESSON_STATUS_FREE("student.lesson.status-free"),               // Bepul
 //    LESSON_STATUS_PAID("student.lesson.status-paid"),               // Pullik
 //    LESSON_CONTENT_LOCKED("student.lesson.content-locked"),         // Kontent yopilgan

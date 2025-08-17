@@ -77,6 +77,7 @@ public class ModuleServiceImpl implements ModuleService {
      * @return moduleDetailDTO
      */
     @Override
+    @Transactional(readOnly = true)
     public ModuleDetailDTO read(Long id) {
         Module module = moduleRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Module nor found with id: " + id));
