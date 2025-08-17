@@ -147,7 +147,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Async
-    @Override
+//    @Override
     public void sendReviewNotification(String to, String subject, String body) {
         try {
             // 1. Thymeleaf kontekstini yaratamiz

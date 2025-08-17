@@ -12,7 +12,10 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import uz.pdp.online_education.enums.TransactionStatus;
 import uz.pdp.online_education.model.Course;
+import uz.pdp.online_education.model.Module;
+import uz.pdp.online_education.model.Payment;
 import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.model.UserProfile;
 import uz.pdp.online_education.repository.*;
@@ -26,6 +29,13 @@ import uz.pdp.online_education.telegram.service.message.MessageService;
 import uz.pdp.online_education.telegram.service.student.template.StudentInlineKeyboardService;
 import uz.pdp.online_education.telegram.service.student.template.StudentProcessMessageService;
 import uz.pdp.online_education.telegram.service.student.template.StudentReplyKeyboardService;
+
+import java.sql.Timestamp;
+import java.text.DecimalFormat;
+import java.time.format.DateTimeFormatter;
+
+import java.util.List;
+
 
 @Slf4j
 @Service
@@ -43,6 +53,7 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
     private final StudentReplyKeyboardService studentReplyKeyboardService;
     private final CourseRepository courseRepository;
     private final ModuleEnrollmentRepository moduleEnrollmentRepository;
+    private final PaymentRepository paymentRepository;
 
     // --- PUBLIC METHODS (from Interface) ---
 
@@ -65,7 +76,7 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
             case Utils.DASHBOARD -> dashboardMessage(user, profile, chatId);
             case Utils.ReplyButtons.STUDENT_MY_COURSES -> sendMyCoursesPage(user, chatId);
             case Utils.ReplyButtons.STUDENT_ALL_COURSES -> sendAllCoursesPage(chatId);
-            case Utils.ReplyButtons.STUDENT_BALANCE -> sendBalanceMenu(chatId);
+            case Utils.ReplyButtons.STUDENT_BALANCE -> sendBalanceMenu(chatId, user);
             case Utils.ReplyButtons.STUDENT_HELP -> askForSupportMessage(chatId);
         }
     }
@@ -158,10 +169,90 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
 
     }
 
-    private void sendBalanceMenu(Long chatId) {
-        telegramUserRepository.updateStateByChatId(chatId, UserState.STUDENT_MANAGING_BALANCE);
-        // TODO: Implement logic for showing the balance menu
-        onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, "'Balans va To'lovlar' bo'limi ishlab chiqilmoqda."));
+//    private void sendBalanceMenu(Long chatId, User user) {
+//
+//        List<Module> modules = moduleEnrollmentRepository.findUnpaidModulesByUserId(user.getId());
+//
+//        Long totalAmount = paymentRepository.findTotalSuccessfulPaymentsByUserId(user.getId(), TransactionStatus.SUCCESS);
+//
+//        Payment payment = paymentRepository.findTopByUser_IdAndStatusOrderByCreatedAtDesc(user.getId(), TransactionStatus.SUCCESS).orElse(null);
+//
+//        messageService.getMessage(BotMessage.BALANCE_INFO_WITH_PENDING_PAYMENT,
+//                // bu yerda %s orniga qoyiladigan malumitlarni berish kerka
+//        );
+//
+//        messageService.getMessage(BotMessage.BALANCE_INFO_NO_PENDING_PAYMENT,
+//                // bu yerda %s orniga qoyiladigan malumitlarni berish kerka
+//        )
+//
+//    }
+
+    @Override
+    public void sendBalanceMenu(Long chatId, User user) {
+        // --- 1. MA'LUMOTLARNI BAZADAN OLISH ---
+        List<Module> unpaidModules = moduleEnrollmentRepository.findUnpaidModulesByUserId(user.getId());
+        Long totalAmount = paymentRepository.findTotalSuccessfulPaymentsByUserId(user.getId(), TransactionStatus.SUCCESS);
+        Payment lastPayment = paymentRepository.findTopByUser_IdAndStatusOrderByCreatedAtDesc(user.getId(), TransactionStatus.SUCCESS).orElse(null);
+        long purchasedCoursesCount = paymentRepository.countByUser_IdAndStatus(user.getId(), TransactionStatus.SUCCESS);
+
+        // --- 2. XABAR MATNINI TAYYORLASH ---
+        String messageText;
+
+        /**
+         * ⏳ Kutilayotgan to'lovlar (1)	📜 To'lovlar tarixi
+         * ⬅️ Orqaga"
+         */
+
+        if (!unpaidModules.isEmpty()) {
+            // Agar to'lovni kutayotgan modullar bo'lsa
+            Module firstUnpaidModule = unpaidModules.get(0);
+
+            messageText = messageService.getMessage(
+                    BotMessage.BALANCE_INFO_WITH_PENDING_PAYMENT,
+                    // %s o'rniga qo'yiladigan ma'lumotlar (TARTIB MUHIM!):
+                    formatAmount(totalAmount),                                 // 1. Umumiy xaridlar
+                    purchasedCoursesCount,                                     // 2. Sotib olingan kurslar soni
+                    lastPayment != null ? lastPayment.getModule().getTitle() : "Mavjud emas", // 3. O'ZGARDI: .getName() -> .getTitle()
+                    lastPayment != null ? formatAmount(lastPayment.getAmount()) : "0 so'm",  // 4. Oxirgi to'lov summasi
+                    lastPayment != null ? formatDate(lastPayment.getCreatedAt()) : "-",    // 5. Oxirgi to'lov sanasi
+                    unpaidModules.size(),                                      // 6. To'lanmagan kurslar soni
+                    firstUnpaidModule.getTitle(),                              // 7. O'ZGARDI: .getName() -> .getTitle()
+                    formatAmount(firstUnpaidModule.getPrice())                 // 8. To'lanmagan kurs narxi
+            );
+        } else {
+            // Agar qarzdorlik bo'lmasa
+            messageText = messageService.getMessage(
+                    BotMessage.BALANCE_INFO_NO_PENDING_PAYMENT,
+                    // %s o'rniga qo'yiladigan ma'lumotlar (TARTIB MUHIM!):
+                    formatAmount(totalAmount),                                 // 1. Umumiy xaridlar
+                    purchasedCoursesCount,                                     // 2. Sotib olingan kurslar soni
+                    lastPayment != null ? lastPayment.getModule().getTitle() : "Mavjud emas", // 3. O'ZGARDI: .getName() -> .getTitle()
+                    lastPayment != null ? formatAmount(lastPayment.getAmount()) : "0 so'm",  // 4. Oxirgi to'lov summasi
+                    lastPayment != null ? formatDate(lastPayment.getCreatedAt()) : "-"     // 5. Oxirgi to'lov sanasi
+            );
+        }
+        boolean hasPending = !unpaidModules.isEmpty();
+        int pendingCount = unpaidModules.size();
+        InlineKeyboardMarkup inlineKeyboardMarkup = studentInlineKeyboardService.createBalanceMenuKeyboard(hasPending, pendingCount);
+        onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, messageText, inlineKeyboardMarkup));
+
+    }
+
+    private String formatAmount(Long amount) {
+        if (amount == null || amount == 0) {
+            return "0 so'm";
+        }
+        DecimalFormat formatter = new DecimalFormat("#,###");
+        return formatter.format(amount / 100) + " so'm";
+    }
+
+    // FAQAT SHU METOD QOLISHI KERAK
+    private String formatDate(Timestamp timestamp) {
+        if (timestamp == null) {
+            return "-";
+        }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+        return timestamp.toLocalDateTime().format(formatter);
     }
 
     private void askForSupportMessage(Long chatId) {

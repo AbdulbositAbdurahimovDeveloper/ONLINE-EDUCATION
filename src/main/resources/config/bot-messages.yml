@@ -52,23 +52,23 @@ student:
     lesson-locked: "🔒 Bu darsni ko'rish uchun <b>'%s'</b> modulini sotib olishingiz kerak."
     buy-module-button: "🛒 Sotib olish"
     quiz-redirect: "❓ Testni ishlash uchun, iltimos, veb-saytdagi shaxsiy kabinetingizga o'ting yoki quyidagi havoladan foydalaning:"
-#  all-courses:
-#    choose-method: "Kurslarni qidirish usulini tanlang:"
-#    by-category:
-#      title: "🗂 <b>Kategoriyalar</b>\n<i>Sahifa: %d / %d</i>"
-#    by-instructor:
-#      title: "👨‍🏫 <b>Mualliflar</b>\n<i>Sahifa: %d / %d</i>"
-#    list:
-#      title: "🎓 <b>%s</b>\n<i>Kurslar ro'yxati (Sahifa: %d / %d)</i>"
-#    detail:
-#      title: |
-#        <b>%s</b>
-#
-#        %s
-#
-#        👨‍🏫 <b>Muallif:</b> %s
-#        ⭐ <b>Reyting:</b> %.1f (%d ta izoh)
-#        📚 <b>Modullar soni:</b> %d ta
+  #  all-courses:
+  #    choose-method: "Kurslarni qidirish usulini tanlang:"
+  #    by-category:
+  #      title: "🗂 <b>Kategoriyalar</b>\n<i>Sahifa: %d / %d</i>"
+  #    by-instructor:
+  #      title: "👨‍🏫 <b>Mualliflar</b>\n<i>Sahifa: %d / %d</i>"
+  #    list:
+  #      title: "🎓 <b>%s</b>\n<i>Kurslar ro'yxati (Sahifa: %d / %d)</i>"
+  #    detail:
+  #      title: |
+  #        <b>%s</b>
+  #
+  #        %s
+  #
+  #        👨‍🏫 <b>Muallif:</b> %s
+  #        ⭐ <b>Reyting:</b> %.1f (%d ta izoh)
+  #        📚 <b>Modullar soni:</b> %d ta
 
   all-courses:
     entry-text: |
@@ -128,7 +128,49 @@ student:
     list-title: |
       📚 <b>Modul darslari</b>
       Topilgan darslar soni: %d
+  balance_info:
+    with_pending_payment: |
+      💰 <b>Balans va To'lovlar</b>
 
+      📈 <b>Umumiy xaridlar:</b> <code>%s</code>
+      📚 <b>Sotib olingan kurslar soni:</b> <code>%s ta</code>
+
+      ---
+
+      🧾 <b>Oxirgi to'lov:</b>
+      Kurs: <code>%s</code>
+      Summa: <code>%s</code>
+      Sana: <code>%s</code>
+
+      ---
+
+      ⏳ <b>Kutilayotgan to'lov:</b>
+      Sizda <b>%s ta</b> to'lanmagan kurs mavjud.
+      Kurs: <code>%s</code>
+      To'lov summasi: <code>%s</code>
+
+      <i>Barcha kutilayotgan to'lovlarni ko'rish va amalga oshirish uchun quyidagi tugmani bosing.</i>
+    no_pending_payment: |
+      💰 <b>Balans va To'lovlar</b>
+
+      📈 <b>Umumiy xaridlar:</b> <code>%s</code>
+      📚 <b>Sotib olingan kurslar soni:</b> <code>%s ta</code>
+
+      ---
+
+      🧾 <b>Oxirgi to'lov:</b>
+      Kurs: <code>%s</code>
+      Summa: <code>%s</code>
+      Sana: <code>%s</code>
+
+      ---
+
+      ✅ <b>Barcha to'lovlaringiz muvaffaqiyatli amalga oshirilgan!</b>
+
+      <i>Sotib olingan kurslarning to'liq ro'yxatini ko'rish uchun "To'lovlar tarixi" tugmasini bosing.</i>
+    button_pending_payments: "⏳ Kutilayotgan to'lovlar (%d)"
+    button_payment_history: "📜 To'lovlar tarixi"
+    button_back_to_menu: "⬅️ Orqaga"
 #  lesson:
 #    status-free: "🆓 Bepul"
 #    status-paid: "💳 Pullik"
