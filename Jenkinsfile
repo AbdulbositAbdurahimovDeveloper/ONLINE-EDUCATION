@@ -60,10 +60,20 @@ pipeline {
             }
         }
 
+//         stage('2. JAR Faylni Qurish') {
+//             steps {
+//                 echo 'Maven yordamida loyiha qurilmoqda...'
+//                 sh 'mvn clean package -DskipTests' // Testlarni o'tkazib yuborib, JAR fayl yaratish
+//                 echo 'JAR fayl muvaffaqiyatli qurildi.'
+//             }
+//         }
         stage('2. JAR Faylni Qurish') {
             steps {
-                echo 'Maven yordamida loyiha qurilmoqda...'
-                sh 'mvn clean package -DskipTests' // Testlarni o'tkazib yuborib, JAR fayl yaratish
+                echo 'Maven Wrapper yordamida loyiha qurilmoqda...'
+                // mvnw fayliga bajarish huquqini berish
+                sh 'chmod +x mvnw'
+                // mvnw orqali build qilish
+                sh './mvnw clean package -DskipTests'
                 echo 'JAR fayl muvaffaqiyatli qurildi.'
             }
         }
