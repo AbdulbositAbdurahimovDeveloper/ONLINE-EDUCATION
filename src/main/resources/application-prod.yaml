@@ -2,16 +2,27 @@ server:
   port: 8080
 
 spring:
+  application:
+    name: ONLINE-EDUCATION
+  servlet:
+    multipart:
+      max-file-size: 2GB
+      max-request-size: 2GB
+  banner:
+    location: classpath:banner.txt
+
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/online_education
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+  liquibase:
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
 
   jpa:
     hibernate:
-      ddl-auto: none
-    show-sql: false
+      ddl-auto: none # Production uchun 'none' yoki 'validate' eng to'g'ri
     properties:
       hibernate:
         format_sql: true
@@ -19,8 +30,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    username: ${SPRING_MAIL_USERNAME}
+    password: ${SPRING_MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -28,22 +39,28 @@ spring:
           starttls:
             enable: true
 
-education:
-  app:
-    base-folder: <your package in local pc>
-
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
-logging:
-  level:
-    root: WARN
-    org.springframework.web: INFO
-    org.hibernate.SQL: DEBUG
-    org.hibernate.orm.jdbc.bind: TRACE
-    org.hibernate.type.descriptor.sql: TRACE
-    com.example.your.app: DEBUG
-recaptcha:
-  site-key: ${RECAPTCHA_SITE_KEY}
-  secret-key: ${RECAPTCHA_SECRET_KEY}
+# Ilovaning maxsus sozlamalari
+application:
+  jwt:
+    secret: ${APPLICATION_JWT_SECRET}
+    access-token-expiration: ${APPLICATION_JWT_ACCESS_TOKEN_EXPIRATION}
+    refresh-token-expiration: ${APPLICATION_JWT_REFRESH_TOKEN_EXPIRATION}
+  minio:
+    endpoint: ${APPLICATION_MINIO_ENDPOINT}
+    access-key: ${APPLICATION_MINIO_ACCESS_KEY}
+    secret-key: ${APPLICATION_MINIO_SECRET_KEY}
+    buckets:
+      - images
+      - other
+      - icons
+  telegram:
+    bot:
+      token: ${APPLICATION_TELEGRAM_BOT_TOKEN}
+      username: ${APPLICATION_TELEGRAM_BOT_USERNAME}
+      webhook-path: ${APPLICATION_TELEGRAM_BOT_WEBHOOK_PATH}
+      chat-id: ${APPLICATION_TELEGRAM_CHAT_ID}
+      channel-id: ${APPLICATION_TELEGRAM_CHANNEL_ID}
