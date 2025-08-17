@@ -1,67 +1,57 @@
 // ===================================================================
-//              "OROMLAND" ANDOZASI ASOSIDA YARATILGAN YAKUNIY JENKINSFILE
+//              ENG ODDIY VA "OROMLAND"GA O'XSHASH JENKINSFILE
 // ===================================================================
 
 pipeline {
-    // Pipeline asosiy Jenkins agent'ida ishlaydi (oromland kabi)
     agent any
 
-    // 'Global Tool Configuration'dagi sozlamalarni chaqirish
     tools {
-        // Maven va JDK'ni bu yerdan olib tashladik, chunki buildni Dockerda qilamiz.
-        // docker-cli sizning oromland proyektingizda ishlagan, demak bu yerda ham ishlashi kerak.
+        // 'oromland' faylidagi kabi faqat 'docker-cli' ni qoldiramiz.
         dockerTool 'docker-cli'
     }
 
-    // Pipeline uchun o'zgaruvchilar (yangi proyektga moslandi)
     environment {
         IMAGE_NAME = "onlineeducation/app:${env.BUILD_NUMBER}"
         LATEST_IMAGE = "onlineeducation/app:latest"
         CONTAINER_NAME = 'online-education-container'
 
-        // Barcha maxfiy ma'lumotlar avvalgidek Credentials'dan olinadi
+        // Barcha maxfiy ma'lumotlar
         DB_URL                 = credentials('online-education-db-url')
         DB_USER                = credentials('postgres_username')
         DB_PASS                = credentials('postgres_password')
-        // ... va boshqa barcha maxfiy ma'lumotlaringiz
+        // ... va boshqalar
     }
 
     stages {
-        stage('1. Klonlash') { // Bu bosqich oromland bilan bir xil
+        stage('1. Klonlash') {
             steps {
                 cleanWs()
-                echo 'Klonlash boshlandi...'
                 git url: 'https://github.com/AbdulbositAbdurahimovDeveloper/ONLINE-EDUCATION.git', branch: 'main'
-                echo 'Repo muvaffaqiyatli olindi.'
             }
         }
 
-        // --- > YAGONA VA ENG MUHIM O'ZGARISH SHU YERDA < ---
-        stage('2. JAR Faylni Docker Ichida Qurish') {
-            // Jenkins'dagi "buzilgan" JDK 17 o'rniga toza va barqaror Docker muhitini ishlatamiz
-            agent {
-                docker {
-                    image 'maven:3.8-openjdk-17'
-                    args '-v $HOME/.m2:/root/.m2'
-                }
-            }
+        // --- > YAGONA VA ENG MUHIM O'ZGARISH < ---
+        stage('2. JAR Faylni Qurish') {
             steps {
-                echo 'Maven yordamida loyiha qurilmoqda (toza Docker konteyneri ichida)...'
-                sh 'mvn clean package -DskipTests'
+                echo 'JAR fayl qurilmoqda (toza Docker konteyneri ichida)...'
+                // Biz `agent { docker ... }` o'rniga to'g'ridan-to'g'ri `docker run` buyrug'ini ishlatamiz.
+                // Bu 'oromland' ishlayotgan muhit bilan bir xil ishlaydi.
+                sh """
+                    docker run --rm -v "$(pwd)":/app -v "$HOME/.m2":/root/.m2 -w /app maven:3.8-openjdk-17 mvn clean package -DskipTests
+                """
                 echo 'JAR fayl muvaffaqiyatli qurildi.'
             }
         }
 
-        stage('3. Docker Image Yaratish') { // Bu bosqich oromland bilan bir xil
+        stage('3. Docker Image Yaratish') {
             steps {
                 echo "Docker image qurilmoqda: ${IMAGE_NAME}"
-                // 'docker' buyrug'i endi `tools` blokidagi 'docker-cli' tufayli topilishi kerak
                 sh "docker build -t ${IMAGE_NAME} -t ${LATEST_IMAGE} ."
                 echo "Docker image muvaffaqiyatli qurildi."
             }
         }
 
-        stage('4. Ilovani Deploy Qilish') { // Bu bosqich oromland bilan bir xil
+        stage('4. Ilovani Deploy Qilish') {
             steps {
                 echo "Container ishga tushirilmoqda: ${CONTAINER_NAME}"
 
@@ -83,9 +73,8 @@ pipeline {
         }
     }
 
-    post { // Bu blok ham oromland bilan bir xil
+    post {
         always {
-            echo 'Pipeline tugadi. Ish joyini tozalash...'
             cleanWs()
         }
     }
