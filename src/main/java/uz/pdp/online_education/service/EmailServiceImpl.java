@@ -60,7 +60,7 @@ public class EmailServiceImpl implements EmailService {
             helper.setFrom("noreply@online-education.com"); // Bu email mavjud bo'lishi shart emas
 
             // 4. Xabarni jo'natish
-            mailSender.send(mimeMessage);
+//            mailSender.send(mimeMessage);
 
         } catch (MessagingException e) {
             // Bu yerda xatolikni log qilish kerak.
@@ -136,7 +136,7 @@ public class EmailServiceImpl implements EmailService {
 
             helper.setTo(to);
             helper.setSubject(subject);
-            helper.setText(text, false); // 'false' - bu oddiy matn ekanligini bildiradi
+            helper.setText(text, true); // 'false' - bu oddiy matn ekanligini bildiradi
             helper.setFrom(fromEmail);
 
             mailSender.send(mimeMessage);
@@ -147,7 +147,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Async
-//    @Override
+    @Override
     public void sendReviewNotification(String to, String subject, String body) {
         try {
             // 1. Thymeleaf kontekstini yaratamiz
@@ -171,7 +171,7 @@ public class EmailServiceImpl implements EmailService {
             helper.setFrom(fromEmail);
 
             // 4. Xabarni jo'natish
-            mailSender.send(mimeMessage);
+//            mailSender.send(mimeMessage);
             log.info("Successfully sent review notification email to {}", to);
 
         } catch (MessagingException e) {

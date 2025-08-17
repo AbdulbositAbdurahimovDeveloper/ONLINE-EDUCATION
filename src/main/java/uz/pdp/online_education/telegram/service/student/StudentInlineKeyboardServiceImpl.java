@@ -890,35 +890,28 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
         return inlineKeyboardMarkup;
     }
 
-    /**
-     * @param module 
-     * @return
-     */
     @Override
-    // 🔹 Tugmalarni tayyorlab, tayyor InlineKeyboardMarkup qaytaradi
     public InlineKeyboardMarkup buildModuleButtons(Module module) {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
 
-        // 1-qator: sotib olish tugmasi
-        String buyCallback = String.join(":",
-                Utils.CallbackData.BALANCED,
-                Utils.CallbackData.ACTION_BUY,
-                module.getId().toString()
-        );
-//        rows.add(List.of(new InlineKeyboardButton("✅ Sotib olish").setCallbackData(buyCallback)));
-        rows.add(List.of(createButton("✅ Sotib olish", buyCallback)));
+        // ✅ Sotib olish tugmasi (URL tugma)
+        InlineKeyboardButton buyButton = new InlineKeyboardButton("✅ Sotib olish");
+        buyButton.setUrl(urlBuilderService.generateModuleCheckoutUrl(module.getId()));
+        rows.add(List.of(buyButton));
 
-        // 2-qator: orqaga tugmasi
-//        rows.add(List.of(new InlineKeyboardButton("⬅️ Orqaga")
-//                .setCallbackData(Utils.CallbackData.BALANCE_PENDING_PAYMENTS)));
-        rows.add(List.of(createButton("⬅️ Orqaga",String.join(":",
-                Utils.CallbackData.BALANCED,
-                Utils.CallbackData.BALANCE_PENDING_PAYMENTS,
-                Utils.CallbackData.ACTION_PAGE,
-                "0"
-        ))));
+        // ⬅️ Orqaga tugmasi
+        rows.add(List.of(
+                createButton("⬅️ Orqaga", String.join(":",
+                        Utils.CallbackData.BALANCED,
+                        Utils.CallbackData.BALANCE_PENDING_PAYMENTS,
+                        Utils.CallbackData.ACTION_PAGE,
+                        "0"
+                ))
+        ));
+
         return new InlineKeyboardMarkup(rows);
     }
+
 
 
     // --- PRIVATE HELPER METHODS ---

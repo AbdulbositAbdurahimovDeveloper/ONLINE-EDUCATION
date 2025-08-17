@@ -239,7 +239,7 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
 
                     count,
                     p.getDescription() != null ? p.getDescription() : "To‘lov",
-                    p.getAmount(),
+                    formatAmount(p.getAmount()),
                     p.getModule() != null ? p.getModule().getTitle() : "Noma’lum modul",
                     p.getMaskedCardNumber() != null ? p.getMaskedCardNumber() : "**** **** **** 1234",
                     date,
