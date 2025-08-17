@@ -19,77 +19,81 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
+/**
+ * Service responsible for storing and loading files (mainly icons).
+ * Uses server-side file system storage under "uploads/icons".
+ *
+ * Provides methods for:
+ *  - Creating storage directories if missing
+ *  - Uploading (storing) files with unique names
+ *  - Retrieving files as {@link Resource}
+ */
 @Service
 public class FileStorageService {
 
     private final Path iconStorageLocation;
 
     public FileStorageService(FileStorageProperties fileStorageProperties) {
-        // Asosiy 'uploads' papkasiga yo'l
         Path rootLocation = Paths.get(fileStorageProperties.getBaseFolder());
-        
-        // Ikonkalar uchun alohida 'uploads/icons' papkasiga yo'l
         this.iconStorageLocation = rootLocation.resolve("icons");
     }
 
     /**
-     * Dastur ishga tushganda papkalar mavjudligini tekshiradi va yaratadi.
+     * Initializes storage directories after application startup.
+     * If the folder does not exist, it will be created automatically.
      */
     @PostConstruct
     public void init() {
         try {
             Files.createDirectories(iconStorageLocation);
         } catch (IOException e) {
-            throw new FileStorageException("Could not create the directory where the uploaded files will be stored.", e);
+            throw new FileStorageException(
+                    "Could not create the directory where the uploaded files will be stored.", e
+            );
         }
     }
 
     /**
-     * Ikonka faylini saqlash uchun metod.
-     * @param file Administrator yuklagan fayl
-     * @return Saqlangan faylning unikal nomi
+     * Stores a given icon file to server storage with a unique name.
+     *
+     * @param file the uploaded {@link MultipartFile}, must not be empty
+     * @return generated unique filename (with extension)
+     * @throws FileStorageException if file is invalid or cannot be saved
      */
     public String storeIcon(MultipartFile file) {
         if (file.isEmpty()) {
             throw new FileStorageException("Failed to store empty file.");
         }
 
-        // Fayl nomini xavfli belgilardan tozalash
         String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
         if (originalFilename.contains("..")) {
-            throw new FileStorageException("Cannot store file with relative path outside current directory " + originalFilename);
+            throw new FileStorageException("Invalid file path: " + originalFilename);
         }
-        
-        // Fayl kengaytmasini olish (masalan, .png)
+
         String extension = "";
         int i = originalFilename.lastIndexOf('.');
         if (i > 0) {
             extension = originalFilename.substring(i);
         }
 
-        // Unikal fayl nomini generatsiya qilish
         String uniqueFileName = UUID.randomUUID().toString() + extension;
 
-        try {
-            // Faylni saqlash uchun to'liq yo'l
+        try (InputStream inputStream = file.getInputStream()) {
             Path targetLocation = this.iconStorageLocation.resolve(uniqueFileName);
-            
-            // Faylni serverga nusxalash
-            try (InputStream inputStream = file.getInputStream()) {
-                Files.copy(inputStream, targetLocation, StandardCopyOption.REPLACE_EXISTING);
-            }
-
+            Files.copy(inputStream, targetLocation, StandardCopyOption.REPLACE_EXISTING);
             return uniqueFileName;
         } catch (IOException e) {
-            throw new FileStorageException("Failed to store file " + originalFilename, e);
+            throw new FileStorageException("Failed to store file: " + originalFilename, e);
         }
     }
 
     /**
-     * Faylni nomi bo'yicha yuklab olish uchun metod.
-     * Bu metodni '/api/open/file/icons/{filename}' endpoint'i chaqiradi.
-     * @param filename Fayl nomi
-     * @return Faylning o'zi (Resource)
+     * Loads a file by its filename as {@link Resource}.
+     * Used by controller endpoints to serve files.
+     *
+     * @param filename file name to load
+     * @return {@link Resource} representation of the file
+     * @throws EntityNotFoundException if the file does not exist
      */
     public Resource loadIconAsResource(String filename) {
         try {
@@ -98,10 +102,10 @@ public class FileStorageService {
             if (resource.exists()) {
                 return resource;
             } else {
-                throw new EntityNotFoundException("File not found " + filename);
+                throw new EntityNotFoundException("File not found: " + filename);
             }
         } catch (MalformedURLException ex) {
-            throw new EntityNotFoundException("File not found " + filename);
+            throw new EntityNotFoundException("File not found: " + filename);
         }
     }
 }

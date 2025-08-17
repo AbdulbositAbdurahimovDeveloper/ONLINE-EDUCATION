@@ -10,6 +10,7 @@ import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.payload.course.CourseWithRatingDTO;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface CourseRepository extends JpaRepository<Course, Long>, CourseRepositoryCustom {
@@ -62,4 +63,10 @@ public interface CourseRepository extends JpaRepository<Course, Long>, CourseRep
     Set<String> findAllSlugs();
 
     boolean existsByThumbnailUrl_Id(Long thumbnailUrlId);
+
+    @Query("SELECT c FROM courses c LEFT JOIN FETCH c.modules WHERE c.id = :courseId")
+    Optional<Course> findByIdWithModules(Long courseId);
+
+    @Query("SELECT c FROM courses c WHERE LOWER(c.title) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
+    Page<Course> searchByTitle(@Param("searchTerm") String searchTerm, Pageable pageable);
 }

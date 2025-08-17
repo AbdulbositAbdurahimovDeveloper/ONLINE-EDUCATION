@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import uz.pdp.online_education.enums.Role;
 import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.payload.AdminDashboardDTO;
@@ -68,4 +69,21 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "GROUP BY u.id, up.firstName, up.lastName " +
             "ORDER BY count(co.id) DESC, up.firstName ASC")
     Page<UserInfo> findInstructorsWithSuccessfulCourses(Pageable pageable);
+
+
+    /**
+     * Berilgan qidiruv matni bo'yicha foydalanuvchilarni qidiradi.
+     * Qidiruv username, email, ism va familiya bo'yicha (case-insensitive) amalga oshiriladi.
+     * @param searchTerm Qidiruv uchun matn
+     * @param pageable Sahifalash uchun ma'lumot
+     * @return Topilgan foydalanuvchilar sahifasi
+     */
+    @Query("""
+        SELECT u FROM users u JOIN u.profile p WHERE
+        LOWER(u.username) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR
+        LOWER(p.email) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR
+        LOWER(p.firstName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR
+        LOWER(p.lastName) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
+    """)
+    Page<User> searchUsers(@Param("searchTerm") String searchTerm, Pageable pageable);
 }

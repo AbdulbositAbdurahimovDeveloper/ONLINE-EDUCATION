@@ -7,6 +7,7 @@ import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.Module;
 import uz.pdp.online_education.model.Review;
 import uz.pdp.online_education.payload.course.CourseDetailDTO;
+import uz.pdp.online_education.payload.course.CourseInfoDTO;
 import uz.pdp.online_education.payload.review.ReviewSummaryDTO;
 
 import java.sql.Timestamp;
@@ -47,5 +48,10 @@ public interface CourseMapper {
 
         return new ReviewSummaryDTO(count, averageRating);
     }
+
+    @Mapping(source = "category.name", target = "categoryName")
+    @Mapping(source = "instructor.profile.firstName", target = "instructorName") // Bu yerda ism-familiyani birlashtirish ham mumkin
+    @Mapping(target = "moduleCount", expression = "java(course.getModules() != null ? course.getModules().size() : 0)")
+    CourseInfoDTO toInfoDto(Course course);
 
 }
