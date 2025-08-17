@@ -9,7 +9,7 @@ pipeline {
     // Jenkins sozlamalaridagi asboblarni chaqirish
     tools {
         maven 'maven'
-        jdk 'JDK24'
+        jdk 'JDK17'
         dockerTool 'docker-cli'
     }
 
