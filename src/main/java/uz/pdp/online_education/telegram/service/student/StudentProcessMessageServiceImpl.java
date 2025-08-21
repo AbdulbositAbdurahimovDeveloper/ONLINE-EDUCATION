@@ -287,10 +287,6 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
     }
 
 
-
-
-
-
 //                    /**
 //                     * Foydalanuvchi yordam so'ragan paytdagi xabarni qayta ishlaydi.
 //                     */
