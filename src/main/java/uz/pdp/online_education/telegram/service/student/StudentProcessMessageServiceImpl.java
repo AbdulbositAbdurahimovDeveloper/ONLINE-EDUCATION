@@ -283,7 +283,9 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
                 "Operatorlarimiz tez orada siz bilan bog'lanishadi.";
 
         onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, supportPromptMessage));
+
         telegramUserService.updateUserState(chatId,UserState.USER_SUPPORT_MESSAGE);
+
     }
 
 
