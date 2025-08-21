@@ -301,7 +301,7 @@ public class AdminMessageServiceImpl implements AdminMessageService {
             text.append("\n🔽 Tanlash uchun tegishli tugmani bosing.");
 
             // Klaviatura yasashda 'searchTerm'ni berib yuboramiz
-            keyboard = inlineKeyboardService.coursesPageMenu(coursePage, searchTerm);
+            keyboard = inlineKeyboardService.coursesPageMenu(coursePage, searchTerm, null);
         }
 
         SendMessage message = sendMsg.sendMessage(chatId, text.toString(), keyboard);

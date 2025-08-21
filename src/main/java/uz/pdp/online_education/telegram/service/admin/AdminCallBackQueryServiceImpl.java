@@ -33,6 +33,7 @@ import uz.pdp.online_education.telegram.service.admin.template.InlineKeyboardSer
 import uz.pdp.online_education.telegram.service.message.MessageService;
 
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
@@ -218,54 +219,184 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
     }
 
 
+
     private void handleCourseCallbacks(Long chatId, Integer messageId, String data) {
         String[] params = data.split(":");
         String action = params[2];
 
         switch (action) {
-            case "page" -> sendCoursesListPage(chatId, messageId, Integer.parseInt(params[3]), null);
-            case "search_page" -> sendCoursesListPage(chatId, messageId, Integer.parseInt(params[4]), params[3]);
-
-            // --- MANA O'SHA MUHIM O'ZGARISH ---
-            case "view" -> {
-                Long courseId = Long.parseLong(params[3]);
-                String fromContext = params[4];
-                String searchTerm = fromContext.equals("search") ? params[5] : null;
-                int page = Integer.parseInt(fromContext.equals("search") ? params[6] : params[5]);
-
-                // "Orqaga" tugmasi uchun to'g'ri manzilni yasaymiz
-                String backCallback = (searchTerm == null)
-                        ? "admin:courses:page:" + page // Agar oddiy ro'yxatdan kelgan bo'lsa
-                        : "admin:courses:search_page:" + searchTerm + ":" + page; // Agar qidiruvdan kelgan bo'lsa
-
-                sendCourseDetail(chatId, messageId, courseId, backCallback);
-            }
-
             case "main_menu" -> sendCoursesMainMenu(chatId, messageId);
+            case "browse" -> handleCourseBrowseView(chatId, messageId,params);
             case "search_init" -> initiateCourseSearch(chatId, messageId);
             case "stats" -> showCourseStats(chatId, messageId);
+
+            // SAHIFALASH
+            case "page" -> sendCoursesListPage(chatId, messageId, Integer.parseInt(params[3]), null,null);
+            case "search_page" -> sendCoursesListPage(chatId, messageId, Integer.parseInt(params[4]), params[3], null);
+            case "list_by_mentor" -> sendMentorsListPage(chatId, messageId, Integer.parseInt(params[4]));
+            case "list_by_mentor_courses" -> sendCoursesByMentorPage(chatId, messageId, Long.parseLong(params[3]), Integer.parseInt(params[5]));
+
+            // KO'RISH
+            case "view" -> {
+                Long courseId = Long.parseLong(params[3]);
+
+                String backCallback;
+
+                // Endi biz callback'ning uzunligiga qarab, qayerdan kelganini aniqlaymiz.
+                if (params.length > 5 && params[4].equals("search")) {
+                    // Bu QIDIRUVdan kelgan, chunki formati: "admin:courses:view:ID:search:TERM:PAGE"
+                    String searchTerm = params[5];
+                    int page = Integer.parseInt(params[6]);
+                    backCallback = "admin:courses:search_page:" + searchTerm + ":" + page;
+                } else if (params.length > 5 && params[4].equals("mentor")) {
+                    // Bu MENTORdan kelgan, chunki formati: "admin:courses:view:ID:mentor:MENTOR_ID:PAGE"
+                    Long mentorId = Long.parseLong(params[5]);
+                    int page = Integer.parseInt(params[6]);
+                    backCallback = "admin:courses:list_by_mentor_courses:" + mentorId + ":page:" + page;
+                } else {
+                    // Bu ODDIY RO'YXATDAN kelgan, chunki formati: "admin:courses:view:ID:all:PAGE"
+                    int page = Integer.parseInt(params[5]);
+                    backCallback = "admin:courses:page:" + page;
+                }
+
+                sendCourseDetail(chatId, messageId, courseId, backCallback);
+                break;
+            }
+            case "list" -> handleCourseListView(chatId,messageId,params);
         }
     }
 
-    private void sendCoursesListPage(Long chatId, Integer messageId, int pageNumber, String searchTerm) {
-        Pageable pageable = PageRequest.of(pageNumber, 10, Sort.by("id"));
-        Page<Course> coursePage = courseRepository.findAll(pageable); // Hozircha qidiruvsiz
+    // AdminCallBackQueryServiceImpl.java
 
-        StringBuilder text = new StringBuilder("📚 *Kurslar ro'yxati*\n_Sahifa: %d / %d_\n\n".formatted(pageNumber + 1, coursePage.getTotalPages()));
+//    private void handleCourseCallbacks(Long chatId, Integer messageId, String data) {
+//        String[] params = data.split(":");
+//        if (params.length < 3) return;
+//        String action = params[2];
+//
+//        switch (action) {
+//            case "page":
+//                // Bu oddiy ro'yxat sahifasi
+//                sendCoursesListPage(chatId, messageId, Integer.parseInt(params[3]), null, null);
+//                break;
+//            case "search_page":
+//                // Bu qidiruv natijalari sahifasi
+//                sendCoursesListPage(chatId, messageId, Integer.parseInt(params[4]), params[3], null);
+//                break;
+//            case "list_by_mentor_courses":
+//                // Bu mentorning kurslari sahifasi
+//                sendCoursesListPage(chatId, messageId, Integer.parseInt(params[5]), null, Long.parseLong(params[3]));
+//                break;
+//
+//            // --- MANA ENG MUHIM QISM ---
+//            case "view":
+//                Long courseId = Long.parseLong(params[3]);
+//                String backCallback;
+//
+//                // Endi biz callback'ning uzunligiga qarab, qayerdan kelganini aniqlaymiz.
+//                if (params.length > 5 && params[4].equals("search")) {
+//                    // Bu QIDIRUVdan kelgan, chunki formati: "admin:courses:view:ID:search:TERM:PAGE"
+//                    String searchTerm = params[5];
+//                    int page = Integer.parseInt(params[6]);
+//                    backCallback = "admin:courses:search_page:" + searchTerm + ":" + page;
+//                } else if (params.length > 5 && params[4].equals("mentor")) {
+//                    // Bu MENTORdan kelgan, chunki formati: "admin:courses:view:ID:mentor:MENTOR_ID:PAGE"
+//                    Long mentorId = Long.parseLong(params[5]);
+//                    int page = Integer.parseInt(params[6]);
+//                    backCallback = "admin:courses:list_by_mentor_courses:" + mentorId + ":page:" + page;
+//                } else {
+//                    // Bu ODDIY RO'YXATDAN kelgan, chunki formati: "admin:courses:view:ID:all:PAGE"
+//                    int page = Integer.parseInt(params[5]);
+//                    backCallback = "admin:courses:page:" + page;
+//                }
+//
+//                sendCourseDetail(chatId, messageId, courseId, backCallback);
+//                break;
+//
+//            case "main_menu":
+//                sendCoursesMainMenu(chatId, messageId);
+//                break;
+//            case "search_init":
+//                initiateCourseSearch(chatId, messageId);
+//                break;
+//            case "stats":
+//                showCourseStats(chatId, messageId);
+//                break;
+//        }
+//    }
+
+    private void handleCourseBrowseView(Long chatId, Integer messageId, String[] params) {
+        if (params.length < 4) return;
+        String listType = params[3];
+
+        switch (listType) {
+            case "init" -> {
+                String menuText = "Kurslarni qanday usulda ko'rmoqchisiz?";
+                InlineKeyboardMarkup keyboard = inlineKeyboardService.courseBrowseMethodMenu("admin:courses:main_menu");
+                onlineEducationBot.myExecute(sendMsg.editMessage(chatId, messageId, menuText, keyboard));
+            }
+            case "by_mentor" -> {
+                int page = Integer.parseInt(params[5]);
+                sendMentorsListPage(chatId, messageId, page);
+            }
+            case "by_mentor_courses" -> {
+                Long mentorId = Long.parseLong(params[4]);
+                int page = Integer.parseInt(params[6]);
+                sendCoursesListPage(chatId, messageId, page, null, mentorId);
+            }
+        }
+    }
+
+// AdminCallBackQueryServiceImpl.java
+
+    private void sendCoursesListPage(Long chatId, Integer messageId, int pageNumber, String searchTerm, Long mentorId) {
+        Pageable pageable = PageRequest.of(pageNumber, 10, Sort.by("id"));
+        Page<Course> coursePage;
+        StringBuilder text = new StringBuilder();
+
+        // --- 1-QADAM: Kerakli ma'lumotlarni bazadan samarali olish ---
+
+        if (searchTerm != null && !searchTerm.isBlank()) {
+            coursePage = courseRepository.searchActiveCoursesByTitleWithDetails(searchTerm, pageable);
+            text.append(String.format("🔍 *'%s' bo'yicha topilgan natijalar*\n", escapeMarkdown(searchTerm)));
+        } else if (mentorId != null) {
+            coursePage = courseRepository.findAllByInstructorIdWithDetails(mentorId, pageable);
+            User mentor = userRepository.findById(mentorId).orElseThrow(() -> new EntityNotFoundException("mentor not found"));
+            // ... (mentor nomini olish logikasi) ...
+            text.append(String.format("📚 *%s* mentorining kurslari\n", escapeMarkdown(mentor.getProfile().getFirstName())));
+        } else {
+            coursePage = courseRepository.findAllWithDetails(pageable);
+            text.append("📖 *Barcha kurslar ro'yxati*\n");
+        }
+
+        text.append(String.format("_Sahifa: %d / %d_\n\n", pageNumber + 1, coursePage.getTotalPages()));
+
+        // --- 2-QADAM: Ro'yxatni formatlash (BU ENDI XATOSIZ ISHLASHI KERAK) ---
 
         List<Course> coursesOnPage = coursePage.getContent();
         if (coursesOnPage.isEmpty()) {
-            text.append("Kurslar topilmadi.");
+            text.append("Bu yerda kurslar topilmadi.");
         } else {
             for (int i = 0; i < coursesOnPage.size(); i++) {
                 Course course = coursesOnPage.get(i);
                 String statusEmoji = course.isDeleted() ? "❌" : "✅";
-                text.append(String.format("`%d.` %s *%s*\n", i + 1, statusEmoji, escapeMarkdown(course.getTitle())));
+
+                // Endi .getCategory() va .getName() xavfsiz, chunki ma'lumotlar allaqachon yuklangan.
+                String categoryName = (course.getCategory() != null) ? course.getCategory().getName() : "Noma'lum";
+
+                text.append(String.format("`%d.` %s **%s** — _%s_\n",
+                        i + 1,
+                        statusEmoji,
+                        escapeMarkdown(course.getTitle()),
+                        escapeMarkdown(categoryName)
+                ));
             }
             text.append("\n🔽 Tanlash uchun tegishli tugmani bosing.");
         }
 
-        InlineKeyboardMarkup keyboard = inlineKeyboardService.coursesPageMenu(coursePage, searchTerm);
+        InlineKeyboardMarkup keyboard = inlineKeyboardService.coursesPageMenu(coursePage, searchTerm, mentorId);
+
+
+
         EditMessageText editMessage = sendMsg.editMessage(chatId, messageId, text.toString(), keyboard);
         editMessage.setParseMode("Markdown");
         onlineEducationBot.myExecute(editMessage);
@@ -338,6 +469,85 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
         // 4. Xabarni tahrirlab, yuboramiz
         EditMessageText editMessage = sendMsg.editMessage(chatId, messageId, text, keyboard);
         editMessage.setParseMode("Markdown");
+        onlineEducationBot.myExecute(editMessage);
+    }
+
+    private void handleCourseListView(Long chatId, Integer messageId, String[] params) {
+        if (params.length < 4) return;
+        String listType = params[3];
+
+        switch (listType) {
+            case "init" -> {
+                String menuText = "Kurslarni qanday usulda ko'rmoqchisiz?";
+                InlineKeyboardMarkup keyboard = inlineKeyboardService.courseBrowseMethodMenu("admin:courses:main_menu");
+                onlineEducationBot.myExecute(sendMsg.editMessage(chatId, messageId, menuText, keyboard));
+            }
+            case "by_mentor" -> {
+                int page = Integer.parseInt(params[5]);
+                sendMentorsListPage(chatId, messageId, page);
+            }
+            case "by_mentor_courses" -> {
+                Long mentorId = Long.parseLong(params[4]);
+                int page = Integer.parseInt(params[6]);
+                sendCoursesListPage(chatId, messageId, page, null, mentorId);
+            }
+        }
+    }
+
+    // --- YANGI YORDAMCHI METODLAR ---
+    private void sendMentorsListPage(Long chatId, Integer messageId, int pageNumber) {
+        Pageable pageable = PageRequest.of(pageNumber, 5, Sort.by("profile.firstName"));
+        Page<User> mentorPage = userRepository.findAllByRole(Role.INSTRUCTOR, pageable);
+        String text = "👨‍🏫 Mentorlardan birini tanlang (Sahifa: %d / %d)".formatted(pageNumber + 1, mentorPage.getTotalPages());
+        String backCallback = "admin:courses:browse:init"; // Tanlash menyusiga qaytish
+        InlineKeyboardMarkup keyboard = inlineKeyboardService.mentorsPageMenu(mentorPage, backCallback);
+        onlineEducationBot.myExecute(sendMsg.editMessage(chatId, messageId, text, keyboard));
+    }
+
+    // Bu metod tanlangan mentorning kurslari ro'yxatini chiqaradi
+    private void sendCoursesByMentorPage(Long chatId, Integer messageId, Long mentorId, int pageNumber) {
+        Pageable pageable = PageRequest.of(pageNumber, 10, Sort.by("id"));
+
+        // 1. Ma'lumotlarni bazadan olamiz
+        Page<Course> coursePage = courseRepository.findAllByInstructorIdAndDeletedFalse(mentorId, pageable);
+
+        User mentor = userRepository.findById(mentorId).orElse(null);
+        String mentorName = (mentor != null && mentor.getProfile() != null)
+                ? mentor.getProfile().getFirstName() + " " + mentor.getProfile().getLastName()
+                : "Noma'lum mentor";
+
+        // 2. Xabar matnini yasashni boshlaymiz (sarlavha qismi)
+        StringBuilder text = new StringBuilder();
+        text.append(String.format("📚 *%s* mentorining kurslari\n", escapeMarkdown(mentorName)));
+        text.append(String.format("_Sahifa: %d / %d_\n\n", pageNumber + 1, coursePage.getTotalPages()));
+
+        // --- MANA O'SHA QOLIB KETGAN QISM ---
+        // 3. Ro'yxatning o'zini formatlaymiz
+        List<Course> coursesOnPage = coursePage.getContent();
+        if (coursesOnPage.isEmpty()) {
+            text.append("Bu mentorga tegishli aktiv kurslar topilmadi.");
+        } else {
+            for (int i = 0; i < coursesOnPage.size(); i++) {
+                Course course = coursesOnPage.get(i);
+                String categoryName = (course.getCategory() != null) ? course.getCategory().getName() : "Noma'lum";
+
+                // Raqam, Kurs Nomi, Kategoriya
+                text.append(String.format("`%d.` 💻 **%s** — _%s_\n",
+                        i + 1,
+                        escapeMarkdown(course.getTitle()),
+                        escapeMarkdown(categoryName)
+                ));
+            }
+            text.append("\n🔽 Tanlash uchun tegishli tugmani bosing.");
+        }
+        // --- FORMATLASH TUGADI ---
+
+        // 4. "Aqlli" klaviaturani yasaymiz
+        InlineKeyboardMarkup keyboard = inlineKeyboardService.coursesPageMenu(coursePage, null,mentorId);
+
+        // 5. Xabarni tahrirlab, yuboramiz
+        EditMessageText editMessage = sendMsg.editMessage(chatId, messageId, text.toString(), keyboard);
+        editMessage.setParseMode("Markdown"); // Yoki MarkdownV2, agar escapeMarkdownV2 ishlatsangiz
         onlineEducationBot.myExecute(editMessage);
     }
 }

@@ -148,6 +148,8 @@ public interface Utils {
 
         String CATEGORY_ID = "category_id";
 
+        String COURSE_LIST_CALLBACK = "admin:courses:list:init";
+
 
         // --- DEPRECATED: Hardcoded Callbacks ---
         /**

@@ -118,5 +118,29 @@ public interface CourseRepository extends JpaRepository<Course, Long>, CourseRep
             Pageable pageable
     );
 
+    /**
+     * Berilgan qidiruv matni bo'yicha kurslarni sarlavhasi (title)
+     * orqali (case-insensitive) qidiradi.
+     * @param searchTerm Qidiruv uchun matn
+     * @param pageable Sahifalash uchun ma'lumot
+     * @return Topilgan kurslar sahifasi
+     */
+    @Query("SELECT c FROM courses c WHERE LOWER(c.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) AND c.deleted = false")
+    Page<Course> searchActiveCoursesByTitle(@Param("searchTerm") String searchTerm, Pageable pageable);
+
+    Page<Course> findAllByInstructorIdAndDeletedFalse(Long instructorId, Pageable pageable);
+
+
+    @Query("SELECT c FROM courses c JOIN FETCH c.category JOIN FETCH c.instructor i JOIN FETCH i.profile")
+    Page<Course> findAllWithDetails(Pageable pageable);
+
+    // Qidiruvni ham xuddi shunday qilamiz
+    @Query("SELECT c FROM courses c JOIN FETCH c.category JOIN FETCH c.instructor i JOIN FETCH i.profile WHERE LOWER(c.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) AND c.deleted = false")
+    Page<Course> searchActiveCoursesByTitleWithDetails(@Param("searchTerm") String searchTerm, Pageable pageable);
+
+    // Mentor bo'yicha qidiruvni ham xuddi shunday qilamiz
+    @Query("SELECT c FROM courses c JOIN FETCH c.category JOIN FETCH c.instructor i JOIN FETCH i.profile WHERE c.instructor.id = :instructorId AND c.deleted = false")
+    Page<Course> findAllByInstructorIdWithDetails(@Param("instructorId") Long instructorId, Pageable pageable);
+
 
 }
