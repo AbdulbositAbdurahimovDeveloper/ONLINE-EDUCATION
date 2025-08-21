@@ -23,6 +23,13 @@ public class FaqServiceImpl implements FaqService {
     private final FaqRepository faqRepository;
     private final FaqMapper faqMapper;
 
+    /**
+     * Yangi FAQ (Ko'p so'raladigan savollar) yaratish metodi.
+     * Yaratilayotgan FAQ ga avtomatik ravishda keyingi bo'sh `displayOrder` qiymatini beradi.
+     *
+     * @param requestDTO FAQ yaratish uchun kerakli ma'lumotlarni o'z ichiga olgan DTO
+     * @return Yaratilgan FAQ ning DTO ko'rinishi
+     */
     @Override
     public FaqDTO create(FaqRequestDTO requestDTO) {
         Faq faq = faqMapper.toEntity(requestDTO);
@@ -33,7 +40,14 @@ public class FaqServiceImpl implements FaqService {
         return faqMapper.toDto(faq);
     }
 
-
+    /**
+     * Mavjud FAQ ni berilgan ID bo'yicha yangilash metodi.
+     *
+     * @param id         Yangilanishi kerak bo'lgan FAQ ning ID si
+     * @param requestDTO Yangilash uchun yangi ma'lumotlarni o'z ichiga olgan DTO
+     * @return Yangilangan FAQ ning DTO ko'rinishi
+     * @throws EntityNotFoundException Agar berilgan ID bilan FAQ topilmasa
+     */
     @Override
     public FaqDTO update(Long id, FaqRequestDTO requestDTO) {
         Faq faq = faqRepository.findById(id)
@@ -44,40 +58,65 @@ public class FaqServiceImpl implements FaqService {
         return faqMapper.toDto(faq);
     }
 
+    /**
+     * FAQ ni o'chirish va qolgan FAQ larning displayOrder tartibini yangilash metodi.
+     * Bu metod transaksionel bo'lib, o'chirish va tartibni yangilash bir butunlikda bajariladi.
+     *
+     * @param id O'chirilishi kerak bo'lgan FAQ ning ID si
+     * @throws EntityNotFoundException Agar berilgan ID bilan FAQ topilmasa
+     */
     @Override
     @Transactional
     public void delete(Long id) {
+        // 1. FAQ ni topamiz, agar topilmasa istisno tashlaymiz
         Faq faq = faqRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Faq not found with id: " + id));
 
-        // 1. Avval Faq ni o'chiramiz
+        // 2. FAQ ni ma'lumotlar bazasidan o'chiramiz
         faqRepository.delete(faq);
 
-        // 2. Qolgan faqlarni displayOrder bo'yicha sortlab olamiz
+        // 3. Qolgan (o'chirilmagan) FAQ larni displayOrder bo'yicha o'suvchi tartibda olamiz
+        // Qaydnoma: Agar Faq modelida "deleted" degan boolean maydon bo'lsa, uni ham filterlash kerak.
+        // Agar 'deleted' maydoni bo'lmasa, faqRepository.findAll(Sort.by(Sort.Direction.ASC, Faq.Fields.displayOrder)); kabi bo'lishi kerak.
         List<Faq> remainingFaqs = faqRepository.findAll(Sort.by(Sort.Direction.ASC, Faq.Fields.displayOrder));
 
-        // 3. Har birining displayOrder ni yangilaymiz: 0 dan boshlanadi
+        // 4. Qolgan har bir FAQ ning displayOrder tartibini 0 dan boshlab yangilaymiz
         for (int i = 0; i < remainingFaqs.size(); i++) {
             Faq f = remainingFaqs.get(i);
             f.setDisplayOrder(i);
         }
 
-        // 4. Hammasini saqlaymiz
+        // 5. Yangilangan displayOrder larni ma'lumotlar bazasiga saqlaymiz
         faqRepository.saveAll(remainingFaqs);
+
+        log.info("FAQ deleted with id={}", id);
     }
 
-
+    /**
+     * Barcha FAQ larni displayOrder bo'yicha saralab, DTO ko'rinishida qaytarish metodi.
+     * Bu metod chaqirilganda, avval qolgan FAQ larning displayOrder tartibi ham yangilanadi.
+     *
+     * @return Barcha FAQ larning DTO ko'rinishidagi listi
+     */
     @Override
     public List<FaqDTO> getAll() {
 
         reorderDisplayOrders();
-        Sort sort = Sort.by(Sort.Direction.ASC,Faq.Fields.displayOrder);
-        List<Faq> allFaqs = faqRepository.findAll(sort);
 
+        Sort sort = Sort.by(Sort.Direction.ASC, Faq.Fields.displayOrder);
+        List<Faq> allFaqs = faqRepository.findAll(sort);
 
         return faqMapper.toDtoList(allFaqs);
     }
 
+    /**
+     * Berilgan ID bo'yicha FAQ ni topish va DTO ko'rinishida qaytarish metodi.
+     * Bu metod ham chaqirilganda, qolgan FAQ larning displayOrder tartibini yangilaydi.
+     *
+     * @param id Qidirilayotgan FAQ ning ID si
+     * @return Topilgan FAQ ning DTO ko'rinishi
+     * @throws EntityNotFoundException Agar berilgan ID bilan FAQ topilmasa
+     */
     @Override
     public FaqDTO getById(Long id) {
         reorderDisplayOrders();
@@ -86,7 +125,14 @@ public class FaqServiceImpl implements FaqService {
         return faqMapper.toDto(faq);
     }
 
-
+    /**
+     * Ikki FAQ ning displayOrder tartibini almashtirish metodi.
+     * Bu metod ma'lum bir FAQ ning joyini o'zgartirish uchun ishlatiladi.
+     *
+     * @param faqId Yangi joyga ko'chirilishi kerak bo'lgan FAQ ning ID si
+     * @param newDisplayOrder FAQ ning ko'chirilishi kerak bo'lgan yangi tartib raqami
+     * @throws EntityNotFoundException Agar `faqId` yoki `newDisplayOrder` ga mos FAQ topilmasa
+     */
     @Override
     public void swapDisplayOrder(Long faqId, int newDisplayOrder) {
         Faq currentFaq = faqRepository.findById(faqId)
@@ -105,6 +151,11 @@ public class FaqServiceImpl implements FaqService {
         log.info("Swapped displayOrder between faqId={} and faqId={}", currentFaq.getId(), targetFaq.getId());
     }
 
+    /**
+     * Faqat o'chirilmagan FAQ larni olib, ularning displayOrder tartibini
+     * ketma-ket (0, 1, 2, ...) qilib qayta nomerlash metodi.
+     * Bu metod ichki (private) bo'lib, faqat boshqa servis metodlari tomonidan chaqiriladi.
+     */
     private void reorderDisplayOrders() {
         List<Faq> activeFaqs = faqRepository.findAllByDeletedFalseOrderByDisplayOrderAsc();
 
@@ -114,5 +165,4 @@ public class FaqServiceImpl implements FaqService {
 
         faqRepository.saveAll(activeFaqs);
     }
-
 }
