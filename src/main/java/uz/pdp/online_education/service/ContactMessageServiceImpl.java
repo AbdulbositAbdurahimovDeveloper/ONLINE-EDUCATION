@@ -12,7 +12,6 @@ import uz.pdp.online_education.enums.MessageStatus;
 import uz.pdp.online_education.exceptions.EntityNotFoundException;
 import uz.pdp.online_education.mapper.ContactMessageMapper;
 import uz.pdp.online_education.model.ContactMessage;
-import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.payload.ContactMessageRequestDTO;
 import uz.pdp.online_education.payload.ContactMessageResponseDTO;
 import uz.pdp.online_education.repository.ContactMessageRepository;
