@@ -156,18 +156,16 @@ public class PaymentServiceImpl implements PaymentService {
 
         emailService.sendPaymentReceipt(payment);
 
-//        ModuleEnrollmentRequestDTO moduleEnrollmentRequestDTO = new ModuleEnrollmentRequestDTO(
-//                currentUser.getId(),
-//                module.getId()
-//        );
-//        moduleEnrollmentService.enrollUser(moduleEnrollmentRequestDTO);
+        ModuleEnrollmentRequestDTO moduleEnrollmentRequestDTO = new ModuleEnrollmentRequestDTO(
+                currentUser.getId(),
+                module.getId()
+        );
+        moduleEnrollmentService.enrollUser(moduleEnrollmentRequestDTO);
 
 //        ModuleEnrollment enrollment = moduleEnrollmentRepository
 //                .findByUserIdAndModuleId(payment.getUser().getId(), payment.getModule().getId())
 //                .orElse(new ModuleEnrollment(payment.getUser(), payment.getModule()));
-
-        // HOLATNI O'ZGARTIRISH
-//        enrollment.setStatus(EnrollmentStatus.ACTIVE);
+//
 //        moduleEnrollmentRepository.save(enrollment);
 
         return paymentMapper.toDTO(payment);

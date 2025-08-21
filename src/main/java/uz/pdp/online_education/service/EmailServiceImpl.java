@@ -60,7 +60,7 @@ public class EmailServiceImpl implements EmailService {
             helper.setFrom("noreply@online-education.com"); // Bu email mavjud bo'lishi shart emas
 
             // 4. Xabarni jo'natish
-            mailSender.send(mimeMessage);
+//            mailSender.send(mimeMessage);
 
         } catch (MessagingException e) {
             // Bu yerda xatolikni log qilish kerak.
@@ -136,7 +136,7 @@ public class EmailServiceImpl implements EmailService {
 
             helper.setTo(to);
             helper.setSubject(subject);
-            helper.setText(text, false); // 'false' - bu oddiy matn ekanligini bildiradi
+            helper.setText(text, true); // 'false' - bu oddiy matn ekanligini bildiradi
             helper.setFrom(fromEmail);
 
             mailSender.send(mimeMessage);
@@ -146,37 +146,37 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
-//    @Async
-////    @Override
-//    public void sendReviewNotification(String to, String subject, String body) {
-//        try {
-//            // 1. Thymeleaf kontekstini yaratamiz
-//            Context context = new Context();
-//            context.setVariable("subject", subject);
-//            // Matndagi qator tashlashlarni (\n) HTML'dagi <br> ga o'giramiz
-//            context.setVariable("body", body.replace("\n", "<br />"));
-//            context.setVariable("platformUrl", "http://online-education.com"); // Platforma URL'si
-//            context.setVariable("currentYear", java.time.Year.now().getValue());
-//
-//            // 2. HTML shablonni String'ga aylantiramiz
-//            String htmlContent = templateEngine.process("review-notification", context);
-//
-//            // 3. MimeMessage (HTML'li xabar) yaratish
-//            MimeMessage mimeMessage = mailSender.createMimeMessage();
-//            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-//
-//            helper.setTo(to);
-//            helper.setSubject(subject);
-//            helper.setText(htmlContent, true); // 'true' - bu HTML ekanligini bildiradi
-//            helper.setFrom(fromEmail);
-//
-//            // 4. Xabarni jo'natish
+    @Async
+    @Override
+    public void sendReviewNotification(String to, String subject, String body) {
+        try {
+            // 1. Thymeleaf kontekstini yaratamiz
+            Context context = new Context();
+            context.setVariable("subject", subject);
+            // Matndagi qator tashlashlarni (\n) HTML'dagi <br> ga o'giramiz
+            context.setVariable("body", body.replace("\n", "<br />"));
+            context.setVariable("platformUrl", "platformUrl");
+            context.setVariable("currentYear", java.time.Year.now().getValue());
+
+            // 2. HTML shablonni String'ga aylantiramiz
+            String htmlContent = templateEngine.process("review-notification", context);
+
+            // 3. MimeMessage (HTML'li xabar) yaratish
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true); // 'true' - bu HTML ekanligini bildiradi
+            helper.setFrom(fromEmail);
+
+            // 4. Xabarni jo'natish
 //            mailSender.send(mimeMessage);
-//            log.info("Successfully sent review notification email to {}", to);
-//
-//        } catch (MessagingException e) {
-//            log.error("Failed to send review notification email to {}: {}", to, e.getMessage());
-//        }
-//    }
+            log.info("Successfully sent review notification email to {}", to);
+
+        } catch (MessagingException e) {
+            log.error("Failed to send review notification email to {}: {}", to, e.getMessage());
+        }
+    }
 }
 

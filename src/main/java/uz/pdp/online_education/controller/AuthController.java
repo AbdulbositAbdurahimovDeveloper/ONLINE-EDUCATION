@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -40,7 +39,7 @@ public class AuthController {
                     ⚠️ Token must be used in `Authorization: Bearer <token>` header for subsequent requests.
                     """,
             tags = {"Authentication", "Login"},
-            requestBody = @RequestBody(
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Login credentials (email/username and password)",
                     required = true,
                     content = @Content(
@@ -81,7 +80,7 @@ public class AuthController {
                     After registration, the user must check their email and confirm before logging in.
                     """,
             tags = {"Authentication", "Registration"},
-            requestBody = @RequestBody(
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "User registration details",
                     required = true,
                     content = @Content(

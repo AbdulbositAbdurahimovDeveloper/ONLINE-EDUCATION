@@ -1,5 +1,6 @@
 package uz.pdp.online_education.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -47,9 +48,11 @@ public class User extends AbsLongEntity implements UserDetails {
      * by the 'user' field in the TelegramUser entity.
      */
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private TelegramUser telegramUser;
 
     @OneToMany(mappedBy = "instructor", fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Course> courses;
 
     private boolean deleted = false;
@@ -57,7 +60,27 @@ public class User extends AbsLongEntity implements UserDetails {
     private boolean enabled = false;
 
     @Override
+    @JsonIgnore
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+    }
+
+    @Override
+    @JsonIgnore
+    public boolean isAccountNonExpired() {
+        return UserDetails.super.isAccountNonExpired();
+    }
+
+    @Override
+    @JsonIgnore
+    public boolean isAccountNonLocked() {
+        return UserDetails.super.isAccountNonLocked();
+    }
+
+
+    @Override
+    @JsonIgnore
+    public boolean isCredentialsNonExpired() {
+        return UserDetails.super.isCredentialsNonExpired();
     }
 }

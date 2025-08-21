@@ -16,7 +16,7 @@ public class CourseDetailDTO {
     private String title;
     private String description;
     private String slug;
-    private String thumbnailUrl; // Attachment obyektini emas, uning URL'ini qaytaramiz
+    private String thumbnailUrl;
     private Long instructorId;
     private Long categoryId;
     private Long modulesCount;

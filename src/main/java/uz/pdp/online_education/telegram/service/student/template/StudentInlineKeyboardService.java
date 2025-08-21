@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.Module;
+import uz.pdp.online_education.model.Payment;
 import uz.pdp.online_education.model.lesson.Lesson;
 import uz.pdp.online_education.payload.CategoryInfo;
 import uz.pdp.online_education.payload.PageDTO;
@@ -118,4 +119,12 @@ public interface StudentInlineKeyboardService {
     InlineKeyboardMarkup buildPurchaseButton(Long id, String datum);
 
     InlineKeyboardMarkup createQuizContent(String s, String url);
+
+    InlineKeyboardMarkup createBalanceMenuKeyboard(boolean hasPending, int pendingCount);
+
+    InlineKeyboardMarkup userPaymentsHistory(Page<Payment> payments);
+
+    InlineKeyboardMarkup userPendingPaymentsKeyboard(Page<Module> modules);
+
+    InlineKeyboardMarkup buildModuleButtons(Module module);
 }

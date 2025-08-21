@@ -8,23 +8,26 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Data Transfer Object for creating a new Module.
+ * This class includes validation constraints for the incoming data.
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class ModuleCreateDTO {
 
-    @NotBlank(message = "Modul sarlavhasi bo'sh bo'lishi mumkin emas")
-    @Size(min = 3, max = 200, message = "Sarlavha 3 dan 200 gacha belgidan iborat bo'lishi kerak")
+    @NotBlank(message = "Module title cannot be blank.")
+    @Size(min = 3, max = 200, message = "Title must be between {min} and {max} characters.")
     private String title;
 
-    @Size(max = 1000, message = "Tavsif 1000 ta belgidan oshmasligi kerak")
+    @Size(max = 1000, message = "Description must not exceed {max} characters.")
     private String description;
-    
-    @NotNull(message = "Modul narxi ko'rsatilishi shart")
-    @Min(value = 0, message = "Narx manfiy bo'lishi mumkin emas")
+
+    @NotNull(message = "Module price cannot be null.")
+    @Min(value = 0, message = "Price cannot be negative.")
     private Long price;
 
-
-    @NotNull(message = "Kurs ID'si ko'rsatilishi shart")
+    @NotNull(message = "Course ID cannot be null.")
     private Long courseId;
 }

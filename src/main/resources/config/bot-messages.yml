@@ -52,23 +52,23 @@ student:
     lesson-locked: "🔒 Bu darsni ko'rish uchun <b>'%s'</b> modulini sotib olishingiz kerak."
     buy-module-button: "🛒 Sotib olish"
     quiz-redirect: "❓ Testni ishlash uchun, iltimos, veb-saytdagi shaxsiy kabinetingizga o'ting yoki quyidagi havoladan foydalaning:"
-#  all-courses:
-#    choose-method: "Kurslarni qidirish usulini tanlang:"
-#    by-category:
-#      title: "🗂 <b>Kategoriyalar</b>\n<i>Sahifa: %d / %d</i>"
-#    by-instructor:
-#      title: "👨‍🏫 <b>Mualliflar</b>\n<i>Sahifa: %d / %d</i>"
-#    list:
-#      title: "🎓 <b>%s</b>\n<i>Kurslar ro'yxati (Sahifa: %d / %d)</i>"
-#    detail:
-#      title: |
-#        <b>%s</b>
-#
-#        %s
-#
-#        👨‍🏫 <b>Muallif:</b> %s
-#        ⭐ <b>Reyting:</b> %.1f (%d ta izoh)
-#        📚 <b>Modullar soni:</b> %d ta
+  #  all-courses:
+  #    choose-method: "Kurslarni qidirish usulini tanlang:"
+  #    by-category:
+  #      title: "🗂 <b>Kategoriyalar</b>\n<i>Sahifa: %d / %d</i>"
+  #    by-instructor:
+  #      title: "👨‍🏫 <b>Mualliflar</b>\n<i>Sahifa: %d / %d</i>"
+  #    list:
+  #      title: "🎓 <b>%s</b>\n<i>Kurslar ro'yxati (Sahifa: %d / %d)</i>"
+  #    detail:
+  #      title: |
+  #        <b>%s</b>
+  #
+  #        %s
+  #
+  #        👨‍🏫 <b>Muallif:</b> %s
+  #        ⭐ <b>Reyting:</b> %.1f (%d ta izoh)
+  #        📚 <b>Modullar soni:</b> %d ta
 
   all-courses:
     entry-text: |
@@ -128,7 +128,49 @@ student:
     list-title: |
       📚 <b>Modul darslari</b>
       Topilgan darslar soni: %d
+  balance_info:
+    with_pending_payment: |
+      💰 <b>Balans va To'lovlar</b>
 
+      📈 <b>Umumiy xaridlar:</b> <code>%s</code>
+      📚 <b>Sotib olingan kurslar soni:</b> <code>%s ta</code>
+
+      ---
+
+      🧾 <b>Oxirgi to'lov:</b>
+      Kurs: <code>%s</code>
+      Summa: <code>%s</code>
+      Sana: <code>%s</code>
+
+      ---
+
+      ⏳ <b>Kutilayotgan to'lov:</b>
+      Sizda <b>%s ta</b> to'lanmagan kurs mavjud.
+      Kurs: <code>%s</code>
+      To'lov summasi: <code>%s</code>
+
+      <i>Barcha kutilayotgan to'lovlarni ko'rish va amalga oshirish uchun quyidagi tugmani bosing.</i>
+    no_pending_payment: |
+      💰 <b>Balans va To'lovlar</b>
+
+      📈 <b>Umumiy xaridlar:</b> <code>%s</code>
+      📚 <b>Sotib olingan kurslar soni:</b> <code>%s ta</code>
+
+      ---
+
+      🧾 <b>Oxirgi to'lov:</b>
+      Kurs: <code>%s</code>
+      Summa: <code>%s</code>
+      Sana: <code>%s</code>
+
+      ---
+
+      ✅ <b>Barcha to'lovlaringiz muvaffaqiyatli amalga oshirilgan!</b>
+
+      <i>Sotib olingan kurslarning to'liq ro'yxatini ko'rish uchun "To'lovlar tarixi" tugmasini bosing.</i>
+    button_pending_payments: "⏳ Kutilayotgan to'lovlar (%d)"
+    button_payment_history: "📜 To'lovlar tarixi"
+    button_back_to_menu: "⬅️ Orqaga"
 #  lesson:
 #    status-free: "🆓 Bepul"
 #    status-paid: "💳 Pullik"
@@ -156,13 +198,128 @@ instructor:
     
     <i>Bu yerda sizning kurslaringiz, o'quvchilaringiz va daromadlaringiz haqida umumiy ma'lumotlar bo'ladi.</i>
 
+# messages.yml
+
+# ===============================================
+# == INSTRUCTOR: COURSE CREATION WIZARD MESSAGES ==
+# ===============================================
+  course_create:
+    # Jarayon boshlanganda birinchi so'raladigan savol (kategoriya tanlash)
+    category_prompt: |
+      🎓 <b>Yangi kurs yaratish</b>
+      
+      Iltimos, yangi kursingiz tegishli bo'lgan kategoriyani quyidagi ro'yxatdan tanlang:
+
+    # Agar foydalanuvchi kategoriya tanlaganidan keyin yuboriladigan xabar
+    category_chosen: "✅ Kategoriya tanlandi: <b>%s</b>"
+
+    # Sarlavha (title) kiritishni so'rash
+    title_prompt: |
+      ✍️ Endi kurs uchun <b>sarlavha (nom)</b> kiriting.
+      
+      <i>Masalan: "Python Dasturlash Asoslari"</i>
+      <i>Sarlavha 3 tadan 150 tagacha belgidan iborat bo'lishi kerak.</i>
+
+    # Sarlavha kiritilgandan keyin yuboriladigan xabar
+    title_accepted: "✅ Sarlavha qabul qilindi."
+
+    # Tavsif (description) kiritishni so'rash
+    description_prompt: |
+      📖 Ajoyib! Endi kurs uchun <b>batafsil tavsif</b> yozing.
+      
+      <i>Bu tavsif kurs sahifasida ko'rinadi va o'quvchilarni jalb qilishga yordam beradi.</i>
+      <i>Agar tavsif qo'shishni xohlamasangiz, /skip buyrug'ini yuboring.</i>
+
+    # Tavsif o'tkazib yuborilganda
+    description_skipped: "✅ Tavsif qadami o'tkazib yuborildi."
+
+    # Tavsif qabul qilinganda
+    description_accepted: "✅ Tavsif qabul qilindi."
+
+    # Rasm (thumbnail) yuklashni so'rash
+    thumbnail_prompt: |
+      🖼️ So'nggi qadam! Kurs uchun <b>asosiy rasmni</b> (thumbnail) yuboring.
+      
+      <i>Bu rasm kurslar ro'yxatida ko'rinadi. Eng yaxshi natija uchun kvadrat shaklidagi (1:1) va yuqori sifatli rasm tanlang.</i>
+
+    # Rasm qabul qilinganda
+    thumbnail_accepted: "✅ Rasm muvaffaqiyatli qabul qilindi va saqlandi."
+
+    # Barcha ma'lumotlar yig'ilgandan keyin tasdiqlash uchun yuboriladigan xabar
+    confirmation_prompt: |
+      🎉 Tabriklaymiz, barcha ma'lumotlar yig'ildi!
+      
+      Iltimos, quyidagi ma'lumotlarni tekshirib, tasdiqlang:
+      
+      <b>Kategoriya:</b> %s
+      <b>Sarlavha:</b> %s
+      <b>Tavsif:</b> %s
+      
+      <i>Agar barcha ma'lumotlar to'g'ri bo'lsa, "✅ Tasdiqlash va Saqlash" tugmasini bosing.</i>
+      <i>Xatolik bo'lsa, "❌ Bekor qilish" tugmasini bosib, jarayonni boshidan boshlashingiz mumkin.</i>
+
+    # Jarayon muvaffaqiyatli yakunlanganda
+    process_complete: |
+      🚀 <b>Kurs muvaffaqiyatli yaratildi!</b>
+      
+      Endi siz ushbu kursga modullar va darslar qo'shishni boshlashingiz mumkin.
+      
+      <i>"📚 Mening Kurslarim" bo'limidan yangi kursingizni topishingiz mumkin.</i>
+
+    # Jarayon bekor qilinganda
+    process_cancelled: "🚫 Kurs yaratish jarayoni bekor qilindi."
+
+    # Validatsiya xatoliklari uchun matnlar
+    validation:
+      title_length_error: "❌ Xatolik: Sarlavha 3 tadan 150 tagacha belgidan iborat bo'lishi kerak. Iltimos, qaytadan kiriting."
+      description_length_error: "❌ Xatolik: Tavsif 1000 ta belgidan oshmasligi kerak. Iltimos, qaytadan kiriting."
+      not_a_photo_error: "❌ Xatolik: Iltimos, rasm formatidagi fayl yuboring (photo)."
+
+  module-create:
+    title: |
+      ✍️ <b>Yangi modul uchun sarlavha kiriting:</b>  
+      Minimal: 3 ta belgi  
+      Maksimal: 200 ta belgi  
+      ℹ️ Masalan: <i>"Java Basics"</i>
+
+    description: |
+      📝 <b>Modul uchun qisqacha tavsif kiriting:</b>  
+      Maksimal: 1000 ta belgi  
+      ℹ️ Masalan: <i>"Bu modul orqali siz Java asoslarini o‘rganasiz."</i>
+
+    price: |
+      💰 <b>Modul narxini kiriting:</b>  
+      Faqat son ko‘rinishida, manfiy bo‘lmasligi kerak.  
+      ℹ️ Masalan: <i>50000</i>
+
+    course-id: |
+      🔗 <b>Qaysi kursga modul qo‘shmoqchisiz?</b>  
+      Iltimos, mavjud kurs ID sini yuboring.
+
+  reminder: |
+    ⏳ Eslatma: barcha ma’lumotlarni 1 soat ichida kiritishingiz kerak.  
+    Aks holda jarayon avtomatik bekor qilinadi.
+    
+    ❌ Istalgan vaqtda <b>/cancel</b> buyrug‘i orqali yaratishni bekor qilishingiz mumkin.
+
 # --- ADMIN BO'LIMI ---
 admin:
   start-message: "Admin paneliga xush kelibsiz, <b>%s</b>."
   dashboard: |
-    <b>⚙️ Admin Paneli</b>
+    
+    📊 Shaxsiy Kabinet
+    
+    👤 Ism-sharif: %s
+    📧 Email: %s
+    🔑 Login: %s
+    🔰 Role: %s
 
-    <i>Bu yerda platformaning umumiy statistikasi va boshqaruv vositalari joylashgan.</i>
+    Umumiy statistika:
+    👥 Jami foydalanuvchilar: %d ta
+    📚 Jami kurslar: %d ta
+    ⚙️ Admin Paneli
+
+
   users-menu: "👤 Foydalanuvchilarni boshqarish bo'limi."
   courses-menu: "📚 Kurslarni boshqarish bo'limi."
   broadcast:

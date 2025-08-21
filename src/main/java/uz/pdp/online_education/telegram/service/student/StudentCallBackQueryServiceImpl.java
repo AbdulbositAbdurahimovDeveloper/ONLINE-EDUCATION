@@ -12,7 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import uz.pdp.online_education.enums.TransactionStatus;
 import uz.pdp.online_education.model.*;
+import uz.pdp.online_education.model.Abs.AbsDateEntity;
 import uz.pdp.online_education.model.Module;
 import uz.pdp.online_education.model.lesson.*;
 import uz.pdp.online_education.payload.CategoryInfo;
@@ -37,6 +39,9 @@ import uz.pdp.online_education.telegram.service.student.template.StudentCallBack
 import uz.pdp.online_education.telegram.service.student.template.StudentInlineKeyboardService;
 import uz.pdp.online_education.telegram.service.student.template.StudentProcessMessageService;
 
+import java.sql.Timestamp;
+import java.text.DecimalFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 
@@ -75,6 +80,8 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
     private final ContentRepository contentRepository;
     private final PaymentRepository paymentRepository;
 
+    private static final DateTimeFormatter FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private static final int PAGE_SIZE = 5;
 
     @Override
@@ -108,6 +115,8 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
                 case Utils.CallbackData.STUDENT_PREFIX -> handleStudentGeneralCallback(user, chatId, messageId, data);
                 case Utils.CallbackData.ALL_COURSES_PREFIX ->
                         handleAllCoursesCallback(user, chatId, messageId, data, queryData, callbackQueryId);
+                case Utils.CallbackData.BALANCED ->
+                        handleBalanced(user, chatId, messageId, data, queryData, callbackQueryId);
             }
         } catch (Exception e) {
             log.error("Callbackni qayta ishlashda xatolik yuz berdi: Query='{}'", queryData, e);
@@ -115,7 +124,206 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
         }
     }
 
+    private void handleBalanced(User user, Long chatId, Integer messageId, String[] data, String queryData, String callbackQueryId) {
+
+        System.out.println(queryData);
+
+        String type = data[1];
+
+        switch (type) {
+            case Utils.CallbackData.ACTION_BACK -> sendBalanceMenu(chatId, user, messageId);
+            case Utils.CallbackData.BALANCE_PAYMENT_HISTORY -> userPaymentHistory(user, chatId, messageId, data);
+            case Utils.CallbackData.BALANCE_PENDING_PAYMENTS -> userPendingPayments(user, chatId, messageId, data);
+            case Utils.CallbackData.ACTION_VIEW -> {
+                Long id = Long.valueOf(data[2]);
+                Module module = moduleRepository.findById(id).orElseThrow();
+                Course course = module.getCourse();
+
+                UserProfile profile = course.getInstructor().getProfile();
+
+                String text = String.format(
+                        """
+                                <b>📘 Modul:</b> %s
+                                🔢 Tartib raqami: %d
+                                💵 Narxi: %s\s
+                                
+                                <b>📚 Kurs:</b> %s
+                                📂 Kategoriya: %s
+                                👨‍🏫 O‘qituvchi: %s
+                                
+                                📖 Darslar soni: %d
+                                
+                                📝 <b>Tavsif:</b>
+                                %s""",
+                        module.getTitle(),
+                        module.getOrderIndex(),
+                        formatAmount(module.getPrice()),
+                        course.getTitle(),
+                        course.getCategory() != null ? course.getCategory().getName() : "Noma’lum",
+                        profile.getFirstName() + " " + profile.getLastName(),
+                        module.getLessons() != null ? module.getLessons().size() : 0,
+                        module.getDescription() != null ? module.getDescription() : "Tavsif mavjud emas"
+                );
+
+                InlineKeyboardMarkup inlineKeyboardMarkup = studentInlineKeyboardService.buildModuleButtons(module);
+                bot.myExecute(sendMsg.editMessage(chatId, messageId, text, inlineKeyboardMarkup));
+            }
+
+        }
+
+    }
+
+    private void userPendingPayments(User user, Long chatId, Integer messageId, String[] data) {
+        int pageNumber = Integer.parseInt(data[3]);
+
+        PageRequest pageRequest = PageRequest.of(pageNumber, PAGE_SIZE);
+        Page<Module> modules = moduleEnrollmentRepository.findUnpaidModulesByUserId(user.getId(), pageRequest);
+
+        // --- Text UI ---
+        StringBuilder sb = new StringBuilder();
+        sb.append("💳 <b>To‘lanmagan modullar ro‘yxati</b>\n\n");
+
+        int counter = 1;
+        for (Module module : modules.getContent()) {
+            sb.append(String.format(
+                    "📘 <b>%d. %s</b>\n" +
+                            "📚 Kurs: %s\n" +
+                            "💰 Narxi: %s so‘m\n" +
+                            "📑 Tartib raqami: %d\n\n",
+                    counter++,
+//                                module.getTitle(),
+                    module.getTitle() != null ? module.getTitle() : "Noma'lum modul",
+                    module.getCourse().getTitle(),
+                    formatAmount(module.getPrice()),
+                    module.getOrderIndex()
+            ));
+        }
+
+        sb.append("⬇️ Quyidagi ro‘yxatdan modulni tanlang yoki sahifani almashtiring.");
+
+        // --- Inline Keyboard (pagination + back) ---
+        InlineKeyboardMarkup markup = studentInlineKeyboardService.userPendingPaymentsKeyboard(modules);
+
+        bot.myExecute(sendMsg.editMessage(chatId, messageId, sb.toString(), markup));
+    }
+
+    private void userPaymentHistory(User user, Long chatId, Integer messageId, String[] data) {
+        int pageNumber = Integer.parseInt(data[3]);
+
+
+        Sort sort = Sort.by(AbsDateEntity.Fields.createdAt).descending();
+        PageRequest pageable = PageRequest.of(pageNumber, PAGE_SIZE, sort);
+        Page<Payment> payments = paymentRepository.findByUserAndStatus(user, TransactionStatus.SUCCESS, pageable);
+
+
+        StringBuilder history = new StringBuilder("🧾 <b>So‘nggi to‘lovlaringiz:</b>\n\n");
+
+        int count = 1;
+        for (Payment p : payments.getContent()) {
+            if (count > 5) break; // faqat 5 ta ko‘rsatamiz
+
+            String date = p.getCreatedAt() != null
+                    ? FORMATTER.format(p.getCreatedAt().toLocalDateTime()) // ✅ Timestamp → LocalDateTime
+                    : "Noma’lum sana";
+
+            history.append(String.format(
+                    """
+                            %d️⃣ %s — %s UZS
+                               📚 Modul: %s
+                               💳 Karta: %s
+                               📅 Sana: %s
+                               💵  Summa %s
+                               📌 Holat: %s
+                            
+                            """,
+
+                    count,
+                    p.getDescription() != null ? p.getDescription() : "To‘lov",
+                    formatAmount(p.getAmount()),
+                    p.getModule() != null ? p.getModule().getTitle() : "Noma’lum modul",
+                    p.getMaskedCardNumber() != null ? p.getMaskedCardNumber() : "**** **** **** 1234",
+                    date,
+                    formatAmount(p.getAmount()),
+                    p.getStatus() != null ? p.getStatus().name() : "UNKNOWN"
+            ));
+
+            count++;
+        }
+
+        String paymentHistoryText = history.toString();
+        InlineKeyboardMarkup inlineKeyboardMarkup = studentInlineKeyboardService.userPaymentsHistory(payments);
+        bot.myExecute(sendMsg.editMessage(chatId, messageId, paymentHistoryText, inlineKeyboardMarkup));
+    }
+
     // --- CALLBACK HANDLERS (Private methods for routing callbacks) ---
+
+    public void sendBalanceMenu(Long chatId, User user, Integer messageId) {
+        // --- 1. MA'LUMOTLARNI BAZADAN OLISH ---
+        List<Module> unpaidModules = moduleEnrollmentRepository.findUnpaidModulesByUserId(user.getId());
+        Long totalAmount = paymentRepository.findTotalSuccessfulPaymentsByUserId(user.getId(), TransactionStatus.SUCCESS);
+        Payment lastPayment = paymentRepository.findTopByUser_IdAndStatusOrderByCreatedAtDesc(user.getId(), TransactionStatus.SUCCESS).orElse(null);
+        long purchasedCoursesCount = paymentRepository.countByUser_IdAndStatus(user.getId(), TransactionStatus.SUCCESS);
+
+        // --- 2. XABAR MATNINI TAYYORLASH ---
+        String messageText;
+
+        /**
+         * ⏳ Kutilayotgan to'lovlar (1)	📜 To'lovlar tarixi
+         * ⬅️ Orqaga"
+         */
+
+        if (!unpaidModules.isEmpty()) {
+            // Agar to'lovni kutayotgan modullar bo'lsa
+            Module firstUnpaidModule = unpaidModules.get(0);
+
+            messageText = messageService.getMessage(
+                    BotMessage.BALANCE_INFO_WITH_PENDING_PAYMENT,
+                    // %s o'rniga qo'yiladigan ma'lumotlar (TARTIB MUHIM!):
+                    formatAmount(totalAmount),                                 // 1. Umumiy xaridlar
+                    purchasedCoursesCount,                                     // 2. Sotib olingan kurslar soni
+                    lastPayment != null ? lastPayment.getModule().getTitle() : "Mavjud emas", // 3. O'ZGARDI: .getName() -> .getTitle()
+                    lastPayment != null ? formatAmount(lastPayment.getAmount()) : "0 so'm",  // 4. Oxirgi to'lov summasi
+                    lastPayment != null ? formatDate(lastPayment.getCreatedAt()) : "-",    // 5. Oxirgi to'lov sanasi
+                    unpaidModules.size(),                                      // 6. To'lanmagan kurslar soni
+                    firstUnpaidModule.getTitle(),                              // 7. O'ZGARDI: .getName() -> .getTitle()
+                    formatAmount(firstUnpaidModule.getPrice())                 // 8. To'lanmagan kurs narxi
+            );
+        } else {
+            // Agar qarzdorlik bo'lmasa
+            messageText = messageService.getMessage(
+                    BotMessage.BALANCE_INFO_NO_PENDING_PAYMENT,
+                    // %s o'rniga qo'yiladigan ma'lumotlar (TARTIB MUHIM!):
+                    formatAmount(totalAmount),                                 // 1. Umumiy xaridlar
+                    purchasedCoursesCount,                                     // 2. Sotib olingan kurslar soni
+                    lastPayment != null ? lastPayment.getModule().getTitle() : "Mavjud emas", // 3. O'ZGARDI: .getName() -> .getTitle()
+                    lastPayment != null ? formatAmount(lastPayment.getAmount()) : "0 so'm",  // 4. Oxirgi to'lov summasi
+                    lastPayment != null ? formatDate(lastPayment.getCreatedAt()) : "-"     // 5. Oxirgi to'lov sanasi
+            );
+        }
+        boolean hasPending = !unpaidModules.isEmpty();
+        int pendingCount = unpaidModules.size();
+        InlineKeyboardMarkup inlineKeyboardMarkup = studentInlineKeyboardService.createBalanceMenuKeyboard(hasPending, pendingCount);
+        bot.myExecute(sendMsg.editMessage(chatId, messageId, messageText, inlineKeyboardMarkup));
+
+    }
+
+    private String formatAmount(Long amount) {
+        if (amount == null || amount == 0) {
+            return "0 so'm";
+        }
+        DecimalFormat formatter = new DecimalFormat("#,###");
+        return formatter.format(amount / 100) + " so'm";
+    }
+
+    // FAQAT SHU METOD QOLISHI KERAK
+    private String formatDate(Timestamp timestamp) {
+        if (timestamp == null) {
+            return "-";
+        }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+        return timestamp.toLocalDateTime().format(formatter);
+    }
+
 
     /**
      * Autentifikatsiya (masalan, tizimdan chiqish) bilan bog'liq callback'larni boshqaradi.
@@ -388,7 +596,6 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
     private void sendAllCoursesLessonContent(User user, Long chatId, Integer messageId, String[] data, String queryData, String callbackQueryId) {
 
 
-        System.out.printf(queryData);
         String datum = data[2];
         Long id = Long.parseLong(data[3]);
 
@@ -599,7 +806,6 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
                 showAllCourses_Instructors(chatId, messageId, 0);
             }
             filterDTO.setInstructorName(List.of(Objects.requireNonNull(user).getProfile().getFirstName(), user.getProfile().getLastName()));
-//            backButton = String.join(":", Utils.CallbackData.ALL_COURSES_PREFIX, Utils.CallbackData.ACTION_LIST, Utils.CallbackData.INSTRUCTOR, user.getId().toString(), Utils.CallbackData.ACTION_PAGE, "0");
             backButton = String.join(":", Utils.CallbackData.ALL_COURSES_PREFIX, Utils.CallbackData.INSTRUCTOR, Utils.CallbackData.ACTION_PAGE, "0");
 
 
@@ -613,13 +819,6 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
         StringBuilder listBuilder = new StringBuilder();
         for (CourseDetailDTO c : courses.getContent()) {
             listBuilder.append(
-//            int originalRating = course.getRating(); // Faraz qilaylik, bu 8
-
-                    // 2. Yordamchi metodimiz orqali uni 5 ballik tizimga o'giramiz
-//            int fivePointRating = mapRatingToFivePointScale(originalRating); // Natija: 4
-
-                    // 3. Yana bir yordamchi metod bilan yulduzchalarni yasaymiz
-//            String stars = generateStars(fivePointRating); // Natija: "⭐⭐⭐⭐☆"
                     messageService.getMessage(
                             BotMessage.ALL_COURSES_COURSE_LIST_ITEM,
                             Utils.Numbering.toCircled(number++),
@@ -640,8 +839,6 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
 
 
         bot.myExecute(sendMsg.editMessage(chatId, messageId, message, inlineKeyboardMarkup));
-
-//        System.out.println(courses);
 
 
     }

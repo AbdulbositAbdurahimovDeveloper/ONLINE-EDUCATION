@@ -10,7 +10,9 @@ import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.Payment;
 import uz.pdp.online_education.model.User;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Page<Payment> findByModule_Id(Long moduleId, Pageable pageable);
@@ -32,13 +34,57 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     boolean existsByUser_UsernameAndModule_Id(String userUsername, Long moduleId);
 
-    /**
-     * Checks if a successful payment exists for a specific user and module.
-     * @return true if a successful payment is found, otherwise false.
-     */
-    boolean existsByUserIdAndModuleIdAndStatus(Long userId, Long moduleId, TransactionStatus status);
-
     boolean existsByUserAndModuleId(User user, Long moduleId);
 
     boolean existsByUser_IdAndModule_Id(Long id, Long id1);
+
+    // 1-so'rov: Foydalanuvchining umumiy to'lagan summasini olish
+    @Query("SELECT SUM(p.amount) FROM payment p WHERE p.user.id = :userId AND p.status = :status")
+    Long findTotalSuccessfulPaymentsByUserId(@Param("userId") Long userId, @Param("status") TransactionStatus status);
+
+    // 2-so'rov: Foydalanuvchining oxirgi muvaffaqiyatli to'lovini topish
+    Optional<Payment> findTopByUser_IdAndStatusOrderByCreatedAtDesc(Long userId, TransactionStatus status);
+
+    long countByUser_IdAndStatus(Long id, TransactionStatus transactionStatus);
+
+    /**
+     * Foydalanuvchining barcha muvaffaqiyatli to'lovlarini (SUCCESS statusli)
+     * sahifalangan va saralangan holda topadi.
+     *
+     * @param user     Foydalanuvchi obyekti
+     * @param status   To'lov statusi (SUCCESS bo'lishi kerak)
+     * @param pageable Sahifalash va saralash ma'lumotlari.
+     *                 Saralash uchun Pageable'da createdAt DESC (yoki shu kabi) belgilanishi kerak.
+     * @return To'lovlar sahifasi (Page<Payment>)
+     */
+    Page<Payment> findByUserAndStatus(User user, TransactionStatus status, Pageable pageable);
+
+
+
+    /**
+     * Ma'lum bir instructorning barcha kurslari bo'yicha umumiy daromadini hisoblaydi.
+     * Faqat muvaffaqiyatli to'lovlar hisobga olinadi. Natija tiyinlarda (Long) qaytariladi.
+     *
+     * @param instructorId Instructorning IDsi.
+     * @return Umumiy daromad (Long), agar daromad bo'lmasa 0 qaytaradi.
+     */
+    @Query("SELECT COALESCE(SUM(p.amount), 0L) " + // 0 o'rniga 0L ishlatamiz, bu Long ekanligini bildiradi
+            "FROM payment p " +
+            "WHERE p.module.course.instructor.id = :instructorId AND p.status = 'SUCCESS'")
+    Long calculateTotalIncomeByInstructorId(@Param("instructorId") Long instructorId);
+
+    /**
+     * Ma'lum bir instructorning kurslariga tegishli modullarni sotib olgan
+     * unikal foydalanuvchilar sonini sanaydi. Faqat muvaffaqiyatli to'lovlar
+     * hisobga olinadi.
+     *
+     * @param instructorId Instructorning IDsi.
+     * @return Unikal o'quvchilar soni.
+     */
+    @Query("SELECT COUNT(DISTINCT p.user.id) " +
+            "FROM payment p " +
+            "WHERE p.module.course.instructor.id = :instructorId AND p.status = 'SUCCESS'")
+    Integer countDistinctPurchasedUsersByInstructorId(@Param("instructorId") Long instructorId);
+
+
 }

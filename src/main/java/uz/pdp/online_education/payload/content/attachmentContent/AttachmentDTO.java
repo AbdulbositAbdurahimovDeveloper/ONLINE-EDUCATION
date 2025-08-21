@@ -21,4 +21,5 @@ public class AttachmentDTO implements Serializable {
     private String minioKey;
     private Timestamp createdAt;
     private Timestamp updatedAt;
+    private String telegramFileId;
 }

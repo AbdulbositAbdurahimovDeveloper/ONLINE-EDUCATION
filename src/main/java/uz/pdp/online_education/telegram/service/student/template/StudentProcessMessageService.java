@@ -35,4 +35,6 @@ public interface StudentProcessMessageService {
      * @param messageId The ID of the message to be edited.
      */
     void showDashboard(User user, Long chatId, Integer messageId);
+
+    void sendBalanceMenu(Long chatId, User user);
 }
