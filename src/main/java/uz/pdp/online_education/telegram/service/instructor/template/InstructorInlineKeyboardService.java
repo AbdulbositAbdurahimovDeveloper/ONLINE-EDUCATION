@@ -4,6 +4,8 @@ import org.springframework.data.domain.Page;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import uz.pdp.online_education.model.Category;
 import uz.pdp.online_education.model.Course;
+import uz.pdp.online_education.payload.PageDTO;
+import uz.pdp.online_education.payload.module.ModuleDetailDTO;
 
 public interface InstructorInlineKeyboardService {
     InlineKeyboardMarkup dashboardMenu();
@@ -25,9 +27,17 @@ public interface InstructorInlineKeyboardService {
     InlineKeyboardMarkup myViewCourses(Page<Course> coursePage, String backButton, boolean successOrDraft);
 
 
-    InlineKeyboardMarkup instructorViewCourses(Long CourseId, String backButton);
+    InlineKeyboardMarkup instructorViewCourses(Long CourseId, String backButton, Long modulesCount);
 
     InlineKeyboardMarkup succesOrDraftBtn(String processKey, String action);
 
     InlineKeyboardMarkup categorySelect(Page<Category> categories);
+
+    InlineKeyboardMarkup readModule(PageDTO<ModuleDetailDTO> modulePage, String backButton);
+
+    InlineKeyboardMarkup instructorViewModule(Long moduleId, String backButton, Integer lessonCount);
+
+    InlineKeyboardMarkup isFree();
+
+
 }
