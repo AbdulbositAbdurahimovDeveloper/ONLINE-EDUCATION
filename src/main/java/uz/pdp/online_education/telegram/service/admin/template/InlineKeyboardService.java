@@ -2,6 +2,7 @@ package uz.pdp.online_education.telegram.service.admin.template;
 
 import org.springframework.data.domain.Page;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import uz.pdp.online_education.model.Category;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.User;
 
@@ -33,7 +34,9 @@ public interface InlineKeyboardService {
 //    InlineKeyboardMarkup coursesPageMenu(Page<Course> coursePage, Long mentorId);
 
     // InlineKeyboardServiceImpl.java
-    InlineKeyboardMarkup coursesPageMenu(Page<Course> coursePage, String searchTerm, Long mentorId);
+//    InlineKeyboardMarkup coursesPageMenu(Page<Course> coursePage, String searchTerm, Long mentorId);
+
+    InlineKeyboardMarkup coursesPageMenu(Page<Course> coursePage, String searchTerm, Long mentorId, Long categoryId);
 
     /**
      * Bitta kurs haqidagi ma'lumot oynasi uchun klaviatura yaratadi.
@@ -42,4 +45,13 @@ public interface InlineKeyboardService {
      * @return Tayyor InlineKeyboardMarkup.
      */
     InlineKeyboardMarkup courseDetailMenu(Long courseId, String backCallbackData);
+
+
+    InlineKeyboardMarkup categoriesPageMenu(Page<Category> categoryPage, String backCallback);
+
+    InlineKeyboardMarkup allCoursesPageMenu(Page<Course> coursePage);
+
+    InlineKeyboardMarkup coursesByMentorPageMenu(Page<Course> coursePage, Long mentorId);
+
+    InlineKeyboardMarkup coursesByCategoryPageMenu(Page<Course> coursePage, Long categoryId);
 }

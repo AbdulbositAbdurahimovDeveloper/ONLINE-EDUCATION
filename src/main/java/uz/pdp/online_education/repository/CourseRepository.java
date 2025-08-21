@@ -143,4 +143,5 @@ public interface CourseRepository extends JpaRepository<Course, Long>, CourseRep
     Page<Course> findAllByInstructorIdWithDetails(@Param("instructorId") Long instructorId, Pageable pageable);
 
 
+    Page<Course> findAllByCategoryIdAndDeletedFalse(Long categoryId, Pageable pageable);
 }
