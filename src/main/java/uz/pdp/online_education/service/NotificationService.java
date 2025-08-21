@@ -268,10 +268,10 @@ public class NotificationService {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8"); // true - multipart
 
-            helper.setTo(adminEmail); // Afminning email'iga yuborish
-            helper.setSubject("Javobingiz - Online Education Support"); // Xat mavzusi
-            helper.setText(htmlContent, true); // HTML formatida
-            helper.setFrom("noreply@online-education.com"); // Yuboruvchi manzil
+            helper.setTo(adminEmail);
+            helper.setSubject("Javobingiz - Online Education Support");
+            helper.setText(htmlContent, true);
+            helper.setFrom("");
 
             // Emailni yuborish
             mailSender.send(mimeMessage);
@@ -301,10 +301,19 @@ public class NotificationService {
 //        // qarab studentEmail topilsin.
 //        // Agar AdminView dan yuborilsa, u yerda studentEmail olinadi.
 //
-//        // Shartli ravishda, biz originalMessage.getEmail() ni ishlatamiz
+//        // Hozirgi holatda, biz originalMessage.getEmail() ni ishlatamiz
+//        // yoki adminning javob yozayotgan talabaning emailini olish uchun boshqa bir metoddan foydalanamiz.
+//        // Agar sizda adminning javob yozayotgan talabaning email'ini olish uchun alohida metod bo'lsa,
+//        // uni shu yerga chaqiring.
+//
+//        // Hozirgi holatda, biz originalMessage.getEmail() ni ishlatamiz
+        // yoki adminning javob yozayotgan talabaning emailini olish uchun boshqa bir metoddan foydalanamiz.
+//
+//      Shartli ravishda, biz originalMessage.getEmail() ni ishlatamiz
 //        // agar sizning loyihangizda bu boshqa bo'lsa, o'zgartiring.
 //        String studentEmail = originalMessage.getEmail();
 //
+//        // Email yuborish uchun Thymeleaf template'ini ishlatamiz
 //        // Sizning bergan kod blokidagi logikani ushbu metodga o'tkazamiz
 //        try {
 //            Context context = new Context();
@@ -445,6 +454,9 @@ public class NotificationService {
 //            // Yuqoridagi `sendReplyToStudent` metodi aniq ishlaydi.
 //
 //            // Quyidagi kodni shunchaki yo'nalish ko'rsatish uchun qoldiramiz:
+//            // Bu yerda `sendReplyToStudent` metodini chaqiramiz.
+//            // Sizning bergan kod blokidagi logikani shu yerga joylashtiram
+//            //sendReplyToStudent(originalMessage, adminGeneratedReplyText, studentEmail);
 //            // Bu kod `sendReplyToStudent` ichida bo'lishi kerak.
 //            //
 //            // MimeMessage mimeMessage = mailSender.createMimeMessage();
@@ -453,10 +465,15 @@ public class NotificationService {
 //            // helper.setSubject("Javobingiz - Online Education Support");
 //            // helper.setText(htmlContent, true); // HTML kontent
 //            // helper.setFrom(supportEmailAddress);
+
 //            // mailSender.send(mimeMessage);
+
 //            // originalMessage.setStatus(MessageStatus.REPLIED);
+
 //            // contactMessageRepository.save(originalMessage);
+
 //
+
 //        } catch (Exception e) {
 //            // Xatolikni log qilish
 //            log.error("Email yuborishda xatolik (talabaga javob): {}", e.getMessage());
