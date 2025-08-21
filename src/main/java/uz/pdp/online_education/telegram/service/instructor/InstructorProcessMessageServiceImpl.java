@@ -12,13 +12,11 @@ import org.telegram.telegrambots.meta.api.objects.PhotoSize;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import uz.pdp.online_education.enums.Role;
+import uz.pdp.online_education.exceptions.DataConflictException;
 import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.model.UserProfile;
 import uz.pdp.online_education.payload.content.attachmentContent.AttachmentDTO;
-import uz.pdp.online_education.repository.CourseRepository;
-import uz.pdp.online_education.repository.ModuleEnrollmentRepository;
-import uz.pdp.online_education.repository.PaymentRepository;
-import uz.pdp.online_education.repository.TelegramUserRepository;
+import uz.pdp.online_education.repository.*;
 import uz.pdp.online_education.service.interfaces.AttachmentService;
 import uz.pdp.online_education.service.interfaces.CategoryService;
 import uz.pdp.online_education.telegram.Utils;
@@ -50,6 +48,8 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
 
     private final CategoryService categoryService;
     private final AttachmentService attachmentService;
+    private final ModuleRepository moduleRepository;
+    private final LessonRepository lessonRepository;
     @Value("${telegram.bot.channel-id}")
     private String CHANNEL_ID;
 
@@ -107,6 +107,11 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
             case AWAITING_COURSE_CATEGORY_CHOICE:
                 handleCourseCreationStep(chatId, message, userState);
                 break;
+            case AWAITING_LESSON_TITLE:
+            case AWAITING_LESSON_DESCRIPTION:
+            case AWAITING_LESSON_IS_FREE:
+            case AWAITING_LESSON_CONFIRMATION:
+                handleLessonCreationStep(chatId, message, userState);
 
 
         }
@@ -121,6 +126,59 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
             case INSTRUCTOR_MY_STUDENTS -> instructorMyStudentHandle(chatId, user);
             case INSTRUCTOR_REVIEWS -> instructorReviewsHandle(chatId, user);
             case INSTRUCTOR_MY_REVENUE -> instructorMyRevenueHandle(chatId, user);
+        }
+
+    }
+
+    private void handleLessonCreationStep(Long chatId, Message message, UserState userState) {
+
+        String processKey = String.join(":", ACTION_ADD, LESSON_PREFIX, chatId.toString());
+
+        String text = message.getText();
+
+        switch (userState) {
+            case AWAITING_LESSON_TITLE -> {
+
+                Optional<Map<String, Object>> allFields = redisTemporaryDataService.getAllFields(processKey);
+
+                if (allFields.isPresent()) {
+                    Map<String, Object> stringObjectMap = allFields.get();
+                    Long moduleId = Long.valueOf(stringObjectMap.get(Utils.CallbackData.MODULE_ID).toString());
+
+                    if (lessonRepository.existsByTitleAndModuleId(text, moduleId)) {
+                        bot.myExecute(sendMsg.sendMessage(chatId, "Lesson already exists."));
+                        return;
+                    }
+                    redisTemporaryDataService.addField(processKey, TITLE, text);
+                    telegramUserService.updateUserState(chatId, UserState.AWAITING_LESSON_DESCRIPTION);
+                    bot.myExecute(sendMsg.sendMessage(chatId, "Dars uchun tavsif kiriting"));
+                }
+
+            }
+            case AWAITING_LESSON_DESCRIPTION -> {
+                if (text != null && text.equals("/skip")) {
+                    redisTemporaryDataService.addField(processKey, DESCRIPTION, "");
+                    String skippedText = messageService.getMessage(BotMessage.INSTRUCTOR_COURSE_CREATE_DESCRIPTION_SKIPPED);
+                    bot.myExecute(sendMsg.sendMessage(chatId, skippedText));
+                } else {
+                    // Validatsiya
+                    if (text == null || text.length() > 1000) {
+                        String errorText = messageService.getMessage(BotMessage.INSTRUCTOR_COURSE_CREATE_VALIDATION_DESC_ERROR);
+                        bot.myExecute(sendMsg.sendMessage(chatId, errorText));
+                        return;
+                    }
+                    // Ma'lumotni Redis'ga saqlaymiz
+                    redisTemporaryDataService.addField(processKey, DESCRIPTION, text);
+                    String acceptedText = messageService.getMessage(BotMessage.INSTRUCTOR_COURSE_CREATE_DESCRIPTION_ACCEPTED);
+                    bot.myExecute(sendMsg.sendMessage(chatId, acceptedText));
+                }
+
+                // Keyingi bosqichga o'tkazamiz
+                telegramUserService.updateUserState(chatId, UserState.AWAITING_COURSE_THUMBNAIL);
+                String nextPrompt = messageService.getMessage(BotMessage.INSTRUCTOR_COURSE_CREATE_THUMBNAIL_PROMPT);
+                InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.isFree();
+                bot.myExecute(sendMsg.sendMessage(chatId, "darslik turi qanday boladi pullik yoki tekinmi",inlineKeyboardMarkup));
+            }
         }
 
     }
@@ -150,8 +208,13 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
                     return; // Holatni o'zgartirmaymiz, foydalanuvchi qayta urinadi.
                 }
 
+                if (courseRepository.existsByTitle(title)) {
+                    bot.myExecute(sendMsg.sendMessage(chatId, "Title already exists"));
+                    return;
+                }
+
                 // Ma'lumotni Redis'ga saqlaymiz
-                redisTemporaryDataService.addField(processKey, "title", title);
+                redisTemporaryDataService.addField(processKey, TITLE, title);
 
                 // Keyingi bosqichga o'tkazamiz
                 telegramUserService.updateUserState(chatId, UserState.AWAITING_COURSE_DESCRIPTION);
@@ -265,6 +328,10 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
             case AWAITING_MODULE_TITLE -> {
                 if (text.length() < 3 || text.length() > 200) {
                     bot.myExecute(sendMsg.sendMessage(chatId, "Sarlavha uzunligi 3 dan 200 gacha bo'lishi kerak."));
+                    return;
+                }
+                if (moduleRepository.existsByTitle(text)) {
+                    bot.myExecute(sendMsg.sendMessage(chatId, "Bunday sarlavha band qilingan"));
                     return;
                 }
 

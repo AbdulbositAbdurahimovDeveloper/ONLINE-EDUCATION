@@ -9,14 +9,18 @@ import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import uz.pdp.online_education.model.Abs.AbsDateEntity;
 import uz.pdp.online_education.model.Category;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.User;
+import uz.pdp.online_education.payload.PageDTO;
 import uz.pdp.online_education.payload.category.CategoryDTO;
 import uz.pdp.online_education.payload.content.attachmentContent.AttachmentDTO;
 import uz.pdp.online_education.payload.course.CourseCreateDTO;
 import uz.pdp.online_education.payload.course.CourseDetailDTO;
+import uz.pdp.online_education.payload.lesson.LessonCreatDTO;
+import uz.pdp.online_education.payload.lesson.LessonResponseDTO;
 import uz.pdp.online_education.payload.module.ModuleCreateDTO;
 import uz.pdp.online_education.payload.module.ModuleDetailDTO;
 import uz.pdp.online_education.payload.review.ReviewSummaryDTO;
@@ -76,6 +80,7 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
     private final RedisTemporaryDataService redisTemporaryDataService;
     private final CategoryRepository categoryRepository;
     private final AttachmentService attachmentService;
+    private final LessonService lessonService;
 
 
     @Override
@@ -95,21 +100,16 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
             String prefix = data[0];
 
             switch (prefix) {
-                case Utils.CallbackData.DELETED -> bot.myExecute(sendMsg.deleteMessage(chatId, messageId));
-                case Utils.CallbackData.AUTH_PREFIX -> handleAuthCallback(user, chatId, messageId, data);
-                case Utils.CallbackData.MY_COURSE_PREFIX ->
-                        instructorMyCourseHandle(chatId, user, messageId, data, queryData);
-                case Utils.CallbackData.STUDENT_PREFIX ->
-                        instructorMyStudentHandle(chatId, user, messageId, data, queryData);
-                case Utils.CallbackData.ACTION_REVIEWS ->
-                        instructorReviewsHandle(chatId, user, messageId, data, queryData);
-                case Utils.CallbackData.ACTION_REVENUE ->
-                        instructorMyRevenueHandle(chatId, user, messageId, data, queryData);
+                case DELETED -> bot.myExecute(sendMsg.deleteMessage(chatId, messageId));
+                case AUTH_PREFIX -> handleAuthCallback(user, chatId, messageId, data);
+                case MY_COURSE_PREFIX -> instructorMyCourseHandle(chatId, user, messageId, data, queryData);
+                case STUDENT_PREFIX -> instructorMyStudentHandle(chatId, user, messageId, data, queryData);
+                case ACTION_REVIEWS -> instructorReviewsHandle(chatId, user, messageId, data, queryData);
+                case ACTION_REVENUE -> instructorMyRevenueHandle(chatId, user, messageId, data, queryData);
                 case ACTION_ADD -> instructorActionAddHandle(chatId, user, messageId, data, queryData, userState);
-                case Utils.CallbackData.ACTION_EDIT ->
-                        instructorActionEditHandle(chatId, user, messageId, data, queryData);
-                case Utils.CallbackData.ACTION_DELETE ->
-                        instructorActionDeleteHandle(chatId, user, messageId, data, queryData);
+                case ACTION_EDIT -> instructorActionEditHandle(chatId, user, messageId, data, queryData);
+                case ACTION_DELETE -> instructorActionDeleteHandle(chatId, user, messageId, data, queryData);
+                case ACTION_VIEW -> instructorActionViewHandle(chatId, user, messageId, data, queryData);
             }
         } catch (Exception e) {
             log.error("Callbackni qayta ishlashda xatolik yuz berdi: Query='{}'", queryData, e);
@@ -205,6 +205,15 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
                 } else {
                     startModuleCreationProcess(chatId, messageId, data);
                 }
+            }
+            case LESSON_PREFIX -> {
+                if (data.length > 2 && data[2].equals(ACTION_CHOICE)) {
+                    handleLessonCreationConfirmation(chatId, messageId, data);
+                } else {
+                    startLessonCreationProcess(chatId, messageId, data);
+                }
+
+
             }
 
         }
@@ -388,16 +397,17 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
                         courseId
                 );
 
-                // BU YERDA moduleService.create(moduleCreateDTO) CHAQIRILADI
-                System.out.println("Ma'lumotlar bazaga saqlanmoqda: " + moduleCreateDTO);
-
                 ModuleDetailDTO moduleDetailDTO = moduleService.create(moduleCreateDTO);
 
                 // Jarayon tugadi, tozalaymiz.
                 redisTemporaryDataService.endProcess(processKey);
                 telegramUserService.updateUserState(chatId, UserState.NONE);
 
-                bot.myExecute(sendMsg.editMessage(chatId, messageId, "✅ Modul muvaffaqiyatli yaratildi! id:" + moduleDetailDTO.getId()));
+
+                bot.myExecute(sendMsg.editMessage(chatId, messageId, "✅ Modul muvaffaqiyatli yaratildi!"));
+                ReplyKeyboardMarkup replyKeyboardMarkup = replyKeyboardService.buildMentorMenu();
+                bot.myExecute(sendMsg.sendMessage(chatId, buildModuleDetailText(moduleDetailDTO), replyKeyboardMarkup));
+
             } else {
                 bot.myExecute(sendMsg.editMessage(chatId, messageId, "❌ Xatolik: Jarayon topilmadi yoki muddati o'tgan."));
             }
@@ -409,12 +419,131 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
         }
     }
 
-    /**
-     * Modul yaratish uchun unikal kalit yasaydigan yordamchi metod.
-     */
-    private String generateModuleProcessKey(long chatId, long courseId) {
-        // Natija: "module_create_12345_99"
-        return "module_create_" + chatId + "_" + courseId;
+    private void handleLessonCreationConfirmation(Long chatId, Integer messageId, String[] data) {
+        String choice = data[3]; // "confirm" yoki "draft"/"cancel"
+
+
+        if (choice.equals(ACTION_CONFIRM)) {
+            String processKey = String.join(":", data[4], data[5], data[6]);
+
+            // "Tasdiqlash" bosildi
+            Optional<Map<String, Object>> allFields = redisTemporaryDataService.getAllFields(processKey);
+
+            if (allFields.isPresent()) {
+                Map<String, Object> moduleFields = allFields.get();
+
+                // XATO 2 ni to'g'rilaymiz: ClassCastException
+                Long moduleId = Long.parseLong(String.valueOf(moduleFields.get(MODULE_ID)));
+                String title = String.valueOf(moduleFields.get(TITLE));
+                String description = String.valueOf(moduleFields.get(DESCRIPTION));
+                boolean isFree = Boolean.parseBoolean(String.valueOf(moduleFields.get(Utils.CallbackData.IS_PREE)));
+
+                LessonCreatDTO lessonCreatDTO = new LessonCreatDTO(
+                        title,
+                        description,
+                        isFree,
+                        moduleId
+                );
+
+                LessonResponseDTO lessonResponseDTO = lessonService.create(lessonCreatDTO);
+
+                // Jarayon tugadi, tozalaymiz.
+                redisTemporaryDataService.endProcess(processKey);
+                telegramUserService.updateUserState(chatId, UserState.NONE);
+
+
+                bot.myExecute(sendMsg.editMessage(chatId, messageId, "✅ Darslik muvaffaqiyatli yaratildi!"));
+                ReplyKeyboardMarkup replyKeyboardMarkup = replyKeyboardService.buildMentorMenu();
+                bot.myExecute(sendMsg.sendMessage(chatId, buildLessonDetailText(lessonResponseDTO), replyKeyboardMarkup));
+
+            } else {
+                bot.myExecute(sendMsg.editMessage(chatId, messageId, "❌ Xatolik: Jarayon topilmadi yoki muddati o'tgan."));
+            }
+        } else if (choice.equals(IS_PREE)) {
+
+            boolean isFree = Boolean.parseBoolean(data[4]);
+
+            String processKey = String.join(":", data[0], data[1], chatId.toString());
+            redisTemporaryDataService.addField(processKey, IS_PREE, isFree);
+
+
+            Optional<Map<String, Object>> allFields = redisTemporaryDataService.getAllFields(processKey);
+            if (allFields.isPresent()) {
+                Map<String, Object> moduleFields = allFields.get();
+
+                Long moduleId = Long.valueOf(moduleFields.get(Utils.CallbackData.MODULE_ID).toString());
+                String title = moduleFields.get(TITLE).toString();
+                String description = moduleFields.get(DESCRIPTION).toString();
+
+                LessonResponseDTO lessonResponseDTO = new LessonResponseDTO();
+                lessonResponseDTO.setTitle(title);
+                lessonResponseDTO.setContent(description);
+                lessonResponseDTO.setModuleId(moduleId);
+                lessonResponseDTO.setFree(isFree);
+
+                String built = buildLessonDetailText(lessonResponseDTO);
+                InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.succesOrDraftBtn(processKey, LESSON_PREFIX);
+                bot.myExecute(sendMsg.editMessage(chatId, messageId, built, inlineKeyboardMarkup));
+
+
+            }
+
+
+        } else { // ACTION_DRAFT yoki ACTION_CANCEL
+            // "Bekor qilish" bosildi
+
+            String processKey = String.join(":", data[4], data[5], data[6]);
+            redisTemporaryDataService.endProcess(processKey);
+            telegramUserService.updateUserState(chatId, UserState.NONE);
+            bot.myExecute(sendMsg.editMessage(chatId, messageId, "🚫 Jarayon bekor qilindi."));
+        }
+    }
+
+
+    private String buildLessonDetailText(LessonResponseDTO l) {
+        String title = safe(l.getTitle());
+        String desc = safe(l.getContent());
+        String free = l.isFree() ? "✅ Ha" : "❌ Yo‘q";
+        String order = l.getOrderIndex() == null ? "-" : String.valueOf(l.getOrderIndex());
+        String module = l.getModuleId() == null ? "-" : String.valueOf(l.getModuleId());
+
+        return """
+                🎓 <b>Dars haqida</b>
+                
+                🆔 ID: <code>%d</code>
+                🏷️ Nomi: <b>%s</b>
+                🪜 Tartib: %s
+                🆓 Bepul: %s
+                🔗 Modul ID: <code>%s</code>
+                
+                📝 Tavsif:
+                %s
+                """.formatted(
+                l.getId(), title, order, free, module,
+                (desc.isBlank() ? "-" : desc)
+        );
+    }
+
+
+    private void startLessonCreationProcess(Long chatId, Integer messageId, String[] data) {
+
+        Long moduleId = Long.parseLong(data[2]); // courseId'ni olamiz
+
+        String processKey = String.join(":", ACTION_ADD, LESSON_PREFIX, chatId.toString());
+
+        // 2. Boshlang'ich ma'lumotlarni tayyorlaymiz.
+        Map<String, Object> initialData = new HashMap<>();
+        initialData.put(MODULE_ID, String.valueOf(moduleId));
+        initialData.put(CURRENT_STEP, UserState.AWAITING_LESSON_TITLE.name());
+
+        redisTemporaryDataService.startProcess(processKey, initialData);
+
+        telegramUserService.updateUserState(chatId, UserState.AWAITING_LESSON_TITLE);
+
+        bot.myExecute(sendMsg.editMessage(chatId, messageId,
+                messageService.getMessage(BotMessage.INSTRUCTOR_CREATE_REMINDER)
+        ));
+        bot.myExecute(sendMsg.sendMessage(chatId, "Daslik uchun sarlavha kiriting"));
     }
 
     private void instructorActionEditHandle(Long chatId, User user, Integer messageId, String[] data, String queryData) {
@@ -423,6 +552,114 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
 
     private void instructorActionDeleteHandle(Long chatId, User user, Integer messageId, String[] data, String queryData) {
         // ... Logika
+    }
+
+    private void instructorActionViewHandle(Long chatId, User user, Integer messageId, String[] data, String queryData) {
+
+
+        String type = data[1];
+
+        switch (type) {
+            case ACTION_MODULE -> {
+
+                Long courseId = Long.valueOf(data[2]);
+                int pageNumber = Integer.parseInt(data[4]);
+
+
+                PageDTO<ModuleDetailDTO> modulePage = moduleService.read(courseId, pageNumber, 10);
+
+                String built = formatModulesPage(modulePage);
+                String backButton = String.join(":", MY_COURSE_PREFIX, ACTION_COURSE, ACTION_VIEW, courseId.toString(), ACTION_PAGE, "0");
+                InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.readModule(modulePage, backButton);
+
+                bot.myExecute(sendMsg.editMessage(chatId, messageId, built, inlineKeyboardMarkup));
+
+
+            }
+            case MODULE_ID -> {
+
+                Long moduleId = Long.valueOf(data[2]);
+
+                ModuleDetailDTO moduleDetailDTO = moduleService.read(moduleId);
+                String built = buildModuleDetailText(moduleDetailDTO);
+                String backButton = String.join(":", ACTION_VIEW, MODULE_PREFIX, moduleDetailDTO.getCourseId().toString(), ACTION_PAGE, "0");
+                InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorViewModule(
+                        moduleId,
+                        backButton,
+                        moduleDetailDTO.getLessonCount()
+                );
+                bot.myExecute(sendMsg.editMessage(chatId, messageId, built, inlineKeyboardMarkup));
+
+
+            }
+        }
+
+
+    }
+
+    // --- Matn qurish ---
+    private String buildModuleDetailText(ModuleDetailDTO m) {
+        String title = safe(m.getTitle());
+        String desc = safe(m.getDescription());
+        String price = formatAmount(m.getPrice()); // "50 000 so'm"
+        String lessons = m.getLessonCount() == null ? "0" : String.valueOf(m.getLessonCount());
+        String enr = m.getModuleEnrollmentsCount() == null ? "-" : String.valueOf(m.getModuleEnrollmentsCount());
+        String orderIx = m.getOrderIndex() == null ? "-" : String.valueOf(m.getOrderIndex() + 1);
+        String created = formatDate(m.getCreatedAt());
+        String updated = formatDate(m.getUpdatedAt());
+        Long course = m.getCourseId() == null ? null : m.getCourseId();
+        CourseDetailDTO courseDetailDTO = courseService.read(course);
+
+        return """
+                🔎 <b>Modul batafsil</b>
+                
+                🔗 Kurs nomi: <b>%s</b>
+                
+                🆔 ID: <code>%d</code>
+                🏷️ Nomi: <b>%s</b>
+                📖 Darslar soni: %s ta
+                💵 Narx: %s
+                👥 O‘quvchilar: %s
+                🔢 Tartib: %s
+                
+                📝 Tavsif:
+                %s
+                
+                🗓️ Yaratilgan: %s
+                ♻️ Yangilangan: %s
+                """.formatted(
+                courseDetailDTO.getTitle(),
+                m.getId(), title, lessons, price, enr, orderIx, desc,
+                created, updated
+        );
+    }
+
+    private String safe(String s) {
+        return s == null ? "" : s;
+    }
+
+    public String formatModulesPage(PageDTO<ModuleDetailDTO> modulePage) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("📚 <b>Modullar ro‘yxati</b>\n\n");
+
+        int number = 1;
+        for (ModuleDetailDTO module : modulePage.getContent()) {
+            sb.append("<b>").append(number++).append("</b>");
+            sb.append(" <b> Nomi: ")
+                    .append(module.getTitle())
+                    .append("</b>\n")
+                    .append("   📖 Darslar soni: ")
+                    .append(module.getLessonCount() == null ? 0 : module.getLessonCount())
+                    .append(" ta\n")
+                    .append("\n\n");
+        }
+
+        sb.append("Sahifa: ")
+                .append(modulePage.getPageNumber() + 1)
+                .append(" / ")
+                .append(modulePage.getTotalPages());
+
+        return sb.toString();
     }
 
 
@@ -472,7 +709,7 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
                 Utils.CallbackData.ACTION_PAGE,
                 "0"
         );
-        InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorViewCourses(courseDetailDTO.getId(), backButton);
+        InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorViewCourses(courseDetailDTO.getId(), backButton, courseDetailDTO.getModulesCount());
         bot.myExecute(sendMsg.editMessage(chatId, messageId, text, inlineKeyboardMarkup));
     }
 

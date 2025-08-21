@@ -141,6 +141,10 @@ public interface Utils {
         String CURRENT_STEP = "CURRENT_STEP";
 
         String COURSE_ID = "course_id";
+        String THUMBNAIL_ID = "thumbnail_id";
+        String CATEGORY_ID = "category_id";
+        String MODULE_ID = "module_id";
+
         String TITLE = "title";
         String DESCRIPTION = "description";
         String PRICE = "price";
@@ -150,6 +154,9 @@ public interface Utils {
 
         String COURSE_LIST_CALLBACK = "admin:courses:list:init";
 
+        String IS_PREE = "is_pree";
+        String TRUE =  "true";
+        String FALSE = "false";
 
         // --- DEPRECATED: Hardcoded Callbacks ---
         /**
