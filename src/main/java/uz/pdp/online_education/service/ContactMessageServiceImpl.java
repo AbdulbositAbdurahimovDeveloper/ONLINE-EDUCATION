@@ -1,6 +1,6 @@
 package uz.pdp.online_education.service;
 
-import jakarta.mail.MessagingException;
+import  jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
