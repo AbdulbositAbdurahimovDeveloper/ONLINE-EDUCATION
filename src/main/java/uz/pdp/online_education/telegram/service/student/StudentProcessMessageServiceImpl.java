@@ -19,6 +19,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import uz.pdp.online_education.enums.MessageStatus;
+import uz.pdp.online_education.enums.Role;
 import uz.pdp.online_education.enums.TransactionStatus;
 import uz.pdp.online_education.mapper.ContactMessageMapperImpl;
 import uz.pdp.online_education.model.*;
@@ -31,6 +32,7 @@ import uz.pdp.online_education.telegram.enums.BotMessage;
 import uz.pdp.online_education.telegram.enums.UserState;
 import uz.pdp.online_education.telegram.mapper.SendMsg;
 import uz.pdp.online_education.telegram.model.TelegramUser;
+import uz.pdp.online_education.telegram.service.RoleServiceImpl;
 import uz.pdp.online_education.telegram.service.TelegramUserService;
 import uz.pdp.online_education.telegram.service.TelegramUserServiceImpl;
 import uz.pdp.online_education.telegram.service.message.MessageService;
@@ -71,8 +73,9 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
     private final UserProfileRepository userProfileRepository;
     private final NotificationService notificationService;
     private final TelegramUserService telegramUserService;
+    private final RoleServiceImpl roleServiceImpl;
     // --- PUBLIC METHODS (from Interface) ---
-
+    @Transactional
     @Override
     public void handleMessage(Message message) {
         Long chatId = message.getChatId();
@@ -87,6 +90,17 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
 
         User user = telegramUser.getUser();
         UserProfile profile = user.getProfile();
+
+
+        UserState userState = telegramUserService.getUserState(chatId);
+
+        switch (userState){
+            case STUDENT_AWAITING_SUPPORT_MESSAGE -> {
+
+                System.out.println(text);
+                notificationService.handleSupportMessage(chatId, user, text);
+            }
+        }
 
 
         switch (text) {
@@ -283,9 +297,6 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
                 "Operatorlarimiz tez orada siz bilan bog'lanishadi.";
 
         onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, supportPromptMessage));
-
-        telegramUserService.updateUserState(chatId,UserState.USER_SUPPORT_MESSAGE);
-
     }
 
 
