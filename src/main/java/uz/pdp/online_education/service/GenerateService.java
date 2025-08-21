@@ -438,7 +438,7 @@ public class GenerateService  {
 
     private List<Module> generateModulesForCourse(Course course, Set<String> existingModuleTitles, Set<String> existingQuizTitles) {
         List<Module> modules = new ArrayList<>();
-        for (int i = 1; i <= 5; i++) {
+        for (int i = 0; i <= 4; i++) {
             Module module = new Module();
             String title = generateUniqueTitle(existingModuleTitles, course.getTitle() + " - Module " + i);
             Long randomPriceInSom = PREDEFINED_PRICES_IN_SOM.get(random.nextInt(PREDEFINED_PRICES_IN_SOM.size()));
@@ -459,7 +459,7 @@ public class GenerateService  {
 
     private List<Lesson> generateLessonsForModule(Module module, Set<String> existingQuizTitles) {
         List<Lesson> lessons = new ArrayList<>();
-        for (int i = 1; i <= 5; i++) {
+        for (int i = 0; i <= 4; i++) {
             Lesson lesson = new Lesson();
             lesson.setTitle("Lesson " + i + ": " + faker.educator().campus());
             lesson.setOrderIndex(i);

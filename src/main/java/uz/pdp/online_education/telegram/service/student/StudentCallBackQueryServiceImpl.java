@@ -806,7 +806,6 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
                 showAllCourses_Instructors(chatId, messageId, 0);
             }
             filterDTO.setInstructorName(List.of(Objects.requireNonNull(user).getProfile().getFirstName(), user.getProfile().getLastName()));
-//            backButton = String.join(":", Utils.CallbackData.ALL_COURSES_PREFIX, Utils.CallbackData.ACTION_LIST, Utils.CallbackData.INSTRUCTOR, user.getId().toString(), Utils.CallbackData.ACTION_PAGE, "0");
             backButton = String.join(":", Utils.CallbackData.ALL_COURSES_PREFIX, Utils.CallbackData.INSTRUCTOR, Utils.CallbackData.ACTION_PAGE, "0");
 
 
@@ -820,13 +819,6 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
         StringBuilder listBuilder = new StringBuilder();
         for (CourseDetailDTO c : courses.getContent()) {
             listBuilder.append(
-//            int originalRating = course.getRating(); // Faraz qilaylik, bu 8
-
-                    // 2. Yordamchi metodimiz orqali uni 5 ballik tizimga o'giramiz
-//            int fivePointRating = mapRatingToFivePointScale(originalRating); // Natija: 4
-
-                    // 3. Yana bir yordamchi metod bilan yulduzchalarni yasaymiz
-//            String stars = generateStars(fivePointRating); // Natija: "⭐⭐⭐⭐☆"
                     messageService.getMessage(
                             BotMessage.ALL_COURSES_COURSE_LIST_ITEM,
                             Utils.Numbering.toCircled(number++),
@@ -847,8 +839,6 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
 
 
         bot.myExecute(sendMsg.editMessage(chatId, messageId, message, inlineKeyboardMarkup));
-
-//        System.out.println(courses);
 
 
     }

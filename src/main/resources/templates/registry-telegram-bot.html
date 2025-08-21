@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="uz">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Webhook sozlash</title>
+    <style>
+        body{font-family:system-ui,Segoe UI,Roboto,sans-serif;background:#0b1020;color:#e8ebf1;display:grid;place-items:center;min-height:100vh;margin:0}
+        .card{width:min(520px,92vw);background:#131a35;padding:24px;border-radius:16px;box-shadow:0 10px 35px rgba(0,0,0,.35)}
+        label{display:block;margin:10px 0 6px;color:#c9d7f2}
+        input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid #2a3461;background:#0f1630;color:#e8ebf1}
+        button{margin-top:12px;width:100%;padding:12px 16px;border:0;border-radius:12px;background:#3b82f6;color:#fff;font-weight:600;cursor:pointer}
+        button[disabled]{opacity:.6;cursor:not-allowed}
+        small{color:#9fb0d1}
+        #result{margin-top:20px;padding:12px;border-radius:10px;white-space:pre-wrap;font-size:14px;line-height:1.4}
+        .ok{background:#093318;color:#4ade80;border:1px solid #22c55e}
+        .err{background:#331212;color:#fca5a5;border:1px solid #ef4444}
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>Telegram webhookni yangilash</h1>
+    <form id="form">
+        <label for="domain">Yangi domen</label>
+        <input id="domain" name="domain" type="text" placeholder="https://oromland.uz" required />
+        <small>Misol: https://oromland.uz — backend /telegram-bot ni o‘zi qo‘shadi.</small>
+        <button type="submit" id="btn">Submit</button>
+    </form>
+    <div id="result" hidden></div>
+</div>
+
+<script>
+    const form = document.getElementById("form");
+    const domainInput = document.getElementById("domain");
+    const btn = document.getElementById("btn");
+    const result = document.getElementById("result");
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const domain = domainInput.value.trim();
+        if (!domain) return;
+
+        result.hidden = true;
+        result.textContent = "";
+        btn.disabled = true;
+        btn.textContent = "Yuborilmoqda...";
+
+        try {
+            const params = new URLSearchParams({ domain });
+            const resp = await fetch("/api/admin/telegram/set-webhook?" + params.toString(), {
+                method: "POST"
+            });
+            const text = await resp.text();
+
+            result.hidden = false;
+            if (resp.ok) {
+                result.className = "ok";
+                result.textContent = "✅ Muvaffaqiyatli:\n" + text;
+            } else {
+                result.className = "err";
+                result.textContent = "❌ Xatolik (" + resp.status + "):\n" + text;
+            }
+        } catch (err) {
+            result.hidden = false;
+            result.className = "err";
+            result.textContent = "❌ Tarmoq xatosi:\n" + err.message;
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "Submit";
+        }
+    });
+</script>
+</body>
+</html>

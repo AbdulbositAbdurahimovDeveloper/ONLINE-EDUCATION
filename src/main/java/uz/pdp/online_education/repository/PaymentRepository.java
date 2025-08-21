@@ -10,6 +10,7 @@ import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.Payment;
 import uz.pdp.online_education.model.User;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,12 +33,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     List<Course> findCoursesByUserId(@Param("userId") Long userId);
 
     boolean existsByUser_UsernameAndModule_Id(String userUsername, Long moduleId);
-
-    /**
-     * Checks if a successful payment exists for a specific user and module.
-     * @return true if a successful payment is found, otherwise false.
-     */
-    boolean existsByUserIdAndModuleIdAndStatus(Long userId, Long moduleId, TransactionStatus status);
 
     boolean existsByUserAndModuleId(User user, Long moduleId);
 
@@ -64,7 +59,32 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
      */
     Page<Payment> findByUserAndStatus(User user, TransactionStatus status, Pageable pageable);
 
-    // Boshqa variant: User IDsi bo'yicha qidirish
-    Page<Payment> findByUserIdAndStatus(Long userId, TransactionStatus status, Pageable pageable);
+
+
+    /**
+     * Ma'lum bir instructorning barcha kurslari bo'yicha umumiy daromadini hisoblaydi.
+     * Faqat muvaffaqiyatli to'lovlar hisobga olinadi. Natija tiyinlarda (Long) qaytariladi.
+     *
+     * @param instructorId Instructorning IDsi.
+     * @return Umumiy daromad (Long), agar daromad bo'lmasa 0 qaytaradi.
+     */
+    @Query("SELECT COALESCE(SUM(p.amount), 0L) " + // 0 o'rniga 0L ishlatamiz, bu Long ekanligini bildiradi
+            "FROM payment p " +
+            "WHERE p.module.course.instructor.id = :instructorId AND p.status = 'SUCCESS'")
+    Long calculateTotalIncomeByInstructorId(@Param("instructorId") Long instructorId);
+
+    /**
+     * Ma'lum bir instructorning kurslariga tegishli modullarni sotib olgan
+     * unikal foydalanuvchilar sonini sanaydi. Faqat muvaffaqiyatli to'lovlar
+     * hisobga olinadi.
+     *
+     * @param instructorId Instructorning IDsi.
+     * @return Unikal o'quvchilar soni.
+     */
+    @Query("SELECT COUNT(DISTINCT p.user.id) " +
+            "FROM payment p " +
+            "WHERE p.module.course.instructor.id = :instructorId AND p.status = 'SUCCESS'")
+    Integer countDistinctPurchasedUsersByInstructorId(@Param("instructorId") Long instructorId);
+
 
 }

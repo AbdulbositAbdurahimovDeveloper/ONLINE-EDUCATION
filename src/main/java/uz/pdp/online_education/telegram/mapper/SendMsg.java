@@ -50,7 +50,12 @@ public interface SendMsg {
      * @param keyboard Inline tugmalar
      * @return Tayyor SendPhoto obyekti
      */
-    SendPhoto sendPhoto(Long chatId, InputFile file, String caption, InlineKeyboardMarkup keyboard);
+    SendPhoto sendPhoto(Long chatId, String file, String caption, InlineKeyboardMarkup keyboard);
+
+    // metod botga jonatilgan rasmni kanalga tashlash uchun kerak
+    SendPhoto sendPhoto(String channelId, InputFile file);
+
+    SendPhoto sendPhoto(Long chatId, String fileId, String caption);
 
     AnswerCallbackQuery answerCallbackQuery(String callbackQueryId, String text);
 

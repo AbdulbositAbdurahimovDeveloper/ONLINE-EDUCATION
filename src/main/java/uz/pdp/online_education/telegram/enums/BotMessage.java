@@ -100,6 +100,38 @@ public enum BotMessage {
     START_MESSAGE_INSTRUCTOR("instructor.start-message"),
     DASHBOARD_INSTRUCTOR("instructor.dashboard"),
 
+    INSTRUCTOR_CREATE_REMINDER("instructor.reminder"),
+
+    // ===============================================
+    // == INSTRUCTOR: KURS YARATISH (COURSE CREATION WIZARD) ==
+    // ===============================================
+    INSTRUCTOR_COURSE_CREATE_CATEGORY_PROMPT("instructor.course_create.category_prompt"),
+    INSTRUCTOR_COURSE_CREATE_CATEGORY_CHOSEN("instructor.course_create.category_chosen"),
+    INSTRUCTOR_COURSE_CREATE_TITLE_PROMPT("instructor.course_create.title_prompt"),
+    INSTRUCTOR_COURSE_CREATE_TITLE_ACCEPTED("instructor.course_create.title_accepted"),
+    INSTRUCTOR_COURSE_CREATE_DESCRIPTION_PROMPT("instructor.course_create.description_prompt"),
+    INSTRUCTOR_COURSE_CREATE_DESCRIPTION_SKIPPED("instructor.course_create.description_skipped"),
+    INSTRUCTOR_COURSE_CREATE_DESCRIPTION_ACCEPTED("instructor.course_create.description_accepted"),
+    INSTRUCTOR_COURSE_CREATE_THUMBNAIL_PROMPT("instructor.course_create.thumbnail_prompt"),
+    INSTRUCTOR_COURSE_CREATE_THUMBNAIL_ACCEPTED("instructor.course_create.thumbnail_accepted"),
+    INSTRUCTOR_COURSE_CREATE_CONFIRMATION_PROMPT("instructor.course_create.confirmation_prompt"),
+    INSTRUCTOR_COURSE_CREATE_PROCESS_COMPLETE("instructor.course_create.process_complete"),
+    INSTRUCTOR_COURSE_CREATE_PROCESS_CANCELLED("instructor.course_create.process_cancelled"),
+
+
+    INSTRUCTOR_MODULE_CREATE_TITLE("instructor.module-create.title"),
+    INSTRUCTOR_MODULE_CREATE_DESCRIPTION("instructor.module-create.description"),
+    INSTRUCTOR_MODULE_CREATE_PRICE("instructor.module-create.price"),
+    INSTRUCTOR_MODULE_CREATE_COURSE_ID("instructor.module-create.course-id"),
+    INSTRUCTOR_MODULE_CREATE_CANCEL("instructor.module-create.cancel"),
+
+    INSTRUCTOR_COURSE_CREATE_VALIDATION_TITLE_ERROR("instructor.course_create.validation.title_length_error"),
+    INSTRUCTOR_COURSE_CREATE_VALIDATION_DESC_ERROR("instructor.course_create.validation.description_length_error"),
+    INSTRUCTOR_COURSE_CREATE_VALIDATION_PHOTO_ERROR("instructor.course_create.validation.not_a_photo_error"),
+
+
+
+
     // --- Admin Messages ---
     START_MESSAGE_ADMIN("admin.start-message"),
     DASHBOARD_ADMIN("admin.dashboard"),

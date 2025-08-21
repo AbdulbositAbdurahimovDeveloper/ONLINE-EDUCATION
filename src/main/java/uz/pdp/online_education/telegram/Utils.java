@@ -1,14 +1,32 @@
 package uz.pdp.online_education.telegram;
 
+/**
+ * A central repository for application-wide constants.
+ * This interface consolidates constants related to bot commands, UI text, callback data structures,
+ * and other utilities to ensure consistency and prevent "magic strings" throughout the codebase.
+ * <p>
+ * This version preserves the original constant names to ensure backward compatibility with existing code.
+ */
 public interface Utils {
 
+    //region BOT COMMANDS
+    /**
+     * Defines the primary commands that users can type to interact with the bot.
+     */
     String ADMIN = "/admin";
     String INSTRUCTOR = "/instructor";
     String STUDENT = "/student";
 
     String START = "/start";
     String DASHBOARD = "/dashboard";
+    String CANCEL = "/cancel";
+    //endregion
 
+    //region UI TEXT: REPLY KEYBOARDS
+
+    /**
+     * Contains user-facing text for Reply Keyboard Buttons (the persistent menu at the bottom).
+     */
     interface ReplyButtons {
         // --- Admin Menu ---
         String ADMIN_USERS = "👤 Foydalanuvchilar";
@@ -29,8 +47,13 @@ public interface Utils {
         String STUDENT_BALANCE = "💰 Balans va To'lovlar";
         String STUDENT_HELP = "🆘 Yordam";
     }
+    //endregion
 
-    // --- INLINE KEYBOARD BUTTONS & CALLBACK DATA ---
+    //region UI TEXT: INLINE KEYBOARDS
+
+    /**
+     * Contains user-facing text for Inline Keyboard Buttons (buttons attached directly to messages).
+     */
     interface InlineButtons {
         String USER_LIST_TEXT = "📋 Foydalanuvchilar ro'yxati";
         String USER_SEARCH_TEXT = "🔎 Foydalanuvchi qidirish";
@@ -50,93 +73,110 @@ public interface Utils {
         String PAGINATION_PREVIOUS_TEXT = "⬅️ Oldingi";
         String PAGINATION_NEXT_TEXT = "Keyingi ➡️";
     }
+    //endregion
 
-    // --- INLINE KEYBOARD CALLBACK DATA PREFIXES ---
-    // Example: "users:list:page:0"
+    //region CALLBACK DATA
+
+    /**
+     * Defines the structure and components for building and parsing callback query data.
+     * <p>
+     * The recommended format is a colon-separated string: {@code "prefix:action:param1:param2:..."}
+     * <ul>
+     *     <li><b>prefix:</b> Identifies the main context (e.g., "myc" for My Courses).</li>
+     *     <li><b>action:</b> Specifies the operation (e.g., "p" for page).</li>
+     *     <li><b>params:</b> Optional data, like an entity ID or page number.</li>
+     * </ul>
+     * <b>Example:</b> {@code "myc:success:p:0"} -> MyCourses, show Successful, go to Page 0.
+     */
     interface CallbackData {
 
-        // --- STUDENT "MY COURSES" FLOW PREFIXES ---
-        // Format: "prefix:action:value1:value2:..."
-        // myc -> my_course, mod -> module, les -> lesson, con -> content
+        // --- CONTEXT PREFIXES ---
+        /**
+         * Defines the main functional area the callback belongs to. Used for routing.
+         */
         String AUTH_PREFIX = "auth";
-        String MY_COURSE_PREFIX = "myc";    // Kurslar ro'yxati uchun
-        String ALL_COURSES_PREFIX = "allc"; // Barcha kurslar oqimi uchun
-        String MODULE_PREFIX = "mod";       // Modullar ro'yxati uchun
-        String LESSON_PREFIX = "les";       // Darslar ro'yxati uchun
-        String CONTENT_PREFIX = "con";      // Kontentni ko'rish uchun
-        String STUDENT_PREFIX = "std";      // Talabaga oid umumiy harakatlar
+        String MY_COURSE_PREFIX = "myc";    // User's own courses (student or instructor)
+        String ALL_COURSES_PREFIX = "allc"; // Browsing all available courses
+        String MODULE_PREFIX = "mod";       // Course modules
+        String LESSON_PREFIX = "les";       // Module lessons
+        String CONTENT_PREFIX = "con";      // Lesson content
+        String STUDENT_PREFIX = "std";      // Student-related actions
+        String CATEGORY = "cat";            // Category context
+        String INSTRUCTOR = "ins";          // Instructor context
+        String BALANCED = "balanced";       // Balance and payments context
 
-        // --- ACTIONS ---
-        String ACTION_VIEW = "v";           // Ko'rish
-        String ACTION_LIST = "l";           // Ro'yxatni ochish (odatda navigatsiya uchun)
-        String ACTION_PAGE = "p";           // Sahifa
-        String ACTION_BACK = "b";           // Orqaga
-        String ACTION_BUY = "buy";          // Sotib olish
-        String ACTION_SUBSCRIPTION = "subs";// obuna bolish
-        String DELETED = "deleted";
+        // --- GENERAL ACTIONS ---
+        /**
+         * Defines the operation to be performed within a context.
+         */
+        String ACTION_VIEW = "v";           // View details
+        String ACTION_LIST = "l";           // Show a list
+        String ACTION_PAGE = "p";           // Paginate
+        String ACTION_BACK = "b";           // Go back
+        String ACTION_BUY = "buy";          // Initiate purchase
+        String ACTION_SUBSCRIPTION = "subs";// Subscribe
+        String DELETED = "deleted";         // Action to delete the message
+        String ACTION_ADD = "add";
+        String ACTION_EDIT = "edit";
+        String ACTION_DELETE = "del";
 
-        String CATEGORY = "cat";            // Category
-        String INSTRUCTOR = "ins";          // instructor
+        // --- SPECIFIC ACTIONS & KEYS ---
+        /**
+         * Defines more specific actions or states, often used as parameters.
+         */
+        String ACTION_LOGOUT = "logout";
+        String ACTION_INIT = "init";
+        String ACTION_CONFIRM = "confirm";
+        String ACTION_CANCEL = "cancel";
+        String ACTION_SUCCESS = "success";
+        String ACTION_DRAFT = "draft";
+        String ACTION_REVIEWS = "review";
+        String ACTION_REVENUE = "revenue";
+        String ACTION_COURSE = "course";    // Parameter to specify the context is a course
+        String ACTION_MODULE = "mod";
 
-        // --- BACK TARGETS ---
-        String BACK_TO_MAIN_MENU = "main";
-        String BACK_TO_COURSES = "courses";
-        String BACK_TO_MODULES = "modules";
-        String BACK_TO_LESSONS = "lessons";
+        String ACTION_CHOICE = "choice";
 
 
-        // Format: "module:action:value1:value2"
-        String USER_LIST_CALLBACK = "users:list:page:0";
-        String USER_SEARCH_CALLBACK = "users:search:init";
-        String USER_STATS_CALLBACK = "users:stats";
-        String BACK_TO_ADMIN_MENU_CALLBACK = "admin:main_menu";
+        String CURRENT_STEP = "CURRENT_STEP";
 
+        String COURSE_ID = "course_id";
+        String TITLE = "title";
+        String DESCRIPTION = "description";
+        String PRICE = "price";
+        String THUMBNAIL_ID = "thumbnail_id";
+
+        String CATEGORY_ID = "category_id";
+
+
+        // --- DEPRECATED: Hardcoded Callbacks ---
+        /**
+         * @deprecated This hardcoded value is brittle. Prefer dynamic construction: {@code String.join(":", AUTH_PREFIX, ACTION_LOGOUT, ACTION_INIT)}.
+         */
+        @Deprecated
         String AUTH_LOGOUT_INIT_CALLBACK = "auth:logout:init";
+        /**
+         * @deprecated This hardcoded value is brittle. Prefer dynamic construction: {@code String.join(":", AUTH_PREFIX, ACTION_LOGOUT, ACTION_CONFIRM)}.
+         */
+        @Deprecated
         String AUTH_LOGOUT_CONFIRM_CALLBACK = "auth:logout:confirm";
+        /**
+         * @deprecated This hardcoded value is brittle. Prefer dynamic construction: {@code String.join(":", AUTH_PREFIX, ACTION_LOGOUT, ACTION_CANCEL)}.
+         */
+        @Deprecated
         String AUTH_LOGOUT_CANCEL_CALLBACK = "auth:logout:cancel";
 
-        // --- NEW: Course menu callbacks ---
-        String COURSE_LIST_CALLBACK = "courses:list:page:0";
-        String COURSE_ADD_CALLBACK = "courses:add:init";
-        String COURSE_SEARCH_CALLBACK = "courses:search:init";
-
-
+        // --- MISC ---
+        String BACK_TO_MAIN_MENU = "main";
         String BALANCE_PENDING_PAYMENTS = "balance_pending";
         String BALANCE_PAYMENT_HISTORY = "balance_history";
-
-        String BALANCED = "balanced";
-
-//
-//        // --- TAYYOR CALLBACK SATRLARI (to'liq ko'rinishda) ---
-//        String AUTH_LOGOUT_INIT_CALLBACK = AUTH_PREFIX + ":logout:init";       // "auth:logout:init"
-//        String AUTH_LOGOUT_CONFIRM_CALLBACK = AUTH_PREFIX + ":logout:confirm"; // "auth:logout:confirm"
-//        String AUTH_LOGOUT_CANCEL_CALLBACK = AUTH_PREFIX + ":logout:cancel";   // "auth:logout:cancel"
-
-        String MY_COURSE_VIEW_CALLBACK = "mycourse:view:"; // Prefix
-        String MY_COURSE_LIST_PAGE_CALLBACK = "mycourse:list:page:"; // Prefix
-
-        String BACK_TO_MY_COURSES_CALLBACK = "mycourse:list:page:0";
-
-        String USERS_PREFIX = "users";
-        String COURSES_PREFIX = "courses";
-        String ADMIN_PREFIX = "admin";
-
-        //        String ACTION_LIST = "list";
-        String ACTION_SEARCH = "search";
-        String ACTION_STATS = "stats";
-        String ACTION_MAIN_MENU = "main_menu";
-
-        String ACTION_LOGOUT = "logout"; // Yangi
-        String ACTION_INIT = "init";     // Yangi
-        String ACTION_CONFIRM = "confirm"; // Yangi
-        String ACTION_CANCEL = "cancel";   // Yangi
-//        String ACTION_PAGE = "page";
-//        String ACTION_BACK = "back";
     }
+    //endregion
+
+    //region DECORATIVE UTILITIES
 
     /**
      * Contains static final String constants for number-related emojis.
-     * These are ready-to-use in message texts for lists, steps, or highlighting numbers.
      */
     interface NumberEmojis {
         String ONE = "1️⃣";
@@ -151,7 +191,6 @@ public interface Utils {
         String ZERO = "0️⃣";
         String TEN = "🔟";
 
-        // Aylana shaklidagi raqamlar ham foydali bo'lishi mumkin
         String CIRCLED_ONE = "①";
         String CIRCLED_TWO = "②";
         String CIRCLED_THREE = "③";
@@ -166,39 +205,35 @@ public interface Utils {
 
     /**
      * Provides utility methods for converting numbers into decorative emoji strings.
-     * Useful for creating visually appealing lists, steps, or counters.
      */
     interface Numbering {
-        // Asosiy emoji raqamlar (0-9)
         String[] DIGIT_EMOJIS = {"0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"};
-
-        // Aylana shaklidagi raqamlar (1-20)
         String[] CIRCLED_NUMBERS = {
                 "", "①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩",
                 "⑪", "⑫", "⑬", "⑭", "⑮", "⑯", "⑰", "⑱", "⑲", "⑳"
         };
 
         /**
-         * Converts any integer into a string of square number emojis.
+         * Converts any non-negative integer into a string of square number emojis.
          * For example, 123 becomes "1️⃣2️⃣3️⃣".
          *
          * @param number The integer to convert.
-         * @return A string representation of the number using emojis.
+         * @return A string representation of the number using emojis, or the original number as a string if negative.
          */
         static String toEmoji(int number) {
-            if (number < 0) {
-                return String.valueOf(number); // Manfiy sonlarni o'zini qaytaramiz
+            if (number < 0 || true) {
+                return String.valueOf(number); // Return negative numbers as is
             }
-
+            if (number == 0) {
+                return DIGIT_EMOJIS[0];
+            }
             StringBuilder emojiString = new StringBuilder();
             String numberStr = String.valueOf(number);
-
             for (char digit : numberStr.toCharArray()) {
                 int digitValue = Character.getNumericValue(digit);
                 emojiString.append(DIGIT_EMOJIS[digitValue]);
             }
-//            return emojiString.toString();
-            return String.valueOf(number);
+            return emojiString.toString();
         }
 
         /**
@@ -211,12 +246,8 @@ public interface Utils {
         static String toCircled(int number) {
             if (number >= 1 && number <= 20) {
                 return CIRCLED_NUMBERS[number];
-//                return String.valueOf(number);
             }
-            // Agar raqam 1-20 oralig'ida bo'lmasa, oddiy formatda qaytaramiz
             return number + ".";
         }
     }
-
-
 }

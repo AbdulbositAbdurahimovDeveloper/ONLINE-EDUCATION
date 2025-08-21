@@ -132,12 +132,31 @@ public class SendMsgImpl implements SendMsg {
     }
 
     @Override
-    public SendPhoto sendPhoto(Long chatId, InputFile file, String caption, InlineKeyboardMarkup keyboard) {
+    public SendPhoto sendPhoto(Long chatId, String file, String caption, InlineKeyboardMarkup keyboard) {
         SendPhoto sendPhoto = new SendPhoto();
         sendPhoto.setChatId(String.valueOf(chatId));
-        sendPhoto.setPhoto(file);
+        sendPhoto.setPhoto(new InputFile(file));
         sendPhoto.setCaption(caption);
         sendPhoto.setReplyMarkup(keyboard);
+        sendPhoto.setParseMode("HTML");
+        return sendPhoto;
+    }
+
+    @Override
+    public SendPhoto sendPhoto(String channelId, InputFile file) {
+        SendPhoto sendPhoto = new SendPhoto();
+        sendPhoto.setChatId(channelId);
+        sendPhoto.setPhoto(file);
+        sendPhoto.setParseMode("HTML");
+        return sendPhoto;
+    }
+
+    @Override
+    public SendPhoto sendPhoto(Long chatId, String fileId, String caption) {
+        SendPhoto sendPhoto = new SendPhoto();
+        sendPhoto.setChatId(String.valueOf(chatId));  // qaysi userga yuborish kerak
+        sendPhoto.setPhoto(new InputFile(fileId));    // kanaldagi rasm file_id
+        sendPhoto.setCaption(caption);
         sendPhoto.setParseMode("HTML");
         return sendPhoto;
     }

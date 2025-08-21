@@ -128,6 +128,7 @@ public class CourseServiceImpl implements CourseService {
      * @return
      */
     @Override
+    @Transactional(readOnly = true)
     public CourseDetailDTO read(Long id) {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Course not found with id: " + id));

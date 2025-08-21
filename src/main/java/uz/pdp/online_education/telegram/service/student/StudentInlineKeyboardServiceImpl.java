@@ -26,6 +26,8 @@ import uz.pdp.online_education.telegram.service.student.template.StudentInlineKe
 import java.util.ArrayList;
 import java.util.List;
 
+import static uz.pdp.online_education.telegram.Utils.CallbackData.*;
+
 @Service
 @RequiredArgsConstructor
 public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardService {
@@ -39,10 +41,11 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
      */
     @Override
     public InlineKeyboardMarkup dashboardMenu() {
+        // Static import tufayli kod qisqaroq va o'qish uchun osonroq
         // Tizimdan chiqish tugmasini yasash uchun yordamchi metodni chaqiramiz.
         return createSingleButtonKeyboard(
                 Utils.InlineButtons.LOGOUT_TEXT,
-                Utils.CallbackData.AUTH_LOGOUT_INIT_CALLBACK
+                String.join(":", AUTH_PREFIX, ACTION_LOGOUT, ACTION_INIT)
         );
     }
 
@@ -54,11 +57,12 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
         // "Ha" va "Yo'q" tugmalarini yaratamiz.
         InlineKeyboardButton yesButton = createButton(
                 Utils.InlineButtons.LOGOUT_CONFIRM_YES_TEXT,
-                Utils.CallbackData.AUTH_LOGOUT_CONFIRM_CALLBACK
+                String.join(":", AUTH_PREFIX, ACTION_LOGOUT, ACTION_CONFIRM)
         );
+
         InlineKeyboardButton noButton = createButton(
                 Utils.InlineButtons.LOGOUT_CONFIRM_NO_TEXT,
-                Utils.CallbackData.AUTH_LOGOUT_CANCEL_CALLBACK
+                String.join(":", AUTH_PREFIX, ACTION_LOGOUT, ACTION_CANCEL)
         );
 
         // Tugmalarni bitta qatorga joylab, klaviaturani qaytaramiz.
@@ -861,7 +865,7 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
             String callbackData = String.join(":",
                     Utils.CallbackData.BALANCED,
                     Utils.CallbackData.ACTION_VIEW,
-                    module.getId().toString()            );
+                    module.getId().toString());
 
             row.add(createButton(buttonText, callbackData));
         }
@@ -911,7 +915,6 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
 
         return new InlineKeyboardMarkup(rows);
     }
-
 
 
     // --- PRIVATE HELPER METHODS ---
