@@ -127,4 +127,5 @@ public interface StudentInlineKeyboardService {
     InlineKeyboardMarkup userPendingPaymentsKeyboard(Page<Module> modules);
 
     InlineKeyboardMarkup buildModuleButtons(Module module);
+
 }

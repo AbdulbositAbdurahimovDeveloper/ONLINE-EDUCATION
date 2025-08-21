@@ -999,4 +999,49 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
         button.setCallbackData(callbackData);
         return button;
     }
+
+
+
+    private static final int PAGE_SIZE = 10;
+    /**
+     * Har qanday Page obyektiga mos ravishda pagination tugmalarini (oldingi, o'ng)
+     * va o'rtadagi SOS tugmasini yaratadi.
+     *
+     * @param keyboard      Mavjud tugmalar qatori (bu metod shu qatorga yangi tugmalarni qo'shadi).
+     * @param page          Sahifalangan ma'lumotlarni o'z ichiga olgan Page obyekti.
+     * @param prefix        Callback uchun prefiks (masalan, "STUDENT", "MY_COURSE").
+     * @param pageAction    Sahifani almashtirish uchun action nomi (masalan, "MY_COURSES_PAGE", "ALL_COURSES_PAGE").
+     */
+    public void addGeneralPaginationAndSosButtons(List<List<InlineKeyboardButton>> keyboard, Page<?> page, String prefix, String pageAction) {
+        // Agar sahifa bo'sh bo'lsa yoki faqat bitta sahifa bo'lsa, pagination tugmalarini ko'rsatmaslik ham mumkin.
+        // Lekin hozircha bitta sahifa bo'lsa ham tugmalarni qo'shamiz.
+        if (page == null || (page.getContent().isEmpty() && !page.hasPrevious() && !page.hasNext())) {
+            return; // Agar hech qanday sahifa bo'lmasa yoki bitta sahifa bo'lsa, tugma qo'shilmaydi.
+        }
+
+        List<InlineKeyboardButton> paginationRow = new ArrayList<>();
+
+        // Chapga arrow tugmasi (avvalgi sahifa)
+        if (page.hasPrevious()) {
+            String prevCallbackData = String.join(":", prefix, pageAction, String.valueOf(page.getNumber() - 1));
+            paginationRow.add(createButton("⬅️ " + Utils.InlineButtons.PAGINATION_PREVIOUS_TEXT, prevCallbackData));
+        }
+
+        // SOS tugmasi (o'rtada)
+        // SOS tugmasi uchun prefiks har doim STUDENT_PREFIX bo'lishi kerak, chunki u umumiy yordam tugmasi.
+        String sosCallbackData = String.join(":", Utils.CallbackData.STUDENT_PREFIX, Utils.CallbackData.ACTION_SOS_SUPPORT);
+        paginationRow.add(createButton("SOS 🆘", sosCallbackData));
+
+        // O'ngga arrow tugmasi (keyingi sahifa)
+        if (page.hasNext()) {
+            String nextCallbackData = String.join(":", prefix, pageAction, String.valueOf(page.getNumber() + 1));
+            paginationRow.add(createButton(Utils.InlineButtons.PAGINATION_NEXT_TEXT + " ➡️", nextCallbackData));
+        }
+
+        // Agar pagination qatori bo'sh bo'lmasa, uni keyboard ga qo'shamiz
+        if (!paginationRow.isEmpty()) {
+            keyboard.add(paginationRow);
+        }
+    }
+
 }

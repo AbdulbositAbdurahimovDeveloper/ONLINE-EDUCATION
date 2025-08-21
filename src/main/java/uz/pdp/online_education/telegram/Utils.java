@@ -137,6 +137,7 @@ public interface Utils {
 
         String ACTION_CHOICE = "choice";
 
+        String ACTION_SOS_SUPPORT = "sos"; // SOS support request
 
         String CURRENT_STEP = "CURRENT_STEP";
 
