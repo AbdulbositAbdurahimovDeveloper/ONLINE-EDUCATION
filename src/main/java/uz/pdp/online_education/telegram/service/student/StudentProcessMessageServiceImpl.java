@@ -623,6 +623,7 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
      * Retrieves an existing TelegramUser or creates a new one if not found.
      */
     private TelegramUser getOrCreateTelegramUser(Long chatId) {
+
         return telegramUserRepository.findByChatId(chatId).orElseGet(() -> {
             log.info("Creating a new TelegramUser for chatId: {}", chatId);
             TelegramUser newTelegramUser = new TelegramUser();
@@ -630,5 +631,7 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
             newTelegramUser.setUserState(UserState.UNREGISTERED);
             return telegramUserRepository.save(newTelegramUser);
         });
+
     }
+
 }
