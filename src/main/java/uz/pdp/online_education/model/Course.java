@@ -17,7 +17,7 @@ import java.util.List;
 @Entity(name = "courses")
 @FieldNameConstants
 @SQLDelete(sql = "UPDATE courses SET deleted = true WHERE id = ?")
-@SQLRestriction(value = "deleted=false and success = true")
+@SQLRestriction(value = "deleted=false")
 public class Course extends AbsLongEntity {
 
     @Column(nullable = false, unique = true)
@@ -37,7 +37,7 @@ public class Course extends AbsLongEntity {
     @ManyToOne
     private Category category;//course qaysi categoryda
 
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
     @ToString.Exclude
     private List<Module> modules; // coursening modullari
 

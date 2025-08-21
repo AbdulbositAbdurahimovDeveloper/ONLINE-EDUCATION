@@ -1,5 +1,6 @@
 package uz.pdp.online_education.telegram.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 import uz.pdp.online_education.model.User;
@@ -18,6 +19,7 @@ public class TelegramUser {
 
     @OneToOne// FetchType.LAZY tavsiya etiladi
     @JoinColumn(name = "user_id", unique = true)
+    @JsonBackReference
     @ToString.Exclude // Bu ustun aloqani o'rnatadi
     private User user;
 

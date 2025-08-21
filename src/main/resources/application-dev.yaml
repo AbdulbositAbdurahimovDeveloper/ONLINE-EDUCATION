@@ -23,7 +23,11 @@ spring:
     analytics-enabled: true
     change-log: classpath:/db/changelog/db.changelog-master.yaml
 
-
+  data:
+    redis:
+      host: ${SERVER_IP}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: none
@@ -88,7 +92,9 @@ application:
     # Refresh tokenning yashash muddati.
     # Bu odatda ancha uzoqroq bo'ladi, masalan 7 kun.
     refresh-token-expiration: ${REFRESH_TOKEN_EXPIRATION}
-
+  cache:
+    # Vaqtinchalik jarayonlar uchun standart yashash vaqti (sekundda)
+    temporary-process-ttl-seconds: ${CACHE_TIME}
   minio:
     endpoint: ${MINION_ENDPOINT}
     access-key: ${MINIO_ACCESS_KEY}

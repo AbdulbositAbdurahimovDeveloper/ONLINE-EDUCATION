@@ -26,39 +26,25 @@ public class TelegramUserServiceImpl implements TelegramUserService {
         return telegramUserRepository.getCurrentUser(chatId).getUserState();
     }
 
-    /**
-     * @param chatId
-     */
-//    @Override
-//    @Transactional
-//    public void unregistered(Long chatId) {
-//        // 1. TelegramUser'ni topamiz
-//        TelegramUser telegramUser = telegramUserRepository.findByChatId(chatId)
-//                .orElseThrow(() -> new EntityNotFoundException("Telegram User with id " + chatId + " not found"));
-//
-//        // 2. Unga bog'liq bo'lgan User'ni olamiz
-//        User user = telegramUser.getUser();
-//
-//        // 3. Agar bog'liqlik mavjud bo'lsa, ikki tomondan uzamiz
-//        if (user != null) {
-//            // Birinchi tomon: User'dan TelegramUser'ni olib tashlaymiz
-//            user.setTelegramUser(null);
-//            userRepository.save(user);
-//
-//        }
-//
-//        // Ikkinchi tomon: TelegramUser'dan User'ni olib tashlaymiz
-//        telegramUser.setUser(null);
-//        telegramUser.setUserState(UserState.UNREGISTERED);
-//
-//        // O'zgarishlarni saqlaymiz. JPA qaysi birini saqlashdan qat'iy nazar,
-//        // o'zgarishni to'g'ri aks ettiradi.
-//        // Odatda, ega tomonni saqlash kifoya.
-//        telegramUserRepository.save(telegramUser);
-//    }
-    // Bu metodga endi @Transactional kerak emas, chunki repository metodining o'zi transactional
+
     public void unregistered(Long chatId) {
         telegramUserRepository.unregisterUserByChatId(chatId);
     }
 
+    /**
+     * @param chatId
+     * @param userState
+     */
+    @Override
+    @Transactional
+    public void updateUserState(Long chatId, UserState userState) {
+
+        telegramUserRepository.findByChatId(chatId).ifPresent(
+                telegramUser -> {
+                    telegramUser.setUserState(userState);
+                    telegramUserRepository.save(telegramUser);
+                }
+        );
+
+    }
 }

@@ -69,4 +69,54 @@ public interface CourseRepository extends JpaRepository<Course, Long>, CourseRep
 
     @Query("SELECT c FROM courses c WHERE LOWER(c.title) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
     Page<Course> searchByTitle(@Param("searchTerm") String searchTerm, Pageable pageable);
+
+    /**
+     * Ma'lum bir instructorning 'success' maydoniga qarab kurslari sonini sanaydi.
+     *
+     * @param instructorId Instructorning IDsi.
+     * @param isSuccess    Kursning holati (true=aktiv, false=noaktiv/tasdiqlanmagan).
+     * @return Kurslar soni.
+     */
+    @Query(value = "SELECT COUNT(*) FROM courses c WHERE c.instructor_id = :instructorId AND c.success = :isSuccess",
+            nativeQuery = true)
+    int countByInstructorIdAndSuccess(@Param("instructorId") Long instructorId,
+                                      @Param("isSuccess") boolean isSuccess);
+
+
+    @Query("""
+                SELECT COUNT(DISTINCT p.user.id)
+                FROM payment p
+                WHERE p.module.course.id = :courseId
+                  AND p.status = uz.pdp.online_education.enums.TransactionStatus.SUCCESS
+            """)
+    int countPurchasedUsers(@Param("courseId") Long courseId);
+
+    @Query("""
+                SELECT COUNT(DISTINCT me.user.id)
+                FROM module_enrollments me
+                WHERE me.module.course.id = :courseId
+            """)
+    int countSubscribedUsers(@Param("courseId") Long courseId);
+
+    Page<Course> findAllByInstructorIdAndSuccess(Long instructorId, boolean success, Pageable pageable);
+
+    @Query(
+            value = "SELECT * FROM courses c " +
+                    "WHERE c.instructor_id = :instructorId " +
+                    "AND c.success = :success " +
+                    "AND c.deleted = false " +
+                    "ORDER BY c.created_at ASC",
+            countQuery = "SELECT COUNT(*) FROM courses c " +
+                    "WHERE c.instructor_id = :instructorId " +
+                    "AND c.success = :success " +
+                    "AND c.deleted = false",
+            nativeQuery = true
+    )
+    Page<Course> findAllByInstructorIdAndSuccessNative(
+            @Param("instructorId") Long instructorId,
+            @Param("success") boolean success,
+            Pageable pageable
+    );
+
+
 }

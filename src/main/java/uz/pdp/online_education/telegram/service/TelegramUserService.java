@@ -6,4 +6,6 @@ public interface TelegramUserService {
     UserState getUserState(Long chatId);
 
     void unregistered(Long chatId);
+
+    void updateUserState(Long chatId, UserState userState);
 }

@@ -14,6 +14,8 @@ import uz.pdp.online_education.telegram.service.admin.template.InlineKeyboardSer
 import java.util.ArrayList;
 import java.util.List;
 
+import static uz.pdp.online_education.telegram.Utils.CallbackData.*;
+
 @Service
 @RequiredArgsConstructor
 public class InlineKeyboardServiceImpl implements InlineKeyboardService {
@@ -33,11 +35,12 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
         // "Ha" va "Yo'q" tugmalarini yaratamiz.
         InlineKeyboardButton yesButton = createButton(
                 Utils.InlineButtons.LOGOUT_CONFIRM_YES_TEXT,
-                Utils.CallbackData.AUTH_LOGOUT_CONFIRM_CALLBACK
+                String.join(":", AUTH_PREFIX, ACTION_LOGOUT, ACTION_CONFIRM)
         );
+
         InlineKeyboardButton noButton = createButton(
                 Utils.InlineButtons.LOGOUT_CONFIRM_NO_TEXT,
-                Utils.CallbackData.AUTH_LOGOUT_CANCEL_CALLBACK
+                String.join(":", AUTH_PREFIX, ACTION_LOGOUT, ACTION_CANCEL)
         );
 
         // Tugmalarni bitta qatorga joylab, klaviaturani qaytaramiz.
@@ -52,7 +55,14 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
     // --- ASOSIY MENYU TUGMALARI ---
     @Override
     public InlineKeyboardMarkup dashboardMenu() {
-        return createSingleButtonKeyboard(Utils.InlineButtons.LOGOUT_TEXT, Utils.CallbackData.AUTH_LOGOUT_INIT_CALLBACK);
+        return createSingleButtonKeyboard(
+                Utils.InlineButtons.LOGOUT_TEXT,
+                String.join(":",
+                        Utils.CallbackData.AUTH_PREFIX,
+                        Utils.CallbackData.ACTION_LOGOUT,
+                        Utils.CallbackData.ACTION_INIT
+                )
+        );
     }
 
     @Override
@@ -90,7 +100,7 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
             String callbackData = "admin:users:view:" + user.getId();
             numberButtonsRow.add(createButton(buttonText, callbackData));
 
-            if (i == 4){
+            if (i == 4) {
                 keyboardRows.add(numberButtonsRow);
                 numberButtonsRow = new ArrayList<>();
             }
@@ -118,7 +128,6 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
     }
 
 
-
     @Override
     public InlineKeyboardMarkup userDetailMenu(Long userId, String backCallbackData) {
         // ... "Bloklash", "Rolni o'zgartirish" kabi tugmalarni kelajakda qo'shasiz ...
@@ -136,7 +145,7 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
         InlineKeyboardButton searchBtn = createButton("🔍 Kurs qidirish", "admin:courses:search_init");
         InlineKeyboardButton statsBtn = createButton("📊 Statistika", "admin:courses:stats");
         InlineKeyboardButton backBtn = createButton("⬅️ Bosh menyu", "admin:main_menu");
-        return new InlineKeyboardMarkup(List.of(List.of(listBtn), List.of(searchBtn),List.of(statsBtn) ,List.of(backBtn)));
+        return new InlineKeyboardMarkup(List.of(List.of(listBtn), List.of(searchBtn), List.of(statsBtn), List.of(backBtn)));
     }
 
     @Override
@@ -162,7 +171,7 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
 
             numberButtonsRow.add(createButton(buttonText, callbackData));
 
-            if (i == 5){
+            if (i == 5) {
                 keyboardRows.add(numberButtonsRow);
                 numberButtonsRow = new ArrayList<>();
             }

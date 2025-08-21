@@ -24,9 +24,6 @@ public class CourseCreateDTO implements Serializable {
     @NotNull(message = "Ikonka ID'si ko'rsatilishi shart")
     private Long thumbnailId; // <<< Faqat ID
 
-//    @NotNull(message = "O'qituvchi ID'si ko'rsatilishi shart")
-//    private Long instructorId; // <<< Faqat ID
-
     @NotNull(message = "Kategoriya ID'si ko'rsatilishi shart")
     private Long categoryId; // <<< Faqat ID
 }
