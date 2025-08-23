@@ -149,6 +149,12 @@ public interface Utils {
         String TITLE = "title";
         String DESCRIPTION = "description";
         String PRICE = "price";
+        String THUMBNAIL_ID = "thumbnail_id";
+
+        String CATEGORY_ID = "category_id";
+
+        String COURSE_LIST_CALLBACK = "admin:courses:list:init";
+
         String IS_PREE = "is_pree";
         String TRUE =  "true";
         String FALSE = "false";
