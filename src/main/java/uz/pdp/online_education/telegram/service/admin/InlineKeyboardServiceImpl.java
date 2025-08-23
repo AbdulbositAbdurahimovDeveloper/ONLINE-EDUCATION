@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.telegram.Utils;
@@ -20,8 +21,8 @@ import static uz.pdp.online_education.telegram.Utils.CallbackData.*;
 @RequiredArgsConstructor
 public class InlineKeyboardServiceImpl implements InlineKeyboardService {
 
-    @Value("${telegram.bot.webhook-path}")
-    private String appDomain;
+    @Value("${telegram.bot.webapp.url}")
+    private String webApp;
 
     // --- YORDAMCHI METODLAR ---
     private InlineKeyboardButton createButton(String text, String callbackData) {
@@ -69,7 +70,8 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
     public InlineKeyboardMarkup welcomeFirstTime(Long chatId) {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         InlineKeyboardButton button = new InlineKeyboardButton("🚀 Kirish / Ro'yxatdan o'tish");
-        button.setUrl(appDomain + "/auth.html?chat_id=" + chatId);
+        button.setWebApp(new WebAppInfo(webApp));
+//        button.setUrl(appDomain + "/auth.html?chat_id=" + chatId);
         inlineKeyboardMarkup.setKeyboard(List.of(List.of(button)));
         return inlineKeyboardMarkup;
     }

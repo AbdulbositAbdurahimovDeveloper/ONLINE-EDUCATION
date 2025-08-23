@@ -109,5 +109,6 @@ telegram:
     token: ${TELEGRAM_BOT_TOKEN}
     username: ${TELEGRAM_BOT_USERNAME}
     webhook-path: ${TELEGRAM_BOT_PATH}
+    webapp.url: ${TELEGRAM_BOT_PATH}/tg-bot-mini-app/index.html
     chat-id: ${TELEGRAM_CHAT_ID}
     channel-id: ${TELEGRAM_BOT_CHANNEL}

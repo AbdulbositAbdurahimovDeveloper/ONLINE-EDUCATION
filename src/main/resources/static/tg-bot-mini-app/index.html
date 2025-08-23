@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Kirish</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #333333;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container { max-width: 500px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 25px; }
+        .header h1 { font-size: 24px; margin: 0 0 10px 0; font-weight: 600; }
+        .header p { font-size: 16px; color: #6c757d; margin: 0; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px; color: #6c757d; }
+        .form-group input {
+            width: 100%; padding: 14px; font-size: 16px; border: 1px solid #ced4da;
+            background-color: #ffffff; border-radius: 10px; color: #495057; box-sizing: border-box;
+        }
+        .form-group input:focus { outline: none; border-color: #007bff; box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25); }
+        .switch-view-link {
+            display: block; text-align: center; margin-top: 20px; color: #007bff;
+            text-decoration: none; font-weight: 500; cursor: pointer;
+        }
+        .error-message { color: #dc3545; font-size: 14px; margin-top: 15px; text-align: center; display: none; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- ===== LOGIN KO'RINISHI ===== -->
+    <div id="login-view">
+        <div class="header">
+            <h1>Kirish</h1>
+            <p>Davom etish uchun tizimga kiring.</p>
+        </div>
+        <form id="login-form">
+            <div class="form-group">
+                <label for="login-username">Foydalanuvchi nomi</label>
+                <input type="text" id="login-username" placeholder="Username" required>
+            </div>
+            <div class="form-group">
+                <label for="login-password">Parol</label>
+                <input type="password" id="login-password" placeholder="Parol" required>
+            </div>
+        </form>
+        <a href="#" id="show-register-link" class="switch-view-link">Akkauntingiz yo'qmi? Ro'yxatdan o'tish</a>
+    </div>
+
+    <!-- ===== REGISTER KO'RINISHI (dastlab yashirilgan) ===== -->
+    <div id="register-view" class="hidden">
+        <div class="header">
+            <h1>Ro'yxatdan o'tish</h1>
+            <p>Yangi akkaunt yaratish uchun ma'lumotlarni to'ldiring.</p>
+        </div>
+        <form id="register-form">
+            <div class="form-group">
+                <label for="register-name">To'liq ismingiz</label>
+                <input type="text" id="register-name" placeholder="Ism Familiya" required>
+            </div>
+            <div class="form-group">
+                <label for="register-phone">Telefon raqamingiz</label>
+                <input type="tel" id="register-phone" placeholder="+998 XX XXX XX XX" required>
+            </div>
+            <div class="form-group">
+                <label for="register-username">Foydalanuvchi nomi (username)</label>
+                <input type="text" id="register-username" placeholder="Yangi username o'ylab toping" required>
+            </div>
+            <div class="form-group">
+                <label for="register-password">Parol</label>
+                <input type="password" id="register-password" placeholder="Yangi parol yarating" required>
+            </div>
+        </form>
+        <a href="#" id="show-login-link" class="switch-view-link">Akkauntingiz bormi? Kirish</a>
+    </div>
+
+    <div id="error-message" class="error-message"></div>
+</div>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
