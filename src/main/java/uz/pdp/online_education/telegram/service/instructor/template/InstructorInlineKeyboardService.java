@@ -5,6 +5,8 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import uz.pdp.online_education.model.Category;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.payload.PageDTO;
+import uz.pdp.online_education.payload.course.CourseDetailDTO;
+import uz.pdp.online_education.payload.lesson.LessonResponseDTO;
 import uz.pdp.online_education.payload.module.ModuleDetailDTO;
 
 public interface InstructorInlineKeyboardService {
@@ -19,6 +21,8 @@ public interface InstructorInlineKeyboardService {
      * @return An {@link InlineKeyboardMarkup} containing "Yes" and "No" buttons for logout confirmation.
      */
     InlineKeyboardMarkup logoutConfirmation();
+
+    InlineKeyboardMarkup createUrlButton(String text, String url);
 
     InlineKeyboardMarkup instructorNoDraftCourse();
 
@@ -40,4 +44,17 @@ public interface InstructorInlineKeyboardService {
     InlineKeyboardMarkup isFree();
 
 
+    InlineKeyboardMarkup instructorViewLesson(Long lessonId, String backButton, Integer contentSize);
+
+    InlineKeyboardMarkup instructorViewLesson(PageDTO<LessonResponseDTO> lessonResponseDTOPageDTO, String backButton,Long id);
+
+    InlineKeyboardMarkup chooseContent(long lessonId);
+
+    InlineKeyboardMarkup instructorContent(LessonResponseDTO lessonResponseDTO, String backButton);
+
+    InlineKeyboardMarkup instructorEditCourses(CourseDetailDTO courseDetailDTO, String backButton);
+
+    InlineKeyboardMarkup deleteCourse(Long id);
+
+    InlineKeyboardMarkup categorySelect(Page<Category> categories, String cancelBtn);
 }

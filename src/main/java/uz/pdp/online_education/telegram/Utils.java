@@ -144,6 +144,7 @@ public interface Utils {
         String THUMBNAIL_ID = "thumbnail_id";
         String CATEGORY_ID = "category_id";
         String MODULE_ID = "module_id";
+        String LESSON_ID =  "lesson_id";
 
         String TITLE = "title";
         String DESCRIPTION = "description";
@@ -157,6 +158,13 @@ public interface Utils {
         String IS_PREE = "is_pree";
         String TRUE =  "true";
         String FALSE = "false";
+
+        String PHOTO = "photo";
+        String VIDEO = "video";
+
+        String TEXT_CONTENT = "text";
+        String ATTACHMENT_CONTENT = "video";
+        String QUIZ_CONTENT = "quiz";
 
         // --- DEPRECATED: Hardcoded Callbacks ---
         /**

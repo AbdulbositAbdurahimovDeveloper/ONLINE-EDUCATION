@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramWebhookBot;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.send.SendVenue;
+import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageMedia;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -88,9 +90,27 @@ public class OnlineEducationBot extends TelegramWebhookBot {
         executeMethod(method);
     }
 
-    public void myExecute(SendPhoto sendPhoto) {
+//    public void myExecute(SendPhoto sendPhoto) {
+//        try {
+//            execute(sendPhoto);
+//        } catch (TelegramApiException e) {
+//            e.printStackTrace();
+//        }
+//    }
+
+    public Message myExecute(SendPhoto sendPhoto) {
         try {
-            execute(sendPhoto);
+            Message execute = execute(sendPhoto);
+            return execute;
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public void myExecute(SendVideo sendVideo) {
+        try {
+            execute(sendVideo);
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }

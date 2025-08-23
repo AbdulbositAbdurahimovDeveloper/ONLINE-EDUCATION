@@ -125,9 +125,6 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
     }
 
     private void handleBalanced(User user, Long chatId, Integer messageId, String[] data, String queryData, String callbackQueryId) {
-
-        System.out.println(queryData);
-
         String type = data[1];
 
         switch (type) {

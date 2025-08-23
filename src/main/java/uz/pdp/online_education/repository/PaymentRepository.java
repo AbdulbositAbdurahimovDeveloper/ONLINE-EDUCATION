@@ -87,4 +87,8 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Integer countDistinctPurchasedUsersByInstructorId(@Param("instructorId") Long instructorId);
 
 
+
+    long countByModule_Course_Id(Long id);
+
+    boolean existsByModule_Course_Id(Long id);
 }

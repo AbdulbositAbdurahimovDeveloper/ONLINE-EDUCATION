@@ -24,10 +24,12 @@ import uz.pdp.online_education.repository.AttachmentRepository;
 import uz.pdp.online_education.repository.CategoryRepository;
 import uz.pdp.online_education.repository.CourseRepository;
 import uz.pdp.online_education.repository.ModuleRepository;
+import uz.pdp.online_education.service.interfaces.AttachmentService;
 import uz.pdp.online_education.service.interfaces.CourseService;
 import uz.pdp.online_education.specification.CourseSpecification;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +41,7 @@ public class CourseServiceImpl implements CourseService {
     private final AttachmentRepository attachmentRepository;
     private final CategoryRepository categoryRepository;
     private final ModuleRepository moduleRepository;
+    private final AttachmentService attachmentService;
 
     // CourseServiceImpl.java
 
@@ -185,16 +188,27 @@ public class CourseServiceImpl implements CourseService {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Course not found with id: " + id));
 
-        Category category = categoryRepository.findById(courseUpdateDTO.getCategoryId())
-                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + courseUpdateDTO.getCategoryId()));
 
         String baseSlug = slugify.slugify(courseUpdateDTO.getTitle());
 
-        course.setTitle(courseUpdateDTO.getTitle());
-        course.setSlug(baseSlug);
-        course.setDescription(courseUpdateDTO.getDescription());
+        if (courseUpdateDTO.getTitle() != null) {
+            course.setTitle(courseUpdateDTO.getTitle());
+            course.setSlug(baseSlug);
+        }
+        if (courseUpdateDTO.getDescription() != null)
+            course.setDescription(courseUpdateDTO.getDescription());
         course.setInstructor(instructor);
-        course.setCategory(category);
+
+        if (courseUpdateDTO.getCategoryId() != null) {
+            Category category = categoryRepository.findById(courseUpdateDTO.getCategoryId())
+                    .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + courseUpdateDTO.getCategoryId()));
+            course.setCategory(category);
+        }
+
+        if (courseUpdateDTO.getThumbnailId() != null) {
+            Attachment attachment = attachmentRepository.findById(courseUpdateDTO.getThumbnailId()).orElseThrow(() -> new RuntimeException("Attachment not found with id :" + courseUpdateDTO.getThumbnailId()));
+            course.setThumbnailUrl(attachment);
+        }
 
         courseRepository.save(course);
         return courseMapper.courseToCourseDetailDTO(course);

@@ -4,10 +4,8 @@ import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageMedia;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.*;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -152,6 +150,15 @@ public class SendMsgImpl implements SendMsg {
     }
 
     @Override
+    public SendPhoto sendPhoto(Long chatId, String file) {
+        SendPhoto sendPhoto = new SendPhoto();
+        sendPhoto.setChatId(chatId);
+        sendPhoto.setPhoto(new InputFile(file));
+        sendPhoto.setParseMode("HTML");
+        return sendPhoto;
+    }
+
+    @Override
     public SendPhoto sendPhoto(Long chatId, String fileId, String caption) {
         SendPhoto sendPhoto = new SendPhoto();
         sendPhoto.setChatId(String.valueOf(chatId));  // qaysi userga yuborish kerak
@@ -169,5 +176,28 @@ public class SendMsgImpl implements SendMsg {
     @Override
     public AnswerCallbackQuery answerCallbackQuery(String callbackQueryId, String text) {
         return AnswerCallbackQuery.builder().callbackQueryId(callbackQueryId).text(text).build();
+    }
+
+    /**
+     * @param chatId
+     * @param telegramFileId
+     * @return
+     */
+    @Override
+    public SendVideo sendVideo(Long chatId, String telegramFileId, InlineKeyboardMarkup keyboard) {
+        SendVideo sendVideo = new SendVideo(chatId.toString(), new InputFile(telegramFileId));
+        sendVideo.setReplyMarkup(keyboard);
+        return sendVideo;
+    }
+
+    @Override
+    public EditMessageCaption editMessageCaption(Long chatId, Integer messageId, String caption, InlineKeyboardMarkup keyboard) {
+        EditMessageCaption editMessageCaption = new EditMessageCaption();
+        editMessageCaption.setChatId(chatId.toString());
+        editMessageCaption.setMessageId(messageId);
+        editMessageCaption.setCaption(caption);
+        editMessageCaption.setReplyMarkup(keyboard);
+        editMessageCaption.setParseMode("HTML");
+        return editMessageCaption;
     }
 }
