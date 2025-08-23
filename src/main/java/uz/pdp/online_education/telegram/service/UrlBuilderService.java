@@ -19,4 +19,7 @@ public interface UrlBuilderService {
      * @return A complete, ready-to-use URL string.
      */
     String generateQuizUrl(Long quizId);
+
+    String generateQuizCreationUrl(String accessToken);
+
 }

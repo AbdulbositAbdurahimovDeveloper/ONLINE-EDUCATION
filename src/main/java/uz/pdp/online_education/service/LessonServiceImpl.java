@@ -49,6 +49,7 @@ public class LessonServiceImpl implements LessonService {
 //    }
 
     @Override
+    @Transactional(readOnly = true)
     public LessonResponseDTO read(Long id) {
         return lessonRepository.findById(id).
                 map(lessonMapper::toDTO)

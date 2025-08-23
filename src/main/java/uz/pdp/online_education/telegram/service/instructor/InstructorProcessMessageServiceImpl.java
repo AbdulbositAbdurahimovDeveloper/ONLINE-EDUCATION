@@ -2,23 +2,26 @@ package uz.pdp.online_education.telegram.service.instructor;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.PhotoSize;
+import org.telegram.telegrambots.meta.api.objects.Video;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import uz.pdp.online_education.enums.Role;
-import uz.pdp.online_education.exceptions.DataConflictException;
 import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.model.UserProfile;
+import uz.pdp.online_education.payload.category.CategoryDTO;
 import uz.pdp.online_education.payload.content.attachmentContent.AttachmentDTO;
+import uz.pdp.online_education.payload.course.CourseDetailDTO;
+import uz.pdp.online_education.payload.course.CourseUpdateDTO;
+import uz.pdp.online_education.payload.text.TextContentCreateDTO;
+import uz.pdp.online_education.payload.user.UserDTO;
 import uz.pdp.online_education.repository.*;
-import uz.pdp.online_education.service.interfaces.AttachmentService;
-import uz.pdp.online_education.service.interfaces.CategoryService;
+import uz.pdp.online_education.service.interfaces.*;
 import uz.pdp.online_education.telegram.Utils;
 import uz.pdp.online_education.telegram.config.controller.OnlineEducationBot;
 import uz.pdp.online_education.telegram.enums.BotMessage;
@@ -34,6 +37,9 @@ import uz.pdp.online_education.telegram.service.instructor.template.InstructorRe
 import uz.pdp.online_education.telegram.service.message.MessageService;
 
 import java.text.DecimalFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
@@ -50,6 +56,9 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
     private final AttachmentService attachmentService;
     private final ModuleRepository moduleRepository;
     private final LessonRepository lessonRepository;
+    private final TextContentService textContentService;
+    private final CourseService courseService;
+    private final UserService userService;
     @Value("${telegram.bot.channel-id}")
     private String CHANNEL_ID;
 
@@ -112,6 +121,15 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
             case AWAITING_LESSON_IS_FREE:
             case AWAITING_LESSON_CONFIRMATION:
                 handleLessonCreationStep(chatId, message, userState);
+                break;
+            case AWAITING_ATTACHMENT_CONTENT:
+            case AWAITING_TEXT_CONTENT:
+                handleInstructorContent(chatId, message, userState);
+            case AWAITING_EDIT_COURSE_TITLE:
+            case AWAITING_EDIT_COURSE_DESCRIPTION:
+            case AWAITING_EDIT_COURSE_THUMBNAIL:
+            case AWAITING_EDIT_COURSE_CONFIRMATION:
+                handleCourseEditionStep(chatId, message, userState, user);
 
 
         }
@@ -128,6 +146,192 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
             case INSTRUCTOR_MY_REVENUE -> instructorMyRevenueHandle(chatId, user);
         }
 
+    }
+
+    private void handleCourseEditionStep(Long chatId, Message message, UserState userState, User user) {
+
+        String processKey = String.join(":", ACTION_EDIT, ACTION_COURSE, chatId.toString());
+        Optional<Map<String, Object>> allFields = redisTemporaryDataService.getAllFields(processKey);
+        if (allFields.isPresent()) {
+
+            Map<String, Object> courseFields = allFields.get();
+            Long id = Long.valueOf(courseFields.get(COURSE_ID).toString());
+
+
+            switch (userState) {
+                case AWAITING_EDIT_COURSE_TITLE -> {
+                    if (message.hasText()) {
+                        String title = message.getText();
+
+                        if (title.length() < 5 || title.length() > 150) {
+                            bot.myExecute(sendMsg.sendMessage(chatId, "Sarlavha uzunligi 5 tadan kop 150 tadan kam bo`lsin"));
+                        } else {
+                            CourseUpdateDTO courseUpdateDTO = new CourseUpdateDTO();
+                            courseUpdateDTO.setTitle(title);
+
+                            CourseDetailDTO courseDetailDTO = courseService.update(id, courseUpdateDTO, user);
+
+                            CategoryDTO categoryDTO = categoryService.read(courseDetailDTO.getCategoryId());
+                            UserDTO userDTO = userService.read(courseDetailDTO.getInstructorId());
+
+                            telegramUserService.updateUserState(chatId, UserState.NONE);
+                            bot.myExecute(sendMsg.sendMessage(chatId, "Kurs nomi ozgartirildi :<b>" + title + "</b>"));
+                            buildCourseDetails(chatId, courseDetailDTO, categoryDTO, userDTO, id);
+                        }
+                    } else {
+                        bot.myExecute(sendMsg.sendMessage(chatId, "Iltimos sarlavha text korinishida kirgizing!!!"));
+                    }
+                }
+                case AWAITING_EDIT_COURSE_DESCRIPTION -> {
+
+                    if (message.hasText()) {
+                        String description = message.getText();
+
+                        if (description.length() > 1000) {
+                            bot.myExecute(sendMsg.sendMessage(chatId, "Tavsif uzunligi 1000 ta belgidan kop bolmasun"));
+                        } else {
+                            CourseUpdateDTO courseUpdateDTO = new CourseUpdateDTO();
+                            courseUpdateDTO.setDescription(description);
+
+                            CourseDetailDTO courseDetailDTO = courseService.update(id, courseUpdateDTO, user);
+
+                            CategoryDTO categoryDTO = categoryService.read(courseDetailDTO.getCategoryId());
+                            UserDTO userDTO = userService.read(courseDetailDTO.getInstructorId());
+
+                            telegramUserService.updateUserState(chatId, UserState.NONE);
+                            bot.myExecute(sendMsg.sendMessage(chatId, "Kurs tavsifi ozgartirildi :<b>" + description + "</b>"));
+                            buildCourseDetails(chatId, courseDetailDTO, categoryDTO, userDTO, id);
+                        }
+                    } else {
+                        bot.myExecute(sendMsg.sendMessage(chatId, "Iltimos sarlavha text korinishida kirgizing!!!"));
+                    }
+                }
+                case AWAITING_EDIT_COURSE_THUMBNAIL -> {
+                    if (message.hasPhoto()) {
+
+                        AttachmentDTO attachmentDTO = attachmentService.saveTg(message.getPhoto());
+                        CourseUpdateDTO courseUpdateDTO = new CourseUpdateDTO();
+                        courseUpdateDTO.setThumbnailId(attachmentDTO.getId());
+
+                        CourseDetailDTO courseDetailDTO = courseService.update(id, courseUpdateDTO, user);
+
+                        CategoryDTO categoryDTO = categoryService.read(courseDetailDTO.getCategoryId());
+                        UserDTO userDTO = userService.read(courseDetailDTO.getInstructorId());
+
+                        telegramUserService.updateUserState(chatId, UserState.NONE);
+                        bot.myExecute(sendMsg.sendMessage(chatId, "Kurs uchun yangi :<b> Rasm yuklandi </b>"));
+                        buildCourseDetails(chatId, courseDetailDTO, categoryDTO, userDTO, id);
+
+                    } else {
+
+                        bot.myExecute(sendMsg.sendMessage(chatId, "Kurs uchun faqat rasm yuklashingiz mumkin!!!"));
+
+                    }
+                }
+            }
+        }
+
+    }
+
+    private void buildCourseDetails(Long chatId, CourseDetailDTO courseDetailDTO, CategoryDTO categoryDTO, UserDTO userDTO, Long id) {
+        String text = String.format("""
+                        📘 <b>Kurs Tafsilotlari</b>
+                        
+                        🔹 <b>Nomi:</b> %s \s
+                        🔹 <b>Slug:</b> %s \s
+                        🔹 <b>Kategoriya:</b> %s \s
+                        🔹 <b>Mentor :</b> %s \s
+                        
+                        📖 <b>Tavsif:</b> \s
+                        %s \s
+                        
+                        📊 <b>Statistika:</b> \s
+                        - 📚 <b>Modullar:</b> %s \s
+                        - ⭐ <b>Baholash:</b> %s  \s
+                        - 📝 <b>Sharhlar:</b> %s ta \s
+                        
+                        🕒 <b>Qo‘shilgan sana:</b> %s \s
+                        ♻️ <b>Yangilangan sana:</b> %s \s
+                        
+                        ✅ <b>Status:</b> %s
+                        """,
+                courseDetailDTO.getTitle(),
+                courseDetailDTO.getSlug(),
+                categoryDTO.getName(),
+                userDTO.getFirstName() + " " + userDTO.getLastName(),
+                courseDetailDTO.getDescription(),
+                courseDetailDTO.getModulesCount(),
+                generateStars(courseDetailDTO.getReviewSummary().getAverageRating()),
+                courseDetailDTO.getReviewSummary().getCount(),
+                formatDate(courseDetailDTO.getCreatedAt()),
+                formatDate(courseDetailDTO.getUpdatedAt()),
+                courseDetailDTO.isSuccess() ? "Faol" : "Faol emas"
+        );
+
+
+        String backButton = String.join(":",
+                Utils.CallbackData.MY_COURSE_PREFIX,
+                ACTION_COURSE,
+                ACTION_VIEW,
+                id.toString(),
+                Utils.CallbackData.ACTION_PAGE,
+                "0"
+        );
+        String tgFile = courseDetailDTO.getThumbnailUrl();
+        InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorEditCourses(courseDetailDTO, backButton);
+
+        if (tgFile == null) {
+            bot.myExecute(sendMsg.sendMessage(chatId, text, inlineKeyboardMarkup));
+        } else {
+            AttachmentDTO attachmentDTO = attachmentService.read(Long.valueOf(tgFile));
+            bot.myExecute(sendMsg.sendPhoto(chatId, attachmentDTO.getTelegramFileId(), text, inlineKeyboardMarkup));
+            telegramUserService.updateUserState(chatId, UserState.AWAITING_COURSE_CONFIRMATION);
+        }
+    }
+
+    private void handleInstructorContent(Long chatId, Message message, UserState userState) {
+
+        String processKey = String.join(":", ACTION_ADD, LESSON_PREFIX, chatId.toString());
+
+        Optional<Map<String, Object>> allFields = redisTemporaryDataService.getAllFields(processKey);
+        if (allFields.isPresent()) {
+
+            Map<String, Object> stringObjectMap = allFields.get();
+
+            Long lessonId = Long.valueOf(stringObjectMap.get(Utils.CallbackData.LESSON_ID).toString());
+
+            switch (userState) {
+                case AWAITING_ATTACHMENT_CONTENT -> {
+                    if (!message.hasVideo()) {
+                        bot.myExecute(sendMsg.sendMessage(chatId, "Please enter the video URL."));
+                        return;
+                    }
+
+                    Video video = message.getVideo();
+                    attachmentService.saveTgVideoAsync(video, chatId, lessonId);
+
+
+                }
+                case AWAITING_TEXT_CONTENT -> {
+
+                    if (!message.hasText()) {
+                        bot.myExecute(sendMsg.sendMessage(chatId, "Please enter the text URL."));
+                        return;
+                    }
+
+                    String text = message.getText();
+
+                    if (text == null) {
+                        bot.myExecute(sendMsg.sendMessage(chatId, "Please enter the text URL."));
+                        return;
+                    }
+
+                    textContentService.create(new TextContentCreateDTO(lessonId, text));
+
+                }
+            }
+
+        }
     }
 
     private void handleLessonCreationStep(Long chatId, Message message, UserState userState) {
@@ -177,7 +381,7 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
                 telegramUserService.updateUserState(chatId, UserState.AWAITING_COURSE_THUMBNAIL);
                 String nextPrompt = messageService.getMessage(BotMessage.INSTRUCTOR_COURSE_CREATE_THUMBNAIL_PROMPT);
                 InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.isFree();
-                bot.myExecute(sendMsg.sendMessage(chatId, "darslik turi qanday boladi pullik yoki tekinmi",inlineKeyboardMarkup));
+                bot.myExecute(sendMsg.sendMessage(chatId, "darslik turi qanday boladi pullik yoki tekinmi", inlineKeyboardMarkup));
             }
         }
 
@@ -418,13 +622,13 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
         int countFalse = courseRepository.countByInstructorIdAndSuccess(user.getId(), false);
         String text = String.format(
                 """
-                        \uD83D\uDCDA <b>Mening kurslarim</b>
+                        📚 <b>Mening kurslarim</b>
                         
                         📊 <u>Statistika</u>
-                        ━━━━━━━━━━━━━━━━━━━━━━━
+                        ━━━━━━━━━━━━━━━
                         1  <b>To‘liq yaratilgan kurslar:</b> <code>%d</code> ✅
                         2  <b>Tugallanmagan kurslar:</b> <code>%d</code> 🛠
-                        ━━━━━━━━━━━━━━━━━━━━━━━
+                        ━━━━━━━━━━━━━━━━
                         
                         👇 <i>Quyidagi tugmalardan birini tanlang:</i>""",
                 countTrue,
@@ -557,10 +761,31 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
         return formatter.format(amount / 100) + " so'm";
     }
 
+    private String formatDate(Long millis) {
+        if (millis == null) {
+            return "-";
+        }
+        Instant instant = Instant.ofEpochMilli(millis);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
+                .withZone(ZoneId.systemDefault());
+        return formatter.format(instant);
+    }
 
-    @NotNull
-    private static String getProcessKey(String data, String chatId) {
-        return String.join(":", data, chatId);
+    private String generateStars(double rating) {
+        if (rating <= 0) return "☆☆☆☆☆";
+        if (rating > 5) rating = 5;
+
+        int filled = (int) rating; // to‘liq yulduzlar
+        boolean half = (rating - filled) >= 0.5; // yarim yulduz bormi?
+        int empty = 5 - filled - (half ? 1 : 0);
+
+        String filledStar = "⭐";
+        String halfStar = "✩"; // yoki "⭐️" / "✨"
+        String emptyStar = "☆";
+
+        return filledStar.repeat(filled)
+                + (half ? halfStar : "")
+                + emptyStar.repeat(empty);
     }
 
 

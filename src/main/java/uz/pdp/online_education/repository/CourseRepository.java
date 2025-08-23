@@ -77,7 +77,7 @@ public interface CourseRepository extends JpaRepository<Course, Long>, CourseRep
      * @param isSuccess    Kursning holati (true=aktiv, false=noaktiv/tasdiqlanmagan).
      * @return Kurslar soni.
      */
-    @Query(value = "SELECT COUNT(*) FROM courses c WHERE c.instructor_id = :instructorId AND c.success = :isSuccess",
+    @Query(value = "SELECT COUNT(*) FROM courses c WHERE c.instructor_id = :instructorId AND c.success = :isSuccess and c.deleted = false",
             nativeQuery = true)
     int countByInstructorIdAndSuccess(@Param("instructorId") Long instructorId,
                                       @Param("isSuccess") boolean isSuccess);
@@ -109,6 +109,7 @@ public interface CourseRepository extends JpaRepository<Course, Long>, CourseRep
             countQuery = "SELECT COUNT(*) FROM courses c " +
                     "WHERE c.instructor_id = :instructorId " +
                     "AND c.success = :success " +
+                    "AND c.deleted = :true " +
                     "AND c.deleted = false",
             nativeQuery = true
     )

@@ -27,4 +27,14 @@ public class UrlBuilderServiceImpl implements UrlBuilderService {
     public String generateQuizUrl(Long quizId) {
         return baseUrl + QUIZ_PATH + quizId;
     }
+
+    /**
+     * @param accessToken
+     */
+    @Override
+    public String generateQuizCreationUrl(String accessToken) {
+
+        // todo url generate
+        return baseUrl + MODULE_CHECKOUT_PATH + accessToken;
+    }
 }

@@ -44,7 +44,7 @@ public class LessonMapperImpl implements LessonMapper {
         for (Content oneContent : contents) {
             if (oneContent instanceof AttachmentContent attachmentContent) {
                 AttachmentContentSummaryDTO contentDTO = attachmentContentMapper.toAttachmentContentDTO(attachmentContent);
-                contentDTO.setAttachmentUrl(attachmentService.tempLink(attachmentContent.getAttachment().getId(), 5));
+//                contentDTO.setAttachmentUrl(attachmentService.tempLink(attachmentContent.getAttachment().getId(), 5));
                 content.add(contentDTO);
             } else if (oneContent instanceof TextContent textContent) {
                 TextContentResponseDTO dto = textContentMapper.toDTO(textContent);
