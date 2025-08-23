@@ -820,10 +820,8 @@ public class InstructorInlineKeyboardServiceImpl implements InstructorInlineKeyb
      */
     @Override
     public InlineKeyboardMarkup instructorEditCourses(CourseDetailDTO courseDetailDTO, String backButton) {
-
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-
         String startAction = String.join(":",
                 ACTION_EDIT,
                 ACTION_COURSE,
@@ -893,11 +891,8 @@ public class InstructorInlineKeyboardServiceImpl implements InstructorInlineKeyb
         );
         rows.add(button4);
 
-
         inlineKeyboardMarkup.setKeyboard(rows);
         return inlineKeyboardMarkup;
-
-
     }
 
     /**
@@ -905,7 +900,6 @@ public class InstructorInlineKeyboardServiceImpl implements InstructorInlineKeyb
      */
     @Override
     public InlineKeyboardMarkup deleteCourse(Long id) {
-
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
 
@@ -934,7 +928,6 @@ public class InstructorInlineKeyboardServiceImpl implements InstructorInlineKeyb
 
         inlineKeyboardMarkup.setKeyboard(rows);
         return inlineKeyboardMarkup;
-
     }
 
     /**
@@ -978,10 +971,11 @@ public class InstructorInlineKeyboardServiceImpl implements InstructorInlineKeyb
         if (!currentRow.isEmpty()) {
             keyboard.add(currentRow);
         }
+        String[] split = cancelBtn.split(":");
         String paginationBaseCallback = String.join(":",
                 ACTION_EDIT,
                 CATEGORY,
-                "-1"
+                split[2]
 
         );
         // 6. Sahifalash (pagination) va "Orqaga" tugmalarini qo'shamiz
@@ -997,6 +991,240 @@ public class InstructorInlineKeyboardServiceImpl implements InstructorInlineKeyb
         return inlineKeyboardMarkup;
 
 
+    }
+
+    /**
+     * @param moduleDetailDTO
+     * @param backButton
+     * @return
+     */
+    @Override
+    public InlineKeyboardMarkup instructorEditModules(ModuleDetailDTO moduleDetailDTO, String backButton) {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+
+        String startAction = String.join(":",
+                ACTION_EDIT,
+                ACTION_MODULE,
+                moduleDetailDTO.getId().toString()
+        );
+
+        List<InlineKeyboardButton> button1 = List.of(
+                createButton("✏️ Sarlavhani tahrirlash",
+                        String.join(":",
+                                startAction,
+                                TITLE
+                        )
+                )
+        );
+        rows.add(button1);
+
+        List<InlineKeyboardButton> button2 = List.of(
+                createButton("✏️ Tavsifni tahrirlash",
+                        String.join(":",
+                                startAction,
+                                DESCRIPTION
+                        )
+                )
+        );
+        rows.add(button2);
+
+        List<InlineKeyboardButton> button5 = List.of(
+                createButton("✏️ Narxni o`zgartirish",
+                        String.join(":",
+                                startAction,
+                                PRICE
+                        )
+                )
+        );
+        rows.add(button5);
+
+        List<InlineKeyboardButton> button4 = List.of(
+                createButton("⬅️ Orqaga",
+                        String.join(":",
+                                backButton
+                        )
+                )
+        );
+        rows.add(button4);
+        inlineKeyboardMarkup.setKeyboard(rows);
+        return inlineKeyboardMarkup;
+    }
+
+    /**
+     * @param lessonResponseDTO
+     * @param backButton
+     * @return
+     */
+    @Override
+    public InlineKeyboardMarkup instructorEditLessons(LessonResponseDTO lessonResponseDTO, String backButton) {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+
+        String startAction = String.join(":",
+                ACTION_EDIT,
+                LESSON_PREFIX,
+                lessonResponseDTO.getId().toString()
+        );
+
+        List<InlineKeyboardButton> button1 = List.of(
+                createButton("✏️ Sarlavhani tahrirlash",
+                        String.join(":",
+                                startAction,
+                                TITLE
+                        )
+                )
+        );
+        rows.add(button1);
+
+        List<InlineKeyboardButton> button2 = List.of(
+                createButton("✏️ Tavsifni tahrirlash",
+                        String.join(":",
+                                startAction,
+                                DESCRIPTION
+                        )
+                )
+        );
+        rows.add(button2);
+
+        List<InlineKeyboardButton> button5 = List.of(
+                createButton("✏️ Dars turini tahrirlash",
+                        String.join(":",
+                                startAction,
+                                IS_PREE
+                        )
+                )
+        );
+        rows.add(button5);
+
+        List<InlineKeyboardButton> button4 = List.of(
+                createButton("⬅️ Orqaga",
+                        String.join(":",
+                                backButton
+                        )
+                )
+        );
+        rows.add(button4);
+        inlineKeyboardMarkup.setKeyboard(rows);
+        return inlineKeyboardMarkup;
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public InlineKeyboardMarkup lessonEditIsFree(Long id) {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+
+        List<InlineKeyboardButton> button2 = List.of(
+                createButton("🆓 Bepul",
+                        String.join(":",
+                                ACTION_EDIT,
+                                IS_PREE,
+                                id.toString(),
+                                TRUE
+                        )
+                ),
+                createButton("💵 Pullik",
+                        String.join(":",
+                                ACTION_EDIT,
+                                IS_PREE,
+                                id.toString(),
+                                FALSE
+                        )
+                )
+        );
+        rows.add(button2);
+
+        List<InlineKeyboardButton> button1 = List.of(
+                createButton("❌ Bekor qilish",
+                        String.join(":",
+                                ACTION_EDIT,
+                                LESSON_PREFIX,
+                                id.toString()
+                        )
+                )
+        );
+        rows.add(button1);
+
+        inlineKeyboardMarkup.setKeyboard(rows);
+        return inlineKeyboardMarkup;
+    }
+
+    /**
+     * @param id
+     * @return
+     */
+    @Override
+    public InlineKeyboardMarkup deleteModule(Long id) {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+
+
+        List<InlineKeyboardButton> button1 = List.of(
+                createButton("✅ O‘chirish",
+                        String.join(":",
+                                ACTION_DELETE,
+                                ACTION_MODULE,
+                                id.toString(),
+                                TRUE
+                        )
+                ),
+                createButton("❌ bekor qilish",
+                        String.join(":",
+                                ACTION_VIEW, MODULE_ID, id.toString()
+//                                MY_COURSE_PREFIX,
+//                                ACTION_MODULE,
+//                                ACTION_VIEW,
+//                                id.toString(),
+//                                ACTION_PAGE,
+//                                "0"
+                        )
+                )
+        );
+        rows.add(button1);
+
+        inlineKeyboardMarkup.setKeyboard(rows);
+        return inlineKeyboardMarkup;
+
+    }
+
+    /**
+     * @param id
+     * @return
+     */
+    @Override
+    public InlineKeyboardMarkup deleteLesson(Long id) {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+
+
+        List<InlineKeyboardButton> button1 = List.of(
+                createButton("✅ O‘chirish",
+                        String.join(":",
+                                ACTION_DELETE,
+                                LESSON_PREFIX,
+                                id.toString(),
+                                TRUE
+                        )
+                ),
+                createButton("❌ bekor qilish",
+                        String.join(":",
+                                ACTION_VIEW, LESSON_ID, id.toString()
+//                                MY_COURSE_PREFIX,
+//                                ACTION_MODULE,
+//                                ACTION_VIEW,
+//                                id.toString(),
+//                                ACTION_PAGE,
+//                                "0"
+                        )
+                )
+        );
+        rows.add(button1);
+
+        inlineKeyboardMarkup.setKeyboard(rows);
+        return inlineKeyboardMarkup;
     }
 
     /**

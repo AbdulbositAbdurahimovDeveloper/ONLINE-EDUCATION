@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo;
+import uz.pdp.online_education.model.Category;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.telegram.Utils;
@@ -20,6 +21,76 @@ import static uz.pdp.online_education.telegram.Utils.CallbackData.*;
 @Service
 @RequiredArgsConstructor
 public class InlineKeyboardServiceImpl implements InlineKeyboardService {
+
+    /**
+     * @param backCallback 
+     * @return
+     */
+    @Override
+    public InlineKeyboardMarkup courseBrowseMethodMenu(String backCallback) {
+        return null;
+    }
+
+    /**
+     * @param mentorPage 
+     * @param backCallback
+     * @return
+     */
+    @Override
+    public InlineKeyboardMarkup mentorsPageMenu(Page<User> mentorPage, String backCallback) {
+        return null;
+    }
+
+    /**
+     * @param coursePage Kurslar sahifasi. 
+     * @param searchTerm
+     * @param mentorId   Agar bu mentorga tegishli kurslar bo'lsa, o'sha mentorning ID'si. Aks holda null.
+     * @param categoryId
+     * @return
+     */
+    @Override
+    public InlineKeyboardMarkup coursesPageMenu(Page<Course> coursePage, String searchTerm, Long mentorId, Long categoryId) {
+        return null;
+    }
+
+    /**
+     * @param categoryPage 
+     * @param backCallback
+     * @return
+     */
+    @Override
+    public InlineKeyboardMarkup categoriesPageMenu(Page<Category> categoryPage, String backCallback) {
+        return null;
+    }
+
+    /**
+     * @param coursePage 
+     * @return
+     */
+    @Override
+    public InlineKeyboardMarkup allCoursesPageMenu(Page<Course> coursePage) {
+        return null;
+    }
+
+    /**
+     * @param coursePage 
+     * @param mentorId
+     * @return
+     */
+    @Override
+    public InlineKeyboardMarkup coursesByMentorPageMenu(Page<Course> coursePage, Long mentorId) {
+        return null;
+    }
+
+    /**
+     * @param coursePage 
+     * @param categoryId
+     * @return
+     */
+    @Override
+    public InlineKeyboardMarkup coursesByCategoryPageMenu(Page<Course> coursePage, Long categoryId) {
+        return null;
+    }
 
     @Value("${telegram.bot.webapp.url}")
     private String webApp;
@@ -150,7 +221,7 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
         return new InlineKeyboardMarkup(List.of(List.of(listBtn), List.of(searchBtn), List.of(statsBtn), List.of(backBtn)));
     }
 
-    @Override
+//    @Override
     public InlineKeyboardMarkup coursesPageMenu(Page<Course> coursePage, String searchTerm) {
         List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>();
         List<InlineKeyboardButton> numberButtonsRow = new ArrayList<>();

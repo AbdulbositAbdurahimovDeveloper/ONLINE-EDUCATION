@@ -57,4 +57,14 @@ public interface InstructorInlineKeyboardService {
     InlineKeyboardMarkup deleteCourse(Long id);
 
     InlineKeyboardMarkup categorySelect(Page<Category> categories, String cancelBtn);
+
+    InlineKeyboardMarkup instructorEditModules(ModuleDetailDTO moduleDetailDTO, String backButton);
+
+    InlineKeyboardMarkup instructorEditLessons(LessonResponseDTO lessonResponseDTO, String backButton);
+
+    InlineKeyboardMarkup lessonEditIsFree(Long id);
+
+    InlineKeyboardMarkup deleteModule(Long id);
+
+    InlineKeyboardMarkup deleteLesson(Long id);
 }

@@ -91,4 +91,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     long countByModule_Course_Id(Long id);
 
     boolean existsByModule_Course_Id(Long id);
+
+    long countByModule_Id(Long id);
 }
