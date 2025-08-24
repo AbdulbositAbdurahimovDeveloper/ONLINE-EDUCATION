@@ -81,7 +81,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
      * @param instructorId Instructorning IDsi.
      * @return Unikal o'quvchilar soni.
      */
-    @Query("SELECT COUNT(DISTINCT p.user.id) " +
+    @Query("SELECT COUNT(*) " +
             "FROM payment p " +
             "WHERE p.module.course.instructor.id = :instructorId AND p.status = 'SUCCESS'")
     Integer countDistinctPurchasedUsersByInstructorId(@Param("instructorId") Long instructorId);
@@ -93,4 +93,25 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     boolean existsByModule_Course_Id(Long id);
 
     long countByModule_Id(Long id);
+
+    /**
+     * Berilgan mentorning barcha kurslari bo'yicha unikal o'quvchilar sonini
+     * JPQL so'rovi yordamida hisoblaydi. JOIN'lar aniq ko'rsatilgan.
+     *
+     * @param mentorId Mentor (instruktor) ID'si.
+     * @param status   Hisobga olinadigan to'lov statusi.
+     * @return Unikal o'quvchilar soni.
+     */
+    @Query("""
+                SELECT COUNT(DISTINCT p.user.id)
+                FROM payment p
+                JOIN p.module m
+                JOIN m.course c
+                WHERE c.instructor.id = :mentorId
+                  AND p.status = :status
+            """)
+    Long countTotalStudentsByMentor(
+            @Param("mentorId") Long mentorId,
+            @Param("status") TransactionStatus status
+    );
 }

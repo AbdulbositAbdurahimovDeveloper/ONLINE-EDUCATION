@@ -1,5 +1,8 @@
 package uz.pdp.online_education.telegram;
 
+import java.util.List;
+import java.util.Random;
+
 /**
  * A central repository for application-wide constants.
  * This interface consolidates constants related to bot commands, UI text, callback data structures,
@@ -119,6 +122,8 @@ public interface Utils {
         String ACTION_ADD = "add";
         String ACTION_EDIT = "edit";
         String ACTION_DELETE = "del";
+        String ACTION_STUDENT = "std";
+        String ACTION_STUDENT_ID = "std_id";
 
         // --- SPECIFIC ACTIONS & KEYS ---
         /**
@@ -144,7 +149,7 @@ public interface Utils {
         String THUMBNAIL_ID = "thumbnail_id";
         String CATEGORY_ID = "category_id";
         String MODULE_ID = "module_id";
-        String LESSON_ID =  "lesson_id";
+        String LESSON_ID = "lesson_id";
 
         String TITLE = "title";
         String DESCRIPTION = "description";
@@ -156,7 +161,7 @@ public interface Utils {
         String COURSE_LIST_CALLBACK = "admin:courses:list:init";
 
         String IS_PREE = "is_pree";
-        String TRUE =  "true";
+        String TRUE = "true";
         String FALSE = "false";
 
         String PHOTO = "photo";
@@ -265,6 +270,16 @@ public interface Utils {
                 return CIRCLED_NUMBERS[number];
             }
             return number + ".";
+        }
+
+        List<String> BOOK_EMOJIS = List.of(
+                "📘", "📗", "📙", "📒", "📕", "📔", "📓"
+//                , "📚", "📖"
+        );
+
+        static String randomBookEmoji() {
+            Random random = new Random();
+            return BOOK_EMOJIS.get(random.nextInt(BOOK_EMOJIS.size()));
         }
     }
 }

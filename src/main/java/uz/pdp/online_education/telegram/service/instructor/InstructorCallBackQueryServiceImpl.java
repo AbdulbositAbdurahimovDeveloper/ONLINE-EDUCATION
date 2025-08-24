@@ -11,6 +11,7 @@ import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import uz.pdp.online_education.config.security.JwtService;
+import uz.pdp.online_education.enums.TransactionStatus;
 import uz.pdp.online_education.model.Abs.AbsDateEntity;
 import uz.pdp.online_education.model.Category;
 import uz.pdp.online_education.model.Course;
@@ -20,6 +21,7 @@ import uz.pdp.online_education.payload.category.CategoryDTO;
 import uz.pdp.online_education.payload.content.attachmentContent.AttachmentDTO;
 import uz.pdp.online_education.payload.course.CourseCreateDTO;
 import uz.pdp.online_education.payload.course.CourseDetailDTO;
+import uz.pdp.online_education.payload.course.CourseStudentStatsProjection;
 import uz.pdp.online_education.payload.course.CourseUpdateDTO;
 import uz.pdp.online_education.payload.lesson.LessonCreatDTO;
 import uz.pdp.online_education.payload.lesson.LessonResponseDTO;
@@ -29,6 +31,7 @@ import uz.pdp.online_education.payload.module.ModuleDetailDTO;
 import uz.pdp.online_education.payload.review.ReviewSummaryDTO;
 import uz.pdp.online_education.payload.text.TextContentResponseDTO;
 import uz.pdp.online_education.payload.user.UserDTO;
+import uz.pdp.online_education.payload.user.UserProjection;
 import uz.pdp.online_education.repository.*;
 import uz.pdp.online_education.service.interfaces.*;
 import uz.pdp.online_education.telegram.Utils;
@@ -57,6 +60,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static uz.pdp.online_education.telegram.Utils.CallbackData.*;
+import static uz.pdp.online_education.telegram.Utils.Numbering.randomBookEmoji;
 
 
 @Slf4j
@@ -92,6 +96,7 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
     private final ModuleRepository moduleRepository;
     private final PaymentService paymentService;
     private final LessonRepository lessonRepository;
+    private final UserRepository userRepository;
 
 
     @Override
@@ -114,6 +119,7 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
 
             switch (prefix) {
                 case DELETED -> bot.myExecute(sendMsg.deleteMessage(chatId, messageId));
+                case BACK_TO_MAIN_MENU -> backToMain(chatId, messageId);
                 case AUTH_PREFIX -> handleAuthCallback(user, chatId, messageId, data);
                 case MY_COURSE_PREFIX -> instructorMyCourseHandle(chatId, user, messageId, data, queryData);
                 case STUDENT_PREFIX -> instructorMyStudentHandle(chatId, user, messageId, data, queryData);
@@ -1194,6 +1200,41 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
     private void instructorActionViewHandle(Long chatId, User user, Integer messageId, String[] data, String queryData) {
         String type = data[1];
         switch (type) {
+            case ACTION_STUDENT -> {
+
+                if (data.length > 3) {
+                    int pageNumber = Integer.parseInt(data[3]);
+                    long count = paymentRepository.countTotalStudentsByMentor(user.getId(), TransactionStatus.SUCCESS);
+                    PageRequest pageable = PageRequest.of(pageNumber, 10);
+                    Page<CourseStudentStatsProjection> stats = courseRepository.findCourseStatsByInstructor(user.getId(), TransactionStatus.SUCCESS.name(), pageable);
+
+                    String built = buildStudentsDashboardText(count, stats);
+                    String backButton = String.join(":", BACK_TO_MAIN_MENU);
+                    InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorMyStudents(stats, backButton);
+                    bot.myExecute(sendMsg.editMessage(chatId, messageId, built, inlineKeyboardMarkup));
+                } else {
+                    Long courseId = Long.valueOf(data[2]);
+
+                    String built = buildCourseDetail(
+                            courseService.read(courseId),
+                            courseRepository.findCourseStatsById(courseId, TransactionStatus.SUCCESS.name())
+                    );
+                    String backButton = String.join(":", ACTION_VIEW, ACTION_STUDENT, ACTION_PAGE, "0");
+                    InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorCourseViewStudents(courseId, backButton);
+                    bot.myExecute(sendMsg.editMessage(chatId, messageId, built, inlineKeyboardMarkup));
+                }
+            }
+            case ACTION_STUDENT_ID -> {
+                Long id = Long.valueOf(data[2]);
+                int pageNumber = Integer.parseInt(data[4]);
+                Page<UserProjection> users = userRepository.findEnrolledStudentProfilesByCourseId(id, TransactionStatus.SUCCESS.name(), PageRequest.of(pageNumber, 5));
+
+                String built = formatUserPage(users);
+
+                String backButton = String.join(":", ACTION_VIEW, ACTION_STUDENT, id.toString());
+                InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorStudentCourseById(users, id, backButton);
+                bot.myExecute(sendMsg.editMessage(chatId, messageId, built, inlineKeyboardMarkup));
+            }
             case ACTION_COURSE -> {
                 int countTrue = courseRepository.countByInstructorIdAndSuccess(user.getId(), true);
                 int countFalse = courseRepository.countByInstructorIdAndSuccess(user.getId(), false);
@@ -1297,11 +1338,147 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
                 Long id = Long.valueOf(data[2]);
                 TextContentResponseDTO responseDTO = textContentService.getById(id);
 
-                InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.createSingleButtonKeyboard("delete", DELETED);
+                InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.createSingleButtonKeyboard("🗑 Xabarni ochirish", DELETED);
                 bot.myExecute(sendMsg.sendMessage(chatId, responseDTO.getText(), inlineKeyboardMarkup));
             }
         }
     }
+
+    private void backToMain(Long chatId, Integer messageId) {
+
+        ReplyKeyboardMarkup replyKeyboardMarkup = replyKeyboardService.buildMentorMenu();
+        bot.myExecute(sendMsg.deleteMessage(chatId, messageId));
+        bot.myExecute(sendMsg.sendMessage(chatId, "Bosh menyu!", replyKeyboardMarkup));
+
+    }
+
+
+    public String formatUserPage(Page<UserProjection> usersPage) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("👥 <b>O'quvchilar ro'yxati</b>\n");
+        sb.append("Sahifa: ").append(usersPage.getNumber() + 1)
+                .append(" / ").append(usersPage.getTotalPages()).append("\n\n");
+
+        int index = usersPage.getNumber() * usersPage.getSize();
+
+        for (UserProjection user : usersPage.getContent()) {
+            index++;
+            sb.append(index).append(". ");
+
+            // Agar FirstName + LastName bo‘lsa
+            if (user.getFirstName() != null || user.getLastName() != null) {
+                sb.append("👤 <b>")
+                        .append(user.getFirstName() != null ? user.getFirstName() : "")
+                        .append(" ")
+                        .append(user.getLastName() != null ? user.getLastName() : "")
+                        .append("</b>\n");
+            } else {
+                sb.append("👤 <b>").append(user.getUsername()).append("</b>\n");
+            }
+
+            // Email
+            if (user.getEmail() != null) {
+                sb.append("📧 ").append(user.getEmail()).append("\n");
+            }
+
+            // Telefon
+            if (user.getPhoneNumber() != null) {
+                sb.append("📱 ").append(user.getPhoneNumber()).append("\n");
+            }
+
+            // Bio
+            if (user.getBio() != null) {
+                sb.append("📝 ").append(user.getBio()).append("\n");
+            }
+
+            // Reyting
+            if (user.getRating() != null) {
+                sb.append("⭐ Reyting: ").append(generateStars(user.getRating())).append("\n");
+            }
+
+            sb.append("〰️〰️〰️〰️〰️\n");
+        }
+
+        return sb.toString();
+    }
+
+
+    public String buildCourseDetail(CourseDetailDTO detail,
+                                    CourseStudentStatsProjection stats) {
+        StringBuilder sb = new StringBuilder();
+
+        // 📘 Kitob emoji — random qilmoqchi bo‘lsangiz, o‘sha oldingi Utils.getRandomBookEmoji() dan foydalaning
+        sb.append("📘 <b>").append(detail.getTitle()).append("</b>\n\n");
+
+        if (detail.getDescription() != null) {
+            sb.append("📝 ").append(detail.getDescription()).append("\n\n");
+        }
+
+        UserDTO userDTO = userService.read(detail.getId());
+        CategoryDTO categoryDTO = categoryService.read(detail.getCategoryId());
+
+        sb.append("👨‍🏫 <b>Mentor ID:</b> ").append(userDTO.getLastName()).append(" ").append(userDTO.getFirstName()).append("\n");
+        sb.append("📂 <b>Kategoriya ID:</b> ").append(categoryDTO.getName()).append("\n");
+        sb.append("📚 <b>Modullar soni:</b> ").append(detail.getModulesCount()).append("\n\n");
+
+        // Statistikalar
+        if (stats != null) {
+            sb.append("📊 <b>Statistika:</b>\n");
+            sb.append("👥 Unikal o‘quvchilar: <b>").append(stats.getUnique_student_count()).append("</b>\n");
+            sb.append("💳 Jami sotuvlar: <b>").append(stats.getTotal_sales_count()).append("</b>\n\n");
+        }
+
+        // Review summary
+        if (detail.getReviewSummary() != null) {
+            sb.append("⭐️ Reyting: ").append(generateStars(detail.getReviewSummary().getAverageRating()))
+                    .append(" (").append(detail.getReviewSummary().getCount()).append(" ta sharh)\n\n");
+        }
+
+        // Vaqt (agar kerak bo‘lsa human-readable formatga aylantirishingiz mumkin)
+        sb.append("📅 Yaratilgan: ").append(formatDate(detail.getCreatedAt())).append("\n");
+
+        return sb.toString();
+    }
+
+    private String buildStudentsDashboardText(long totalUniqueStudents, Page<CourseStudentStatsProjection> courseStatsPage) {
+        // --- Kurslar ro'yxatini formatlaymiz ---
+        List<CourseStudentStatsProjection> courseStats = courseStatsPage.getContent();
+        StringBuilder coursesFormattedText = new StringBuilder();
+        if (courseStats.isEmpty()) {
+            coursesFormattedText.append("<i>Hozircha birorta ham kursingizga o'quvchilar yozilmagan.</i>");
+        } else {
+
+            for (CourseStudentStatsProjection stat : courseStats) {
+                coursesFormattedText.append(String.format(
+                        "%s <b>%s:</b> %d ta o'quvchi\n\n",
+                        randomBookEmoji(),
+                        escapeHtml(stat.getCourse_title()),
+                        stat.getUnique_student_count() != null ? stat.getUnique_student_count() : 0 // null'dan himoya
+                ));
+            }
+        }
+
+        // --- Asosiy shablonni to'ldiramiz ---
+        String dashboardTemplate = """
+                🎓 <b>O'quvchilarim Sahifasi</b>
+                
+                Sizda jami <b>%d ta</b> unikal o'quvchi mavjud.
+                
+                〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️
+                
+                📊 <b>Kurslar bo'yicha statistika:</b>
+                
+                %s
+                
+                <i>Quyidagi amallardan birini tanlashingiz mumkin:</i>""";
+
+        return String.format(
+                dashboardTemplate,
+                totalUniqueStudents,
+                coursesFormattedText.toString().trim()
+        );
+    }
+
 
     private String buildLessonsPage(PageDTO<LessonResponseDTO> page) {
         StringBuilder sb = new StringBuilder();
@@ -1579,5 +1756,15 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
         return filledStar.repeat(filled)
                 + (half ? halfStar : "")
                 + emptyStar.repeat(empty);
+    }
+
+    /**
+     * Matndagi maxsus HTML belgilarini xavfsiz holatga keltiradi.
+     */
+    private static String escapeHtml(String text) {
+        if (text == null) return "";
+        return text.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;");
     }
 }

@@ -6,8 +6,10 @@ import uz.pdp.online_education.model.Category;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.payload.PageDTO;
 import uz.pdp.online_education.payload.course.CourseDetailDTO;
+import uz.pdp.online_education.payload.course.CourseStudentStatsProjection;
 import uz.pdp.online_education.payload.lesson.LessonResponseDTO;
 import uz.pdp.online_education.payload.module.ModuleDetailDTO;
+import uz.pdp.online_education.payload.user.UserProjection;
 
 public interface InstructorInlineKeyboardService {
     InlineKeyboardMarkup dashboardMenu();
@@ -67,4 +69,10 @@ public interface InstructorInlineKeyboardService {
     InlineKeyboardMarkup deleteModule(Long id);
 
     InlineKeyboardMarkup deleteLesson(Long id);
+
+    InlineKeyboardMarkup instructorMyStudents(Page<CourseStudentStatsProjection> stats, String backButton);
+
+    InlineKeyboardMarkup instructorCourseViewStudents(Long courseId, String backButton);
+
+    InlineKeyboardMarkup instructorStudentCourseById(Page<UserProjection> users, Long id, String backButton);
 }
