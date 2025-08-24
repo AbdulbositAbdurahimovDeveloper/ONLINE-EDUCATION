@@ -10,10 +10,13 @@ import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.payload.PageDTO;
 import uz.pdp.online_education.payload.content.ContentDTO;
 import uz.pdp.online_education.payload.course.CourseDetailDTO;
+import uz.pdp.online_education.payload.course.CourseStudentStatsProjection;
 import uz.pdp.online_education.payload.lesson.LessonResponseDTO;
 import uz.pdp.online_education.payload.module.ModuleDetailDTO;
+import uz.pdp.online_education.payload.user.UserProjection;
 import uz.pdp.online_education.service.interfaces.CourseService;
 import uz.pdp.online_education.telegram.Utils;
+import uz.pdp.online_education.telegram.service.UrlBuilderService;
 import uz.pdp.online_education.telegram.service.instructor.template.InstructorInlineKeyboardService;
 
 import java.util.ArrayList;
@@ -25,9 +28,11 @@ import static uz.pdp.online_education.telegram.Utils.CallbackData.*;
 public class InstructorInlineKeyboardServiceImpl implements InstructorInlineKeyboardService {
 
     private final CourseService courseService;
+    private final UrlBuilderService urlBuilderService;
 
-    public InstructorInlineKeyboardServiceImpl(CourseService courseService) {
+    public InstructorInlineKeyboardServiceImpl(CourseService courseService, UrlBuilderService urlBuilderService) {
         this.courseService = courseService;
+        this.urlBuilderService = urlBuilderService;
     }
 
     /**
@@ -780,7 +785,7 @@ public class InstructorInlineKeyboardServiceImpl implements InstructorInlineKeyb
             if (content.getContentType().equals("QUIZ")) {
 
                 InlineKeyboardButton keyboardButton = new InlineKeyboardButton(content.getContentType());
-                keyboardButton.setUrl("url bolishi kerak");
+                keyboardButton.setUrl(urlBuilderService.generateQuizCreationUrl("string"));
                 List<InlineKeyboardButton> button = List.of(keyboardButton);
                 rows.add(button);
 
@@ -937,7 +942,6 @@ public class InstructorInlineKeyboardServiceImpl implements InstructorInlineKeyb
      */
     @Override
     public InlineKeyboardMarkup categorySelect(Page<Category> categories, String cancelBtn) {
-
         // 1. Asosiy klaviatura va tugmalar qatorlari uchun ro'yxatlarni yaratamiz
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
@@ -989,8 +993,6 @@ public class InstructorInlineKeyboardServiceImpl implements InstructorInlineKeyb
         // 7. Tayyor klaviaturani qaytaramiz
         inlineKeyboardMarkup.setKeyboard(keyboard);
         return inlineKeyboardMarkup;
-
-
     }
 
     /**
@@ -1225,6 +1227,130 @@ public class InstructorInlineKeyboardServiceImpl implements InstructorInlineKeyb
 
         inlineKeyboardMarkup.setKeyboard(rows);
         return inlineKeyboardMarkup;
+    }
+
+    /**
+     * @param stats
+     * @param backButton
+     * @return {@return }
+     */
+    @Override
+    public InlineKeyboardMarkup instructorMyStudents(Page<CourseStudentStatsProjection> stats, String backButton) {
+        // 1. Asosiy klaviatura va tugmalar qatorlari uchun ro'yxatlarni yaratamiz
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        final int buttonsPerRow = 5;
+        List<InlineKeyboardButton> currentRow = new ArrayList<>();
+        int itemIndex = 1;
+
+        // 4. Har bir kategoriya uchun FAQAAT RAQAMDAN iborat tugma yasaymiz
+        for (CourseStudentStatsProjection CourseStudentStatsProjection : stats.getContent()) {
+            String buttonText = Utils.Numbering.toEmoji(itemIndex);
+
+            String callbackData = String.join(":",
+                    ACTION_VIEW,
+                    ACTION_STUDENT,
+                    CourseStudentStatsProjection.getCourse_id().toString()
+            );
+
+            // Tugmani yaratib, joriy qatorga qo'shamiz
+            currentRow.add(createButton(buttonText, callbackData));
+            itemIndex++;
+
+            // Agar joriy qator to'lsa (5 ta tugma bo'lsa), uni klaviaturaga qo'shamiz
+            if (currentRow.size() == buttonsPerRow) {
+                keyboard.add(currentRow);
+                currentRow = new ArrayList<>(); // va yangi qator ochamiz
+            }
+        }
+
+        // 5. Sikl tugagandan so'ng, oxirgi qator to'liq bo'lmasa ham uni qo'shib qo'yamiz
+        if (!currentRow.isEmpty()) {
+            keyboard.add(currentRow);
+        }
+        String paginationBaseCallback = String.join(":",
+                ACTION_VIEW,
+                ACTION_STUDENT
+
+        );
+        // 6. Sahifalash (pagination) va "Orqaga" tugmalarini qo'shamiz
+        List<InlineKeyboardButton> paginationRow = createPaginationRow(stats, paginationBaseCallback);
+        if (!paginationRow.isEmpty()) {
+            keyboard.add(paginationRow);
+        }
+
+        keyboard.add(List.of(createButton("⬅️ Orqaga", backButton)));
+
+        // 7. Tayyor klaviaturani qaytaramiz
+        inlineKeyboardMarkup.setKeyboard(keyboard);
+        return inlineKeyboardMarkup;
+    }
+
+    /**
+     * @param courseId
+     * @param backButton
+     * @return
+     */
+    @Override
+    public InlineKeyboardMarkup instructorCourseViewStudents(Long courseId, String backButton) {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+
+
+        List<InlineKeyboardButton> button1 = List.of(
+                createButton("👥 O‘quvchilar",
+                        String.join(":",
+                                ACTION_VIEW,
+                                ACTION_STUDENT_ID,
+                                courseId.toString(),
+                                ACTION_PAGE,
+                                "0"
+                        )
+                )
+        );
+        rows.add(button1);
+
+        rows.add(List.of(createButton("⬅️ Orqaga", backButton)));
+
+
+        inlineKeyboardMarkup.setKeyboard(rows);
+        return inlineKeyboardMarkup;
+
+
+    }
+
+    /**
+     * @param users
+     * @param id
+     * @param backButton
+     * @return
+     */
+    @Override
+    public InlineKeyboardMarkup instructorStudentCourseById(Page<UserProjection> users, Long id, String backButton) {
+        // 1. Asosiy klaviatura va tugmalar qatorlari uchun ro'yxatlarni yaratamiz
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        String paginationBaseCallback = String.join(":",
+                ACTION_VIEW,
+                ACTION_STUDENT_ID,
+                id.toString()
+
+        );
+        // 6. Sahifalash (pagination) va "Orqaga" tugmalarini qo'shamiz
+        List<InlineKeyboardButton> paginationRow = createPaginationRow(users, paginationBaseCallback);
+        if (!paginationRow.isEmpty()) {
+            keyboard.add(paginationRow);
+        }
+
+        keyboard.add(List.of(createButton("⬅️ Orqaga", backButton)));
+
+        // 7. Tayyor klaviaturani qaytaramiz
+        inlineKeyboardMarkup.setKeyboard(keyboard);
+        return inlineKeyboardMarkup;
+
+
     }
 
     /**

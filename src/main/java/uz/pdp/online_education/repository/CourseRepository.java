@@ -2,14 +2,12 @@ package uz.pdp.online_education.repository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import uz.pdp.online_education.model.Course;
-import uz.pdp.online_education.payload.course.CourseWithRatingDTO;
+import uz.pdp.online_education.payload.course.CourseStudentStatsProjection;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -122,8 +120,9 @@ public interface CourseRepository extends JpaRepository<Course, Long>, CourseRep
     /**
      * Berilgan qidiruv matni bo'yicha kurslarni sarlavhasi (title)
      * orqali (case-insensitive) qidiradi.
+     *
      * @param searchTerm Qidiruv uchun matn
-     * @param pageable Sahifalash uchun ma'lumot
+     * @param pageable   Sahifalash uchun ma'lumot
      * @return Topilgan kurslar sahifasi
      */
     @Query("SELECT c FROM courses c WHERE LOWER(c.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) AND c.deleted = false")
@@ -145,4 +144,73 @@ public interface CourseRepository extends JpaRepository<Course, Long>, CourseRep
 
 
     Page<Course> findAllByCategoryIdAndDeletedFalse(Long categoryId, Pageable pageable);
+
+
+    @Query(
+            value = """
+                        SELECT
+                            c.id AS course_id,
+                            c.title AS course_title,
+                            COUNT(DISTINCT p.user_id) AS unique_student_count,
+                            COUNT(p.id) AS total_sales_count
+                        FROM
+                            courses c
+                        LEFT JOIN
+                            modules m ON c.id = m.course_id
+                        LEFT JOIN
+                            payment p ON m.id = p.module_id AND p.status = :status
+                        WHERE
+                            c.instructor_id = :mentorId
+                        GROUP BY
+                            c.id, c.title
+                    """,
+            countQuery = """
+                        SELECT COUNT(*) FROM (
+                            SELECT c.id
+                            FROM courses c
+                            WHERE c.instructor_id = :mentorId
+                            GROUP BY c.id
+                        ) AS course_count
+                    """,
+            nativeQuery = true
+    )
+    Page<CourseStudentStatsProjection> findCourseStatsByInstructor(
+            @Param("mentorId") Long mentorId,
+            @Param("status") String status,
+            Pageable pageable
+    );
+
+    /**
+     * Berilgan bitta kurs uchun unikal o'quvchilar va jami sotuvlar sonini hisoblaydi.
+     * Nativ SQL so'rovidan foydalanadi.
+     *
+     * @param courseId  Statistikasi olinishi kerak bo'lgan kursning ID'si.
+     * @param status    Hisobga olinadigan to'lov statusi (masalan, "SUCCESS").
+     * @return Kurs statistikasi bilan to'ldirilgan Projection interfeysi. Agar kurs topilmasa
+     *         yoki sotuvlar bo'lmasa, sonlar 0 bo'lib qaytishi mumkin.
+     */
+    @Query(
+            value = """
+                        SELECT
+                            c.id AS course_id,
+                            c.title AS course_title,
+                            COUNT(DISTINCT p.user_id) AS unique_student_count,
+                            COUNT(p.id) AS total_sales_count
+                        FROM
+                            courses c
+                        LEFT JOIN
+                            modules m ON c.id = m.course_id
+                        LEFT JOIN
+                            payment p ON m.id = p.module_id AND p.status = :status
+                        WHERE
+                            c.id = :courseId
+                        GROUP BY
+                            c.id, c.title
+                    """,
+            nativeQuery = true
+    )
+    CourseStudentStatsProjection findCourseStatsById(
+            @Param("courseId") Long courseId,
+            @Param("status") String status
+    );
 }

@@ -3,6 +3,9 @@ package uz.pdp.online_education.telegram.service.instructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -12,11 +15,14 @@ import org.telegram.telegrambots.meta.api.objects.Video;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import uz.pdp.online_education.enums.Role;
+import uz.pdp.online_education.enums.TransactionStatus;
+import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.model.UserProfile;
 import uz.pdp.online_education.payload.category.CategoryDTO;
 import uz.pdp.online_education.payload.content.attachmentContent.AttachmentDTO;
 import uz.pdp.online_education.payload.course.CourseDetailDTO;
+import uz.pdp.online_education.payload.course.CourseStudentStatsProjection;
 import uz.pdp.online_education.payload.course.CourseUpdateDTO;
 import uz.pdp.online_education.payload.lesson.LessonResponseDTO;
 import uz.pdp.online_education.payload.lesson.LessonUpdateDTO;
@@ -44,11 +50,10 @@ import java.text.DecimalFormat;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static uz.pdp.online_education.telegram.Utils.CallbackData.*;
+import static uz.pdp.online_education.telegram.Utils.Numbering.randomBookEmoji;
 import static uz.pdp.online_education.telegram.Utils.ReplyButtons.*;
 
 @Slf4j
@@ -900,7 +905,56 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
     }
 
     private void instructorMyStudentHandle(Long chatId, User user) {
+        long count = paymentRepository.countTotalStudentsByMentor(user.getId(), TransactionStatus.SUCCESS);
 
+        PageRequest pageable = PageRequest.of(0, 10);
+        Page<CourseStudentStatsProjection> stats = courseRepository.findCourseStatsByInstructor(user.getId(), TransactionStatus.SUCCESS.name(), pageable);
+
+        String built = buildStudentsDashboardText(count, stats);
+        String backButton = String.join(":", BACK_TO_MAIN_MENU);
+        InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorMyStudents(stats, backButton);
+        bot.myExecute(sendMsg.sendMessage(chatId, built, inlineKeyboardMarkup));
+
+
+    }
+
+    private static String buildStudentsDashboardText(long totalUniqueStudents, Page<CourseStudentStatsProjection> courseStatsPage) {
+        // --- Kurslar ro'yxatini formatlaymiz ---
+        List<CourseStudentStatsProjection> courseStats = courseStatsPage.getContent();
+        StringBuilder coursesFormattedText = new StringBuilder();
+        if (courseStats.isEmpty()) {
+            coursesFormattedText.append("<i>Hozircha birorta ham kursingizga o'quvchilar yozilmagan.</i>");
+        } else {
+
+            for (CourseStudentStatsProjection stat : courseStats) {
+                coursesFormattedText.append(String.format(
+                        "%s <b>%s:</b> %d ta o'quvchi\n\n",
+                        randomBookEmoji(),
+                        escapeHtml(stat.getCourse_title()),
+                        stat.getUnique_student_count() != null ? stat.getUnique_student_count() : 0 // null'dan himoya
+                ));
+            }
+        }
+
+        // --- Asosiy shablonni to'ldiramiz ---
+        String dashboardTemplate = """
+                🎓 <b>O'quvchilarim Sahifasi</b>
+                
+                Sizda jami <b>%d ta</b> unikal o'quvchi mavjud.
+                
+                〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️
+                
+                📊 <b>Kurslar bo'yicha statistika:</b>
+                
+                %s
+                
+                <i>Quyidagi amallardan birini tanlashingiz mumkin:</i>""";
+
+        return String.format(
+                dashboardTemplate,
+                totalUniqueStudents,
+                coursesFormattedText.toString().trim()
+        );
     }
 
     private void instructorReviewsHandle(Long chatId, User user) {
@@ -1047,6 +1101,15 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
         return s == null ? "" : s;
     }
 
+    /**
+     * Matndagi maxsus HTML belgilarini xavfsiz holatga keltiradi.
+     */
+    private static String escapeHtml(String text) {
+        if (text == null) return "";
+        return text.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;");
+    }
 
     /**
      * Retrieves an existing TelegramUser or creates a new one if not found.

@@ -1,7 +1,5 @@
 package uz.pdp.online_education.repository;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +9,7 @@ import uz.pdp.online_education.enums.Role;
 import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.payload.AdminDashboardDTO;
 import uz.pdp.online_education.payload.UserInfo;
+import uz.pdp.online_education.payload.user.UserProjection;
 
 import java.util.List;
 import java.util.Optional;
@@ -74,18 +73,64 @@ public interface UserRepository extends JpaRepository<User, Long> {
     /**
      * Berilgan qidiruv matni bo'yicha foydalanuvchilarni qidiradi.
      * Qidiruv username, email, ism va familiya bo'yicha (case-insensitive) amalga oshiriladi.
+     *
      * @param searchTerm Qidiruv uchun matn
-     * @param pageable Sahifalash uchun ma'lumot
+     * @param pageable   Sahifalash uchun ma'lumot
      * @return Topilgan foydalanuvchilar sahifasi
      */
     @Query("""
-        SELECT u FROM users u JOIN u.profile p WHERE
-        LOWER(u.username) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR
-        LOWER(p.email) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR
-        LOWER(p.firstName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR
-        LOWER(p.lastName) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
-    """)
+                SELECT u FROM users u JOIN u.profile p WHERE
+                LOWER(u.username) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR
+                LOWER(p.email) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR
+                LOWER(p.firstName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR
+                LOWER(p.lastName) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
+            """)
     Page<User> searchUsers(@Param("searchTerm") String searchTerm, Pageable pageable);
 
     Page<User> findAllByRole(Role role, Pageable pageable);
+
+    @Query(
+            value = """
+                        SELECT DISTINCT
+                            u.id AS id,
+                            u.username AS username,
+                            u.role AS role,
+                            up.first_name AS firstName,
+                            up.last_name AS lastName,
+                            up.email AS email,
+                            up.phone_number AS phoneNumber,
+                            up.bio AS bio,
+                            up.profile_picture_id AS profilePictureId,
+                            u.created_at AS createdAt,
+                            u.updated_at AS updatedAt,
+                            r.rating AS rating
+                        FROM
+                            users u
+                        INNER JOIN
+                            payment p ON u.id = p.user_id
+                        INNER JOIN
+                            modules m ON p.module_id = m.id
+                        LEFT JOIN
+                            user_profiles up ON u.id = up.user_id
+                        LEFT JOIN
+                            reviews r ON u.id = r.user_id AND m.course_id = r.course_id
+                        WHERE
+                            m.course_id = :courseId
+                            AND p.status = :status
+                    """,
+            countQuery = """
+                        SELECT COUNT(DISTINCT u.id)
+                        FROM users u
+                        INNER JOIN payment p ON u.id = p.user_id
+                        INNER JOIN modules m ON p.module_id = m.id
+                        WHERE m.course_id = :courseId
+                          AND p.status = :status
+                    """,
+            nativeQuery = true
+    )
+    Page<UserProjection> findEnrolledStudentProfilesByCourseId(
+            @Param("courseId") Long courseId,
+            @Param("status") String status,
+            Pageable pageable
+    );
 }
