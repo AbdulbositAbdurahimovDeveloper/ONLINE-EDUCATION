@@ -15,7 +15,7 @@ public interface ContactMessageMapper {
 
     ContactMessageResponseDTO toDto(ContactMessage message);
 
-    ContactMessage toEntity(ContactMessageRequestDTO dto);
+     ContactMessage toEntity(ContactMessageRequestDTO dto);
 
     void updateEntityFromDto(ContactMessageRequestDTO dto, @MappingTarget ContactMessage entity);
 }
