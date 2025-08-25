@@ -6,7 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import uz.pdp.online_education.model.Course;
-import uz.pdp.online_education.payload.course.CourseStudentStatsProjection;
+import uz.pdp.online_education.payload.projection.CourseStudentStatsProjection;
+import uz.pdp.online_education.payload.projection.CourseReviewStatsProjection;
 
 import java.util.Optional;
 import java.util.Set;
@@ -184,10 +185,10 @@ public interface CourseRepository extends JpaRepository<Course, Long>, CourseRep
      * Berilgan bitta kurs uchun unikal o'quvchilar va jami sotuvlar sonini hisoblaydi.
      * Nativ SQL so'rovidan foydalanadi.
      *
-     * @param courseId  Statistikasi olinishi kerak bo'lgan kursning ID'si.
-     * @param status    Hisobga olinadigan to'lov statusi (masalan, "SUCCESS").
+     * @param courseId Statistikasi olinishi kerak bo'lgan kursning ID'si.
+     * @param status   Hisobga olinadigan to'lov statusi (masalan, "SUCCESS").
      * @return Kurs statistikasi bilan to'ldirilgan Projection interfeysi. Agar kurs topilmasa
-     *         yoki sotuvlar bo'lmasa, sonlar 0 bo'lib qaytishi mumkin.
+     * yoki sotuvlar bo'lmasa, sonlar 0 bo'lib qaytishi mumkin.
      */
     @Query(
             value = """
@@ -212,5 +213,35 @@ public interface CourseRepository extends JpaRepository<Course, Long>, CourseRep
     CourseStudentStatsProjection findCourseStatsById(
             @Param("courseId") Long courseId,
             @Param("status") String status
+    );
+
+    @Query(
+            value = """
+                        SELECT
+                            c.id AS courseId,
+                            c.title AS courseTitle,
+                            AVG(r.rating) AS averageRating,
+                            COUNT(r.rating) AS totalReviews,
+                            COUNT(r.id) AS totalComments,
+                            COUNT(DISTINCT r.user_id) AS activeStudents
+                        FROM
+                            courses c
+                        LEFT JOIN
+                            reviews r ON c.id = r.course_id
+                        WHERE
+                            c.instructor_id = :mentorId
+                        GROUP BY
+                            c.id, c.title
+                    """,
+            countQuery = """
+                        SELECT COUNT(c.id)
+                        FROM courses c
+                        WHERE c.instructor_id = :mentorId
+                    """,
+            nativeQuery = true
+    )
+    Page<CourseReviewStatsProjection> findCourseReviewStatsByMentor(
+            @Param("mentorId") Long mentorId,
+            Pageable pageable
     );
 }

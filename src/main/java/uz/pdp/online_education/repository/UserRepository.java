@@ -9,7 +9,8 @@ import uz.pdp.online_education.enums.Role;
 import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.payload.AdminDashboardDTO;
 import uz.pdp.online_education.payload.UserInfo;
-import uz.pdp.online_education.payload.user.UserProjection;
+import uz.pdp.online_education.payload.projection.CourseReviewDetailProjection;
+import uz.pdp.online_education.payload.projection.UserProjection;
 
 import java.util.List;
 import java.util.Optional;
@@ -132,5 +133,31 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("courseId") Long courseId,
             @Param("status") String status,
             Pageable pageable
+    );
+
+    @Query(
+            value = """
+                        SELECT
+                            u.created_at AS joinedAt,
+                            COALESCE(up.first_name || ' ' || up.last_name, u.username) AS studentName,
+                            up.bio AS bio,
+                            (SELECT MAX(p.created_at) FROM payment p JOIN modules m ON p.module_id = m.id WHERE m.course_id = :courseId AND p.user_id = :studentId AND p.status = 'SUCCESS') AS purchasedAt,
+                            (SELECT r.created_at FROM reviews r WHERE r.course_id = :courseId AND r.user_id = :studentId ORDER BY r.created_at DESC LIMIT 1) AS reviewDate,
+                            (SELECT r.rating FROM reviews r WHERE r.course_id = :courseId AND r.user_id = :studentId ORDER BY r.created_at DESC LIMIT 1) AS rating,
+                            (SELECT r.comment FROM reviews r WHERE r.course_id = :courseId AND r.user_id = :studentId ORDER BY r.created_at DESC LIMIT 1) AS comment, -- YANGI QATOR
+                            (SELECT COUNT(DISTINCT m.course_id) FROM payment p JOIN modules m ON p.module_id = m.id WHERE p.user_id = :studentId AND p.status = 'SUCCESS') AS totalCourses,
+                            (SELECT AVG(r.rating) FROM reviews r WHERE r.user_id = :studentId) AS averageRating
+                        FROM
+                            users u
+                        LEFT JOIN
+                            user_profiles up ON u.id = up.user_id
+                        WHERE
+                            u.id = :studentId
+                    """,
+            nativeQuery = true
+    )
+    CourseReviewDetailProjection findStudentDetailForCourse(
+            @Param("courseId") Long courseId,
+            @Param("studentId") Long studentId
     );
 }

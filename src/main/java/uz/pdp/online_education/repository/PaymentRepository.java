@@ -9,6 +9,7 @@ import uz.pdp.online_education.enums.TransactionStatus;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.Payment;
 import uz.pdp.online_education.model.User;
+import uz.pdp.online_education.payload.projection.MentorIncomeProjection;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -19,6 +20,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     /**
      * Finds all unique users who have made at least one payment.
+     *
      * @return A list of unique User entities.
      */
     @Query("SELECT DISTINCT p.user FROM payment p")
@@ -26,6 +28,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     /**
      * Finds all courses that a specific user has paid for.
+     *
      * @param userId The ID of the user.
      * @return A list of unique Course entities purchased by the user.
      */
@@ -60,7 +63,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Page<Payment> findByUserAndStatus(User user, TransactionStatus status, Pageable pageable);
 
 
-
     /**
      * Ma'lum bir instructorning barcha kurslari bo'yicha umumiy daromadini hisoblaydi.
      * Faqat muvaffaqiyatli to'lovlar hisobga olinadi. Natija tiyinlarda (Long) qaytariladi.
@@ -85,7 +87,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             "FROM payment p " +
             "WHERE p.module.course.instructor.id = :instructorId AND p.status = 'SUCCESS'")
     Integer countDistinctPurchasedUsersByInstructorId(@Param("instructorId") Long instructorId);
-
 
 
     long countByModule_Course_Id(Long id);
@@ -114,4 +115,52 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             @Param("mentorId") Long mentorId,
             @Param("status") TransactionStatus status
     );
+
+    // PaymentRepository.java
+
+    @Query(
+            value = """
+                        WITH mentor_payments AS (
+                            SELECT
+                                p.user_id,
+                                p.amount,
+                                p.created_at,
+                                c.title AS course_title
+                            FROM
+                                payment p
+                            JOIN
+                                modules m ON p.module_id = m.id
+                            JOIN
+                                courses c ON m.course_id = c.id
+                            WHERE
+                                c.instructor_id = :mentorId
+                                AND p.status = 'SUCCESS'
+                        ),
+                        top_course AS (
+                            SELECT
+                                course_title,
+                                COUNT(*) AS sales_count
+                            FROM
+                                mentor_payments
+                            GROUP BY
+                                course_title
+                            ORDER BY
+                                sales_count DESC
+                            LIMIT 1
+                        )
+                        SELECT
+                            COALESCE(SUM(CASE WHEN DATE(mp.created_at) = CURRENT_DATE THEN mp.amount ELSE 0 END), 0) AS todayIncome,
+                            COALESCE(COUNT(CASE WHEN DATE(mp.created_at) = CURRENT_DATE THEN 1 END), 0) AS todaySales,
+                            COALESCE(SUM(CASE WHEN DATE_TRUNC('month', mp.created_at) = DATE_TRUNC('month', CURRENT_DATE) THEN mp.amount ELSE 0 END), 0) AS monthlyIncome,
+                            COALESCE(SUM(mp.amount), 0) AS totalIncome,
+                            COALESCE(COUNT(DISTINCT mp.user_id), 0) AS totalStudents,
+                            (SELECT course_title FROM top_course) AS topCourseName,
+                            COALESCE((SELECT sales_count FROM top_course), 0) AS topCourseSales,
+                            (SELECT AVG(r.rating) FROM reviews r JOIN courses c ON r.course_id = c.id WHERE c.instructor_id = :mentorId) AS averageRating
+                        FROM
+                            mentor_payments mp
+                    """,
+            nativeQuery = true
+    )
+    MentorIncomeProjection findMentorIncomeStats(@Param("mentorId") Long mentorId);
 }
