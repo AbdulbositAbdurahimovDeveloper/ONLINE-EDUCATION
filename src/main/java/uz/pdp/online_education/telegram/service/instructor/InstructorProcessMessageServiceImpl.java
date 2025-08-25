@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -16,18 +15,19 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import uz.pdp.online_education.enums.Role;
 import uz.pdp.online_education.enums.TransactionStatus;
-import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.model.UserProfile;
 import uz.pdp.online_education.payload.category.CategoryDTO;
 import uz.pdp.online_education.payload.content.attachmentContent.AttachmentDTO;
 import uz.pdp.online_education.payload.course.CourseDetailDTO;
-import uz.pdp.online_education.payload.course.CourseStudentStatsProjection;
+import uz.pdp.online_education.payload.projection.CourseStudentStatsProjection;
 import uz.pdp.online_education.payload.course.CourseUpdateDTO;
 import uz.pdp.online_education.payload.lesson.LessonResponseDTO;
 import uz.pdp.online_education.payload.lesson.LessonUpdateDTO;
 import uz.pdp.online_education.payload.module.ModuleDetailDTO;
 import uz.pdp.online_education.payload.module.ModuleUpdateDTO;
+import uz.pdp.online_education.payload.projection.MentorIncomeProjection;
+import uz.pdp.online_education.payload.projection.ReviewStatsProjection;
 import uz.pdp.online_education.payload.text.TextContentCreateDTO;
 import uz.pdp.online_education.payload.user.UserDTO;
 import uz.pdp.online_education.repository.*;
@@ -70,6 +70,7 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
     private final UserService userService;
     private final ModuleService moduleService;
     private final LessonService lessonService;
+    private final ReviewRepository reviewRepository;
     @Value("${telegram.bot.channel-id}")
     private String CHANNEL_ID;
 
@@ -518,6 +519,26 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
         );
     }
 
+    public static String buildReviewSummary(ReviewStatsProjection stats) {
+        DecimalFormat df = new DecimalFormat("#.##");
+        String avgRating = stats.getAverageRating() == null ? "0.0" : df.format(stats.getAverageRating());
+
+        return """
+                💬 <b>Kurs sharhlari va fikrlar</b>
+                
+                📊 Umumiy baho: ⭐️ %s (%d ta sharh)
+                📝 Jami fikrlar soni: %d
+                👥 Faol ishtirokchilar: %d
+                
+                Quyidagi tugmalar orqali sharhlarni ko‘rishingiz yoki filtr qilishingiz mumkin 👇
+                """.formatted(
+                avgRating,
+                stats.getTotalReviews(),
+                stats.getTotalComments(),
+                stats.getActiveStudents()
+        );
+    }
+
     private String buildLessonDetailText(LessonResponseDTO l) {
         String title = safe(l.getTitle());
         String desc = safe(l.getContent());
@@ -958,11 +979,17 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
     }
 
     private void instructorReviewsHandle(Long chatId, User user) {
-
+        ReviewStatsProjection projection = reviewRepository.getOverallReviewStatsByMentorId(user.getId());
+        String built = buildReviewSummary(projection);
+        InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.myReview();
+        bot.myExecute(sendMsg.sendMessage(chatId, built, inlineKeyboardMarkup));
     }
 
     private void instructorMyRevenueHandle(Long chatId, User user) {
-
+        MentorIncomeProjection mentorIncomeStats = paymentRepository.findMentorIncomeStats(user.getId());
+        String built = buildMentorIncomeText(mentorIncomeStats);
+        InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.mentorRevenue();
+        bot.myExecute(sendMsg.sendMessage(chatId, built, inlineKeyboardMarkup));
     }
 
     /**
@@ -993,7 +1020,7 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
         String mentorStartText = """
                 <b>👋 Assalomu alaykum, hurmatli mentor!</b>
                 
-                <b>Online Education</b> platformasiga xush kelibsiz. 
+                <b>Online Education</b> platformasiga xush kelibsiz.
                 Quyidagi menyu orqali o‘z kurslaringizni boshqarishingiz mumkin.
                 """;
 
@@ -1039,7 +1066,7 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
                         ✅ Aktiv kurslar: %d ta
                         ⏸️ Aktiv emas kurslar: %d ta
                         🎓 O‘quvchilar (sotib olgan): %d ta
-                        💰 Umumiy daromad: $%s""",
+                        💰 Umumiy daromad: %s""",
                 fullName,
                 email,
                 username,
@@ -1050,6 +1077,40 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
                 formatAmount(totalIncome)
         );
     }
+
+    public String buildMentorIncomeText(MentorIncomeProjection p) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("<b>📊 Mentor daromadlari haqida hisobot</b>\n\n");
+
+        // Bugungi statistikalar
+        sb.append("📅 <u>Bugungi natijalar</u>\n");
+        sb.append("💰 Daromad: ").append(formatAmount(p.getTodayIncome())).append("\n");
+        sb.append("🛒 Sotuvlar soni: ").append(p.getTodaySales() != null ? p.getTodaySales() : 0).append(" ta\n\n");
+
+        // Oylik va umumiy
+        sb.append("📅 <u>Oylik va umumiy</u>\n");
+        sb.append("📆 Joriy oydagi daromad: ").append(formatAmount(p.getMonthlyIncome())).append("\n");
+        sb.append("💳 Umumiy daromad: ").append(formatAmount(p.getTotalIncome())).append("\n\n");
+
+        // Talabalar va kurslar
+        sb.append("👨‍🎓 Umumiy talabalar soni: ").append(p.getTotalStudents() != null ? p.getTotalStudents() : 0).append(" ta\n");
+        sb.append("⭐️ Kurslar bo‘yicha o‘rtacha reyting: ").append(
+                p.getAverageRating() != null ? String.format("%.1f", p.getAverageRating()) : "Noma'lum"
+        ).append("\n\n");
+
+        // Eng ko‘p sotilgan kurs
+        sb.append("🏆 <u>Eng ko‘p sotilgan kurs</u>\n");
+        if (p.getTopCourseName() != null) {
+            sb.append("📚 Kurs: ").append(p.getTopCourseName()).append("\n");
+            sb.append("🛒 Sotuvlar: ").append(p.getTopCourseSales() != null ? p.getTopCourseSales() : 0).append(" ta\n");
+        } else {
+            sb.append("⚠️ Hali kurs sotilmagan.\n");
+        }
+
+        return sb.toString();
+    }
+
 
     /**
      * Creates a simple text-based progress bar.

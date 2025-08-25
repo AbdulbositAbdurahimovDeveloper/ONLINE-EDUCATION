@@ -1,5 +1,5 @@
 // UserProjection.java
-package uz.pdp.online_education.payload.user;
+package uz.pdp.online_education.payload.projection;
 
 import java.sql.Timestamp;
 

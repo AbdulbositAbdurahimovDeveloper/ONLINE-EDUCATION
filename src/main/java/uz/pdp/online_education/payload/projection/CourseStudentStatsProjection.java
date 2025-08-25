@@ -1,5 +1,5 @@
 // CourseStudentStatsProjection.java
-package uz.pdp.online_education.payload.course;
+package uz.pdp.online_education.payload.projection;
 
 /**
  * Nativ SQL so'rovining natijasini saqlash uchun Projection interfeysi.

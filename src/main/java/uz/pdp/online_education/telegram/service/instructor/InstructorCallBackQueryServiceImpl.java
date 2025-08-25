@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
@@ -19,19 +20,16 @@ import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.payload.PageDTO;
 import uz.pdp.online_education.payload.category.CategoryDTO;
 import uz.pdp.online_education.payload.content.attachmentContent.AttachmentDTO;
-import uz.pdp.online_education.payload.course.CourseCreateDTO;
-import uz.pdp.online_education.payload.course.CourseDetailDTO;
-import uz.pdp.online_education.payload.course.CourseStudentStatsProjection;
-import uz.pdp.online_education.payload.course.CourseUpdateDTO;
+import uz.pdp.online_education.payload.course.*;
 import uz.pdp.online_education.payload.lesson.LessonCreatDTO;
 import uz.pdp.online_education.payload.lesson.LessonResponseDTO;
 import uz.pdp.online_education.payload.lesson.LessonUpdateDTO;
 import uz.pdp.online_education.payload.module.ModuleCreateDTO;
 import uz.pdp.online_education.payload.module.ModuleDetailDTO;
+import uz.pdp.online_education.payload.projection.*;
 import uz.pdp.online_education.payload.review.ReviewSummaryDTO;
 import uz.pdp.online_education.payload.text.TextContentResponseDTO;
 import uz.pdp.online_education.payload.user.UserDTO;
-import uz.pdp.online_education.payload.user.UserProjection;
 import uz.pdp.online_education.repository.*;
 import uz.pdp.online_education.service.interfaces.*;
 import uz.pdp.online_education.telegram.Utils;
@@ -97,6 +95,7 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
     private final PaymentService paymentService;
     private final LessonRepository lessonRepository;
     private final UserRepository userRepository;
+    private final ReviewRepository reviewRepository;
 
 
     @Override
@@ -1200,8 +1199,48 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
     private void instructorActionViewHandle(Long chatId, User user, Integer messageId, String[] data, String queryData) {
         String type = data[1];
         switch (type) {
-            case ACTION_STUDENT -> {
+            case ACTION_REVIEWS -> {
+                if (data.length == 6) {
+                    Long studentId = Long.valueOf(data[5]);
+                    Long courseId = Long.valueOf(data[3]);
 
+//                    CourseReviewDetailProjection studentDetailForCourse = courseRepository.findStudentDetailForCourse(courseId, studentId);
+                    CourseReviewDetailProjection studentDetailForCourse = userRepository.findStudentDetailForCourse(courseId, studentId);
+
+                    String built = buildReviewDetailHtml(studentDetailForCourse);
+                    InlineKeyboardMarkup keyboard = inlineKeyboardService.createSingleButtonKeyboard("⬅️ Orqaga", String.join(":", ACTION_VIEW, ACTION_REVIEWS, courseId.toString(), ACTION_PAGE, "0"));
+                    bot.myExecute(sendMsg.editMessage(chatId, messageId, built, keyboard));
+
+
+                } else if (data.length == 3 && data[2].equals(ACTION_BACK)) {
+                    ReviewStatsProjection projection = reviewRepository.getOverallReviewStatsByMentorId(user.getId());
+                    String built = buildReviewSummary(projection);
+                    InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.myReview();
+                    bot.myExecute(sendMsg.editMessage(chatId, messageId, built, inlineKeyboardMarkup));
+                } else if (data.length == 4) {
+                    int pageNumber = Integer.parseInt(data[3]);
+                    Page<CourseReviewStatsProjection> stats = courseRepository.findCourseReviewStatsByMentor(user.getId(), PageRequest.of(pageNumber, 5));
+                    String backButton = String.join(":", ACTION_VIEW, ACTION_REVIEWS, ACTION_BACK);
+                    InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorReviewCourses(stats, backButton);
+                    String built = buildCourseReviewStatsText(stats);
+                    bot.myExecute(sendMsg.editMessage(chatId, messageId, built, inlineKeyboardMarkup));
+                } else {
+                    Long id = Long.valueOf(data[2]);
+                    int pageNumber = Integer.parseInt(data[4]);
+
+                    Sort sortByRatingDesc = Sort.by(
+                            Sort.Order.desc("rating"),      // Asosiy saralash
+                            Sort.Order.desc("createdAt")    // Ikkilamchi saralash
+                    );
+                    Pageable pageable = PageRequest.of(pageNumber, 5, sortByRatingDesc);
+                    Page<CourseReviewProjection> reviews = reviewRepository.findReviewsByCourseId(id, pageable);
+                    String built = formatCourseReviewsPage(reviews);
+                    String backButton = String.join(":", ACTION_VIEW, ACTION_REVIEWS, ACTION_PAGE, "0");
+                    InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.courseReviews(reviews, id, backButton);
+                    bot.myExecute(sendMsg.editMessage(chatId, messageId, built, inlineKeyboardMarkup));
+                }
+            }
+            case ACTION_STUDENT -> {
                 if (data.length > 3) {
                     int pageNumber = Integer.parseInt(data[3]);
                     long count = paymentRepository.countTotalStudentsByMentor(user.getId(), TransactionStatus.SUCCESS);
@@ -1350,6 +1389,137 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
         bot.myExecute(sendMsg.deleteMessage(chatId, messageId));
         bot.myExecute(sendMsg.sendMessage(chatId, "Bosh menyu!", replyKeyboardMarkup));
 
+    }
+
+    public String buildReviewDetailHtml(CourseReviewDetailProjection p) {
+        StringBuilder sb = new StringBuilder();
+
+        // Sotib olish va sharh sanalari
+        sb.append("📌 <b>Kurs sotib olingan:</b> ")
+                .append(p.getPurchasedAt() != null ? p.getPurchasedAt().toLocalDateTime().toLocalDate() : "❌ Ma'lumot yo‘q")
+                .append("\n");
+        sb.append("📝 <b>Sharh yozilgan:</b> ")
+                .append(p.getReviewDate() != null ? p.getReviewDate().toLocalDateTime().toLocalDate() : "❌ Ma'lumot yo‘q")
+                .append("\n\n");
+
+        // Foydalanuvchi ma'lumotlari
+        sb.append("👤 <b>Talaba:</b> ")
+                .append(p.getStudentName() != null && !p.getStudentName().isBlank() ? escapeHtml(p.getStudentName()) : "Anonim foydalanuvchi")
+                .append("\n");
+        if (p.getBio() != null && !p.getBio().isBlank()) {
+            sb.append("ℹ️ <b>Bio:</b> ").append(escapeHtml(p.getBio())).append("\n");
+        }
+        sb.append("📅 <b>Platformaga qo‘shilgan:</b> ")
+                .append(p.getJoinedAt() != null ? p.getJoinedAt().toLocalDateTime().toLocalDate() : "❌ Ma'lumot yo‘q")
+                .append("\n\n");
+
+        // Statistika
+        sb.append("📚 <b>Umumiy kurslar:</b> ").append(p.getTotalCourses() != null ? p.getTotalCourses() : 0).append("\n");
+        sb.append("⭐️ <b>O‘rtacha baho:</b> ")
+                .append(p.getAverageRating() != null ? String.format("%.1f", p.getAverageRating()) : "❌ Ma'lumot yo‘q")
+                .append("\n");
+        sb.append("🎯 <b>Ushbu kursdagi bahosi:</b> ")
+                .append(p.getRating() != null ? p.getRating() + " ⭐️" : "❌ Ma'lumot yo‘q")
+                .append("\n\n");
+
+        // Sharh matni
+        if (p.getComment() != null && !p.getComment().isBlank()) {
+            sb.append("💬 <b>Fikr:</b> ").append(escapeHtml(p.getComment())).append("\n");
+        } else {
+            sb.append("💬 <b>Fikr:</b> ❌ Sharh qoldirilmagan\n");
+        }
+
+        return sb.toString();
+    }
+
+    public String formatCourseReviewsPage(Page<CourseReviewProjection> page) {
+        if (page.isEmpty()) {
+            return "❌ Bu kurs uchun sharhlar topilmadi.";
+        }
+
+        StringBuilder sb = new StringBuilder("💬 <b>Kurs sharhlari</b>\n\n");
+
+        for (CourseReviewProjection review : page.getContent()) {
+            String name = review.getStudentName() != null ? review.getStudentName() : "Anonim foydalanuvchi";
+            String stars = "⭐️".repeat(review.getRating());
+            String comment = review.getComment() != null && !review.getComment().isBlank()
+                    ? "✍️ " + review.getComment()
+                    : "✍️ Fikr qoldirilmagan";
+
+            String date = review.getCreatedAt()
+                    .toLocalDateTime()
+                    .format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
+
+
+            sb.append("👤 ").append(name).append("\n")
+                    .append(stars).append(" ").append(review.getRating()).append("\n")
+                    .append(comment).append("\n")
+                    .append("⏰ ").append(date).append("\n\n");
+        }
+
+        sb.append("📄 Sahifa: ").append(page.getNumber() + 1)
+                .append(" / ").append(page.getTotalPages());
+
+        return sb.toString();
+    }
+
+
+    public static String buildReviewSummary(ReviewStatsProjection stats) {
+        DecimalFormat df = new DecimalFormat("#.##");
+        String avgRating = stats.getAverageRating() == null ? "0.0" : df.format(stats.getAverageRating());
+
+        return """
+                💬 <b>Kurs sharhlari va fikrlar</b>
+                
+                📊 Umumiy baho: ⭐️ %s (%d ta sharh)
+                📝 Jami fikrlar soni: %d
+                👥 Faol ishtirokchilar: %d
+                
+                Quyidagi tugmalar orqali sharhlarni ko‘rishingiz yoki filtr qilishingiz mumkin 👇
+                """.formatted(
+                avgRating,
+                stats.getTotalReviews(),
+                stats.getTotalComments(),
+                stats.getActiveStudents()
+        );
+    }
+
+    public String buildCourseReviewStatsText(Page<CourseReviewStatsProjection> stats) {
+        if (stats == null || stats.isEmpty()) {
+            return """
+                    📚 <b>Sizning kurslaringiz bo‘yicha sharhlar</b>
+                    
+                    ❌ Hozircha sharhlar mavjud emas.
+                    """;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("📚 <b>Sizning kurslaringiz bo‘yicha sharhlar</b>\n\n");
+
+        int startIndex = 0;
+
+        for (int i = 0; i < stats.getContent().size(); i++) {
+            CourseReviewStatsProjection course = stats.getContent().get(i);
+
+            int number = startIndex + i + 1;
+
+            sb.append("%d️⃣ <b>%s</b>\n".formatted(number, course.getCourseTitle()));
+
+            if (course.getTotalReviews() == null || course.getTotalReviews() == 0) {
+                sb.append("⭐️ O‘rtacha baho: - \n 💬 Sharhlar mavjud emas\n\n");
+            } else {
+                String avgRating = String.format("%.2f", course.getAverageRating());
+                sb.append("⭐️ O‘rtacha baho: %s \n 💬 %d ta sharh \n 📝 %d ta fikr\n\n"
+                        .formatted(
+                                avgRating,
+                                course.getTotalReviews(),
+                                course.getTotalComments()
+                        )
+                );
+            }
+        }
+
+        return sb.toString();
     }
 
 
