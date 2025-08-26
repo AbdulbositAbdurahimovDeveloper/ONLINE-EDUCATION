@@ -9,9 +9,12 @@ import uz.pdp.online_education.enums.Role;
 import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.payload.AdminDashboardDTO;
 import uz.pdp.online_education.payload.UserInfo;
+import uz.pdp.online_education.payload.projection.AdminDashboardStats;
 import uz.pdp.online_education.payload.projection.CourseReviewDetailProjection;
 import uz.pdp.online_education.payload.projection.UserProjection;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -160,4 +163,24 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("courseId") Long courseId,
             @Param("studentId") Long studentId
     );
+
+
+
+    @Query(value = """
+        SELECT
+            (SELECT COUNT(*) FROM users) AS totalUsers,
+            (SELECT COUNT(*) FROM users WHERE role = 'STUDENT') AS totalStudents,
+            (SELECT COUNT(*) FROM users WHERE role = 'INSTRUCTOR') AS totalInstructors,
+            (SELECT COUNT(*) FROM courses WHERE deleted = false) AS totalCourses,
+            (SELECT COUNT(*) FROM modules WHERE deleted = false) AS totalModules,
+            (SELECT COUNT(*) FROM lesson) AS totalLessons,
+            (SELECT COUNT(*) FROM module_enrollments) AS totalEnrollments,
+            (SELECT AVG(percentage) FROM quiz_attempts WHERE status = 'COMPLETED') AS averageQuizPercentage,
+            (SELECT COALESCE(SUM(amount), 0) FROM payment WHERE created_at >= date_trunc('month', current_date)) AS revenueThisMonth,
+            (SELECT COUNT(*) FROM users WHERE created_at >= date_trunc('day', current_date)) AS newUsersToday,
+            (SELECT COALESCE(SUM(amount), 0) FROM payment WHERE created_at >= date_trunc('day', current_date)) AS revenueToday,
+            (SELECT COALESCE(SUM(amount), 0) FROM payment) AS totalRevenue
+    """, nativeQuery = true)
+    AdminDashboardStats getFullDashboardStatistics();
+
 }

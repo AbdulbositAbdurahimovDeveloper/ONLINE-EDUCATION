@@ -19,7 +19,7 @@ import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.model.UserProfile;
 import uz.pdp.online_education.payload.AdminDashboardDTO;
-import uz.pdp.online_education.payload.BroadcastDataDTO;
+import uz.pdp.online_education.payload.projection.AdminDashboardStats;
 import uz.pdp.online_education.repository.CourseRepository;
 import uz.pdp.online_education.repository.TelegramUserRepository;
 import uz.pdp.online_education.repository.UserRepository;
@@ -35,6 +35,7 @@ import uz.pdp.online_education.telegram.service.admin.template.ReplyKeyboardServ
 import uz.pdp.online_education.telegram.service.message.MessageService;
 import org.springframework.data.domain.Pageable;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -116,7 +117,7 @@ public class AdminMessageServiceImpl implements AdminMessageService {
                 case Utils.ReplyButtons.ADMIN_USERS -> sendUsersMainMenu(chatId);
                 case Utils.ReplyButtons.ADMIN_COURSES -> sendCoursesMainMenu(chatId);
                 case Utils.ReplyButtons.ADMIN_SEND_MESSAGE -> initiateBroadcast(chatId);
-                // case Utils.ReplyButtons.ADMIN_STATISTICS -> ...
+                case Utils.ReplyButtons.ADMIN_STATISTICS -> showFullStatistics(chatId);
                 default -> onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, "Tushunarsiz buyruq."));
             }
         }
@@ -166,7 +167,7 @@ public class AdminMessageServiceImpl implements AdminMessageService {
 
     private void sendStatisticsMessage(Long chatId) {
         AdminDashboardDTO stats = userRepository.getAdminDashboardStats();
-        String statsText = formatDashboardText("Admin", stats);
+        String statsText = formatDashboardText(stats);
         onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, statsText));
     }
 
@@ -243,10 +244,10 @@ public class AdminMessageServiceImpl implements AdminMessageService {
         onlineEducationBot.myExecute(sendMsg.editMessage(chatId, messageId, dashboardText, inlineKeyboardMarkup));
     }
 
-    private String formatDashboardText(String adminName, AdminDashboardDTO stats) {
+    private String formatDashboardText(AdminDashboardDTO stats) {
         return messageService.getMessage(
                 BotMessage.DASHBOARD_ADMIN,
-                adminName,
+                "Admin",
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy, HH:mm")),
                 stats.getTotalUsers(),
                 stats.getTotalInstructors(),
@@ -381,15 +382,69 @@ public class AdminMessageServiceImpl implements AdminMessageService {
 
         // Asosiy menyuni yuborish uchun AdminMessageService'dagi metodni chaqiramiz
         // Buning uchun bizga UserProfile kerak bo'ladi
-        UserProfile profile = telegramUserRepository.findByChatId(chatId)
+        telegramUserRepository.findByChatId(chatId)
                 .map(TelegramUser::getUser)
-                .map(User::getProfile)
-                .orElse(null);
+                .map(User::getProfile).ifPresent(profile -> initiateBroadcast(chatId));
 
-        if (profile != null) {
-            initiateBroadcast(chatId);
-        }
     }
 
+
+    @Transactional(readOnly = true)
+    protected void showFullStatistics(Long chatId) {
+        // 1. Ma'lumotlarni yig'ish (bu qism o'zgarmaydi)
+        AdminDashboardStats stats = userRepository.getFullDashboardStatistics();
+
+        // --- NULL TEKSHIRUVLARI VA TIPLARNI O'GIRISH ---
+        // Bu kodni ancha barqaror qiladi.
+        BigDecimal totalRevenue = stats.getTotalRevenue() != null ? stats.getTotalRevenue() : BigDecimal.ZERO;
+        BigDecimal revenueThisMonth = stats.getRevenueThisMonth() != null ? stats.getRevenueThisMonth() : BigDecimal.ZERO;
+        BigDecimal revenueToday = stats.getRevenueToday() != null ? stats.getRevenueToday() : BigDecimal.ZERO;
+        Double avgPercentage = stats.getAverageQuizPercentage() != null ? stats.getAverageQuizPercentage() : 0.0;
+
+        // 2. Xabar matnini formatlash (YANGILANDI)
+        String reportText = String.format(
+                """
+                📊 *Umumiy Statistika (%s):*
+                
+                --- *Foydalanuvchilar* ---
+                👥 Jami: *%d* ta
+                👨‍🎓 Talabalar: *%d* ta | 👨‍🏫 Instruktorlar: *%d* ta
+                🚀 Bugun qo'shildi: *%d* ta
+                
+                --- *Moliya* ---
+                💰 Jami daromad: *$%.2f*
+                🗓️ Bu oygi daromad: *$%.2f*
+                💸 Bugungi savdo: *$%.2f*
+                
+                --- *Kontent* ---
+                📚 Jami kurslar: *%d* ta
+                📖 Jami modullar: *%d* ta
+                📄 Jami darslar: *%d* ta
+                
+                --- *Faollik* ---
+                📝 Jami sotib olingan modullar: *%d* ta
+                ✅ O'rtacha o'zlashtirish: *%.1f%%*
+                """,
+                java.time.LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")),
+                stats.getTotalUsers(),
+                stats.getTotalStudents(),
+                stats.getTotalInstructors(),
+                stats.getNewUsersToday(),
+                totalRevenue, // <-- ENDI BU YERDA 'BigDecimal' EMAS, 'double' BERILADI
+                revenueThisMonth,
+                revenueToday,
+                stats.getTotalCourses(),
+                stats.getTotalModules(),
+                stats.getTotalLessons(),
+                stats.getTotalEnrollments(),
+                avgPercentage
+        );
+
+        // 3. Xabarni yuborish
+        SendMessage sendMessage = sendMsg.sendMessage(chatId, reportText);
+
+        sendMessage.setParseMode("Markdown");
+        onlineEducationBot.myExecute(sendMessage);
+    }
 
 }
