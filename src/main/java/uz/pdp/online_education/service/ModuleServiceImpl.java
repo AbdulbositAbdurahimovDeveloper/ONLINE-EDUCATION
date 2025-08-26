@@ -146,6 +146,7 @@ public class ModuleServiceImpl implements ModuleService {
      * @return moduleDetailDTO
      */
     @Override
+    @Transactional
     public ModuleDetailDTO update(Long id, ModuleUpdateDTO moduleUpdateDTO) {
         Module module = moduleRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Module nor found with id: " + id));
@@ -236,7 +237,12 @@ public class ModuleServiceImpl implements ModuleService {
 
         moduleRepository.shiftOrderIndexesAfterDelete(course, deletedOrderIndex);
 
-        moduleRepository.delete(moduleToDelete);
+//        moduleRepository.delete(moduleToDelete);
+//        moduleRepository.flush();
+
+        course.getModules().remove(moduleToDelete);
+
+//        moduleRepository.deleteById(id);
     }
 //    @Override
 //    public void delete(Long id) {

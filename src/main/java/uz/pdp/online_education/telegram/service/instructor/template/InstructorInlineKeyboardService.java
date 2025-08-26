@@ -6,8 +6,12 @@ import uz.pdp.online_education.model.Category;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.payload.PageDTO;
 import uz.pdp.online_education.payload.course.CourseDetailDTO;
+import uz.pdp.online_education.payload.projection.CourseStudentStatsProjection;
 import uz.pdp.online_education.payload.lesson.LessonResponseDTO;
 import uz.pdp.online_education.payload.module.ModuleDetailDTO;
+import uz.pdp.online_education.payload.projection.CourseReviewProjection;
+import uz.pdp.online_education.payload.projection.CourseReviewStatsProjection;
+import uz.pdp.online_education.payload.projection.UserProjection;
 
 public interface InstructorInlineKeyboardService {
     InlineKeyboardMarkup dashboardMenu();
@@ -57,4 +61,28 @@ public interface InstructorInlineKeyboardService {
     InlineKeyboardMarkup deleteCourse(Long id);
 
     InlineKeyboardMarkup categorySelect(Page<Category> categories, String cancelBtn);
+
+    InlineKeyboardMarkup instructorEditModules(ModuleDetailDTO moduleDetailDTO, String backButton);
+
+    InlineKeyboardMarkup instructorEditLessons(LessonResponseDTO lessonResponseDTO, String backButton);
+
+    InlineKeyboardMarkup lessonEditIsFree(Long id);
+
+    InlineKeyboardMarkup deleteModule(Long id);
+
+    InlineKeyboardMarkup deleteLesson(Long id);
+
+    InlineKeyboardMarkup instructorMyStudents(Page<CourseStudentStatsProjection> stats, String backButton);
+
+    InlineKeyboardMarkup instructorCourseViewStudents(Long courseId, String backButton);
+
+    InlineKeyboardMarkup instructorStudentCourseById(Page<UserProjection> users, Long id, String backButton);
+
+    InlineKeyboardMarkup myReview();
+
+    InlineKeyboardMarkup instructorReviewCourses(Page<CourseReviewStatsProjection> stats, String backButton);
+
+    InlineKeyboardMarkup courseReviews(Page<CourseReviewProjection> reviews, Long id, String backButton);
+
+    InlineKeyboardMarkup mentorRevenue();
 }

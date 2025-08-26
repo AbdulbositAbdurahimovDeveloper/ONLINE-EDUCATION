@@ -53,4 +53,6 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
     boolean hasFreeLessons(@Param("moduleId") Long moduleId);
 
     Page<Lesson> findAllByModuleOrderByOrderIndexAsc(Module module, Pageable pageable);
+
+    Object existsLessonByIsFree(boolean isFree);
 }

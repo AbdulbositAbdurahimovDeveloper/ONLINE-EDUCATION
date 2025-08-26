@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo;
 import uz.pdp.online_education.model.Category;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.User;
@@ -23,6 +24,9 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
 
     @Value("${telegram.bot.webhook-path}")
     private String appDomain;
+
+    @Value("${telegram.bot.webapp.url}")
+    private String webApp;
 
     // --- YORDAMCHI METODLAR ---
     private InlineKeyboardButton createButton(String text, String callbackData) {
@@ -70,7 +74,8 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
     public InlineKeyboardMarkup welcomeFirstTime(Long chatId) {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         InlineKeyboardButton button = new InlineKeyboardButton("🚀 Kirish / Ro'yxatdan o'tish");
-        button.setUrl(appDomain + "/auth.html?chat_id=" + chatId);
+//        button.setUrl(appDomain + "/auth.html?chat_id=" + chatId);
+        button.setWebApp(new WebAppInfo(webApp));
         inlineKeyboardMarkup.setKeyboard(List.of(List.of(button)));
         return inlineKeyboardMarkup;
     }
@@ -272,7 +277,7 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
         InlineKeyboardButton byMentor = createButton("👨‍🏫 Mentorlar bo'yicha", "admin:courses:list_by_mentor:page:0");
         InlineKeyboardButton back = createButton("⬅️ Orqaga", backCallback);
 
-        return new InlineKeyboardMarkup( List.of(List.of(allCourses), List.of(byCategory), List.of(byMentor), List.of(back)));
+        return new InlineKeyboardMarkup(List.of(List.of(allCourses), List.of(byCategory), List.of(byMentor), List.of(back)));
     }
 
 
@@ -348,8 +353,12 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
         if (!numberButtonsRow.isEmpty()) rows.add(numberButtonsRow);
 
         List<InlineKeyboardButton> navRow = new ArrayList<>();
-        if (coursePage.hasPrevious()) { navRow.add(createButton("⬅️", baseNavCallback + (coursePage.getNumber() - 1))); }
-        if (coursePage.hasNext()) { navRow.add(createButton("➡️", baseNavCallback + (coursePage.getNumber() + 1))); }
+        if (coursePage.hasPrevious()) {
+            navRow.add(createButton("⬅️", baseNavCallback + (coursePage.getNumber() - 1)));
+        }
+        if (coursePage.hasNext()) {
+            navRow.add(createButton("➡️", baseNavCallback + (coursePage.getNumber() + 1)));
+        }
         if (!navRow.isEmpty()) rows.add(navRow);
 
         rows.add(List.of(createButton("⬅️ Orqaga", backCallback)));

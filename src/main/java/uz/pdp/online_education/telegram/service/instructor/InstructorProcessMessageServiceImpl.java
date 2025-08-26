@@ -3,6 +3,8 @@ package uz.pdp.online_education.telegram.service.instructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -12,12 +14,20 @@ import org.telegram.telegrambots.meta.api.objects.Video;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import uz.pdp.online_education.enums.Role;
+import uz.pdp.online_education.enums.TransactionStatus;
 import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.model.UserProfile;
 import uz.pdp.online_education.payload.category.CategoryDTO;
 import uz.pdp.online_education.payload.content.attachmentContent.AttachmentDTO;
 import uz.pdp.online_education.payload.course.CourseDetailDTO;
+import uz.pdp.online_education.payload.projection.CourseStudentStatsProjection;
 import uz.pdp.online_education.payload.course.CourseUpdateDTO;
+import uz.pdp.online_education.payload.lesson.LessonResponseDTO;
+import uz.pdp.online_education.payload.lesson.LessonUpdateDTO;
+import uz.pdp.online_education.payload.module.ModuleDetailDTO;
+import uz.pdp.online_education.payload.module.ModuleUpdateDTO;
+import uz.pdp.online_education.payload.projection.MentorIncomeProjection;
+import uz.pdp.online_education.payload.projection.ReviewStatsProjection;
 import uz.pdp.online_education.payload.text.TextContentCreateDTO;
 import uz.pdp.online_education.payload.user.UserDTO;
 import uz.pdp.online_education.repository.*;
@@ -40,11 +50,10 @@ import java.text.DecimalFormat;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static uz.pdp.online_education.telegram.Utils.CallbackData.*;
+import static uz.pdp.online_education.telegram.Utils.Numbering.randomBookEmoji;
 import static uz.pdp.online_education.telegram.Utils.ReplyButtons.*;
 
 @Slf4j
@@ -59,6 +68,9 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
     private final TextContentService textContentService;
     private final CourseService courseService;
     private final UserService userService;
+    private final ModuleService moduleService;
+    private final LessonService lessonService;
+    private final ReviewRepository reviewRepository;
     @Value("${telegram.bot.channel-id}")
     private String CHANNEL_ID;
 
@@ -125,11 +137,22 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
             case AWAITING_ATTACHMENT_CONTENT:
             case AWAITING_TEXT_CONTENT:
                 handleInstructorContent(chatId, message, userState);
+                break;
             case AWAITING_EDIT_COURSE_TITLE:
             case AWAITING_EDIT_COURSE_DESCRIPTION:
             case AWAITING_EDIT_COURSE_THUMBNAIL:
             case AWAITING_EDIT_COURSE_CONFIRMATION:
                 handleCourseEditionStep(chatId, message, userState, user);
+                break;
+            case AWAITING_EDIT_MODULE_TITLE:
+            case AWAITING_EDIT_MODULE_DESCRIPTION:
+            case AWAITING_EDIT_MODULE_PRICE:
+                handleModuleEditionStep(chatId, message, userState, user);
+                break;
+            case AWAITING_EDIT_LESSON_TITLE:
+            case AWAITING_EDIT_LESSON_DESCRIPTION:
+                handleLessonEditionStep(chatId, message, userState, user);
+                break;
 
 
         }
@@ -145,6 +168,173 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
             case INSTRUCTOR_REVIEWS -> instructorReviewsHandle(chatId, user);
             case INSTRUCTOR_MY_REVENUE -> instructorMyRevenueHandle(chatId, user);
         }
+
+    }
+
+    private void handleLessonEditionStep(Long chatId, Message message, UserState userState, User user) {
+
+        String processKey = String.join(":", ACTION_EDIT, LESSON_PREFIX, chatId.toString());
+        Optional<Map<String, Object>> allFields = redisTemporaryDataService.getAllFields(processKey);
+        if (allFields.isPresent()) {
+
+            Map<String, Object> lessonFields = allFields.get();
+            Long id = Long.valueOf(lessonFields.get(Utils.CallbackData.LESSON_ID).toString());
+            boolean isFree = Boolean.parseBoolean(lessonFields.get(Utils.CallbackData.IS_PREE).toString());
+            switch (userState) {
+                case AWAITING_EDIT_LESSON_TITLE -> {
+                    if (message.hasText()) {
+
+                        String title = message.getText();
+
+                        if (title.length() < 5 || title.length() > 150) {
+                            bot.myExecute(sendMsg.sendMessage(chatId, "Iltimos sarlavha uzunligi 5 ta belgidan kop 150 ta belgidan kam bolsin"));
+                        }
+
+                        LessonUpdateDTO lessonUpdateDTO = new LessonUpdateDTO();
+                        lessonUpdateDTO.setTitle(title);
+                        lessonUpdateDTO.setFree(isFree);
+                        LessonResponseDTO update = lessonService.update(id, lessonUpdateDTO);
+                        String built = buildLessonDetailText(update);
+                        String backButton = String.join(":", ACTION_VIEW, LESSON_ID, id.toString());
+                        InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorEditLessons(update, backButton);
+                        bot.myExecute(sendMsg.sendMessage(chatId, built, inlineKeyboardMarkup));
+                        telegramUserService.updateUserState(chatId, UserState.NONE);
+
+                    } else {
+                        bot.myExecute(sendMsg.sendMessage(chatId, "Iltimos sarlavha uchun text kirgizing"));
+                    }
+
+                }
+                case AWAITING_EDIT_LESSON_DESCRIPTION -> {
+                    if (message.hasText()) {
+
+                        String description = message.getText();
+
+                        if (description.length() < 5 || description.length() > 1000) {
+                            bot.myExecute(sendMsg.sendMessage(chatId, "Iltimos sarlavha uzunligi 5 ta belgidan kop 1000 ta belgidan kam bolsin"));
+                        }
+
+                        LessonUpdateDTO lessonUpdateDTO = new LessonUpdateDTO();
+                        lessonUpdateDTO.setContent(description);
+                        lessonUpdateDTO.setFree(isFree);
+                        LessonResponseDTO update = lessonService.update(id, lessonUpdateDTO);
+                        String built = buildLessonDetailText(update);
+                        String backButton = String.join(":", ACTION_VIEW, LESSON_ID, id.toString());
+                        InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorEditLessons(update, backButton);
+                        bot.myExecute(sendMsg.sendMessage(chatId, built, inlineKeyboardMarkup));
+                        telegramUserService.updateUserState(chatId, UserState.NONE);
+
+                    } else {
+                        bot.myExecute(sendMsg.sendMessage(chatId, "Iltimos tavsif uchun text kirgizing"));
+                    }
+                }
+
+            }
+
+        } else {
+            bot.myExecute(sendMsg.sendMessage(chatId, "Tahrirlash uchun qaytadan boshlang"));
+        }
+
+
+    }
+
+    private void handleModuleEditionStep(Long chatId, Message message, UserState userState, User user) {
+
+        String processKey = String.join(":", ACTION_EDIT, ACTION_MODULE, chatId.toString());
+        Optional<Map<String, Object>> allFields = redisTemporaryDataService.getAllFields(processKey);
+        if (allFields.isPresent()) {
+
+            Map<String, Object> courseFields = allFields.get();
+            Long id = Long.valueOf(courseFields.get(MODULE_ID).toString());
+
+            switch (userState) {
+                case AWAITING_EDIT_MODULE_TITLE -> {
+
+                    if (message.hasText()) {
+                        String title = message.getText();
+
+                        if (title.length() < 3 || title.length() > 200) {
+                            bot.myExecute(sendMsg.sendMessage(chatId, "Iltimos sarlavha uzunligi 3 ta belgidan kam 200 ta belgidan kam bolsin"));
+                            return;
+                        }
+
+                        ModuleUpdateDTO moduleUpdateDTO = new ModuleUpdateDTO();
+                        moduleUpdateDTO.setTitle(title);
+                        ModuleDetailDTO moduleDetailDTO = moduleService.update(id, moduleUpdateDTO);
+                        String built = buildModuleDetailText(moduleDetailDTO);
+
+                        bot.myExecute(sendMsg.sendMessage(chatId, "Module nomi ozgartirildi :<b>" + title + "</b>"));
+                        String backButton = String.join(":", ACTION_VIEW, MODULE_ID, id.toString());
+                        InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorEditModules(moduleDetailDTO, backButton);
+                        bot.myExecute(sendMsg.sendMessage(chatId, built, inlineKeyboardMarkup));
+                        telegramUserService.updateUserState(chatId, UserState.NONE);
+                    } else {
+                        bot.myExecute(sendMsg.sendMessage(chatId, "Iltimos sarlavha uchun text yozing"));
+                    }
+                }
+                case AWAITING_EDIT_MODULE_DESCRIPTION -> {
+
+                    if (message.hasText()) {
+                        String description = message.getText();
+
+                        if (description.length() > 1000) {
+                            bot.myExecute(sendMsg.sendMessage(chatId, "Iltimos tavsif uzunligi 1000 ta belgidan kop bo`lmasun"));
+                            return;
+                        }
+
+                        ModuleUpdateDTO moduleUpdateDTO = new ModuleUpdateDTO();
+                        moduleUpdateDTO.setDescription(description);
+                        ModuleDetailDTO moduleDetailDTO = moduleService.update(id, moduleUpdateDTO);
+                        String built = buildModuleDetailText(moduleDetailDTO);
+
+                        bot.myExecute(sendMsg.sendMessage(chatId, "Kurs tavsifi ozgartirildi :<b>" + description + "</b>"));
+
+                        String backButton = String.join(":", ACTION_VIEW, MODULE_ID, id.toString());
+                        InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorEditModules(moduleDetailDTO, backButton);
+                        bot.myExecute(sendMsg.sendMessage(chatId, built, inlineKeyboardMarkup));
+                        telegramUserService.updateUserState(chatId, UserState.NONE);
+                    } else {
+                        bot.myExecute(sendMsg.sendMessage(chatId, "Iltimos sarlavha uchun text yozing"));
+                    }
+                }
+                case AWAITING_EDIT_MODULE_PRICE -> {
+
+                    if (message.hasText()) {
+                        String price = message.getText();
+
+                        double priceDouble = 0.0;
+
+                        try {
+                            priceDouble = Double.parseDouble(price);
+                        } catch (NumberFormatException e) {
+                            bot.myExecute(sendMsg.sendMessage(chatId, "Iltimos narxni son bilan kiriting"));
+                            return;
+                        }
+
+                        ModuleUpdateDTO moduleUpdateDTO = new ModuleUpdateDTO();
+                        moduleUpdateDTO.setPrice((long) (priceDouble * 100));
+                        ModuleDetailDTO moduleDetailDTO = moduleService.update(id, moduleUpdateDTO);
+                        String built = buildModuleDetailText(moduleDetailDTO);
+
+                        bot.myExecute(sendMsg.sendMessage(chatId, "Kurs narxi ozgartirildi :<b>" + price + "</b>"));
+                        String backButton = String.join(":", ACTION_VIEW, MODULE_ID, id.toString());
+                        InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorEditModules(moduleDetailDTO, backButton);
+                        bot.myExecute(sendMsg.sendMessage(chatId, built, inlineKeyboardMarkup));
+                        telegramUserService.updateUserState(chatId, UserState.NONE);
+                    } else {
+                        bot.myExecute(sendMsg.sendMessage(chatId, "Iltimos price uchun narx yozing"));
+                    }
+                }
+
+            }
+
+
+        } else {
+            ReplyKeyboardMarkup replyKeyboardMarkup = replyKeyboardService.buildMentorMenu();
+            bot.myExecute(sendMsg.sendMessage(chatId, "Tahrirlash belgilangan vaqt tugadi iltimos qaytadan harakat qilib koring", replyKeyboardMarkup));
+
+        }
+
 
     }
 
@@ -229,6 +419,10 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
                     }
                 }
             }
+        } else {
+            ReplyKeyboardMarkup replyKeyboardMarkup = replyKeyboardService.buildMentorMenu();
+            bot.myExecute(sendMsg.sendMessage(chatId, "Tahrirlash belgilangan vaqt tugadi iltimos qaytadan harakat qilib koring", replyKeyboardMarkup));
+
         }
 
     }
@@ -270,11 +464,11 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
 
 
         String backButton = String.join(":",
-                Utils.CallbackData.MY_COURSE_PREFIX,
+                MY_COURSE_PREFIX,
                 ACTION_COURSE,
                 ACTION_VIEW,
                 id.toString(),
-                Utils.CallbackData.ACTION_PAGE,
+                ACTION_PAGE,
                 "0"
         );
         String tgFile = courseDetailDTO.getThumbnailUrl();
@@ -289,6 +483,89 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
         }
     }
 
+    private String buildModuleDetailText(ModuleDetailDTO m) {
+        String title = safe(m.getTitle());
+        String desc = safe(m.getDescription());
+        String price = formatAmount(m.getPrice()); // "50 000 so'm"
+        String lessons = m.getLessonCount() == null ? "0" : String.valueOf(m.getLessonCount());
+        String enr = m.getModuleEnrollmentsCount() == null ? "-" : String.valueOf(m.getModuleEnrollmentsCount());
+        String orderIx = m.getOrderIndex() == null ? "-" : String.valueOf(m.getOrderIndex() + 1);
+        String created = formatDate(m.getCreatedAt());
+        String updated = formatDate(m.getUpdatedAt());
+        Long course = m.getCourseId() == null ? null : m.getCourseId();
+        CourseDetailDTO courseDetailDTO = courseService.read(course);
+
+        return """
+                🔎 <b>Modul batafsil</b>
+                
+                🔗 Kurs nomi: <b>%s</b>
+                
+                🆔 ID: <code>%d</code>
+                🏷️ Nomi: <b>%s</b>
+                📖 Darslar soni: %s ta
+                💵 Narx: %s
+                👥 O‘quvchilar: %s
+                🔢 Tartib: %s
+                
+                📝 Tavsif:
+                %s
+                
+                🗓️ Yaratilgan: %s
+                ♻️ Yangilangan: %s
+                """.formatted(
+                courseDetailDTO.getTitle(),
+                m.getId(), title, lessons, price, enr, orderIx, desc,
+                created, updated
+        );
+    }
+
+    public static String buildReviewSummary(ReviewStatsProjection stats) {
+        DecimalFormat df = new DecimalFormat("#.##");
+        String avgRating = stats.getAverageRating() == null ? "0.0" : df.format(stats.getAverageRating());
+
+        return """
+                💬 <b>Kurs sharhlari va fikrlar</b>
+                
+                📊 Umumiy baho: ⭐️ %s (%d ta sharh)
+                📝 Jami fikrlar soni: %d
+                👥 Faol ishtirokchilar: %d
+                
+                Quyidagi tugmalar orqali sharhlarni ko‘rishingiz yoki filtr qilishingiz mumkin 👇
+                """.formatted(
+                avgRating,
+                stats.getTotalReviews(),
+                stats.getTotalComments(),
+                stats.getActiveStudents()
+        );
+    }
+
+    private String buildLessonDetailText(LessonResponseDTO l) {
+        String title = safe(l.getTitle());
+        String desc = safe(l.getContent());
+        String free = l.isFree() ? "✅ Ha" : "❌ Yo‘q";
+        String order = l.getOrderIndex() == null ? "-" : String.valueOf(l.getOrderIndex());
+        String module = l.getModuleId() == null ? "-" : String.valueOf(l.getModuleId());
+
+        return """
+                🎓 <b>Dars haqida</b>
+                
+                🆔 ID: <code>%d</code>
+                🏷️ Nomi: <b>%s</b>
+                🪜 Tartib: %s
+                🆓 Bepul: %s
+                🔗 Modul ID: <code>%s</code>
+                
+                kontent %s
+                
+                📝 Tavsif:
+                %s
+                """.formatted(
+                l.getId(), title, order, free, module,
+                l.getContents() != null ? l.getContents().size() : null,
+                (desc.isBlank() ? "-" : desc)
+        );
+    }
+
     private void handleInstructorContent(Long chatId, Message message, UserState userState) {
 
         String processKey = String.join(":", ACTION_ADD, LESSON_PREFIX, chatId.toString());
@@ -298,7 +575,7 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
 
             Map<String, Object> stringObjectMap = allFields.get();
 
-            Long lessonId = Long.valueOf(stringObjectMap.get(Utils.CallbackData.LESSON_ID).toString());
+            Long lessonId = Long.valueOf(stringObjectMap.get(LESSON_ID).toString());
 
             switch (userState) {
                 case AWAITING_ATTACHMENT_CONTENT -> {
@@ -331,6 +608,10 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
                 }
             }
 
+        } else {
+            ReplyKeyboardMarkup replyKeyboardMarkup = replyKeyboardService.buildMentorMenu();
+            bot.myExecute(sendMsg.sendMessage(chatId, "Tahrirlash belgilangan vaqt tugadi iltimos qaytadan harakat qilib koring", replyKeyboardMarkup));
+
         }
     }
 
@@ -347,7 +628,7 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
 
                 if (allFields.isPresent()) {
                     Map<String, Object> stringObjectMap = allFields.get();
-                    Long moduleId = Long.valueOf(stringObjectMap.get(Utils.CallbackData.MODULE_ID).toString());
+                    Long moduleId = Long.valueOf(stringObjectMap.get(MODULE_ID).toString());
 
                     if (lessonRepository.existsByTitleAndModuleId(text, moduleId)) {
                         bot.myExecute(sendMsg.sendMessage(chatId, "Lesson already exists."));
@@ -504,7 +785,7 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
             String categoryName = categoryService.read(Long.valueOf(categoryId)).getName();
             String title = String.valueOf(courseData.get(TITLE));
             String description = String.valueOf(courseData.get(DESCRIPTION));
-            Long thumbnailId = Long.valueOf(String.valueOf(courseData.get(Utils.CallbackData.THUMBNAIL_ID)));
+            Long thumbnailId = Long.valueOf(String.valueOf(courseData.get(THUMBNAIL_ID)));
 
             AttachmentDTO attachmentDTO = attachmentService.read(thumbnailId);
 
@@ -645,15 +926,70 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
     }
 
     private void instructorMyStudentHandle(Long chatId, User user) {
+        long count = paymentRepository.countTotalStudentsByMentor(user.getId(), TransactionStatus.SUCCESS);
 
+        PageRequest pageable = PageRequest.of(0, 10);
+        Page<CourseStudentStatsProjection> stats = courseRepository.findCourseStatsByInstructor(user.getId(), TransactionStatus.SUCCESS.name(), pageable);
+
+        String built = buildStudentsDashboardText(count, stats);
+        String backButton = String.join(":", BACK_TO_MAIN_MENU);
+        InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorMyStudents(stats, backButton);
+        bot.myExecute(sendMsg.sendMessage(chatId, built, inlineKeyboardMarkup));
+
+
+    }
+
+    private static String buildStudentsDashboardText(long totalUniqueStudents, Page<CourseStudentStatsProjection> courseStatsPage) {
+        // --- Kurslar ro'yxatini formatlaymiz ---
+        List<CourseStudentStatsProjection> courseStats = courseStatsPage.getContent();
+        StringBuilder coursesFormattedText = new StringBuilder();
+        if (courseStats.isEmpty()) {
+            coursesFormattedText.append("<i>Hozircha birorta ham kursingizga o'quvchilar yozilmagan.</i>");
+        } else {
+
+            for (CourseStudentStatsProjection stat : courseStats) {
+                coursesFormattedText.append(String.format(
+                        "%s <b>%s:</b> %d ta o'quvchi\n\n",
+                        randomBookEmoji(),
+                        escapeHtml(stat.getCourse_title()),
+                        stat.getUnique_student_count() != null ? stat.getUnique_student_count() : 0 // null'dan himoya
+                ));
+            }
+        }
+
+        // --- Asosiy shablonni to'ldiramiz ---
+        String dashboardTemplate = """
+                🎓 <b>O'quvchilarim Sahifasi</b>
+                
+                Sizda jami <b>%d ta</b> unikal o'quvchi mavjud.
+                
+                〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️
+                
+                📊 <b>Kurslar bo'yicha statistika:</b>
+                
+                %s
+                
+                <i>Quyidagi amallardan birini tanlashingiz mumkin:</i>""";
+
+        return String.format(
+                dashboardTemplate,
+                totalUniqueStudents,
+                coursesFormattedText.toString().trim()
+        );
     }
 
     private void instructorReviewsHandle(Long chatId, User user) {
-
+        ReviewStatsProjection projection = reviewRepository.getOverallReviewStatsByMentorId(user.getId());
+        String built = buildReviewSummary(projection);
+        InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.myReview();
+        bot.myExecute(sendMsg.sendMessage(chatId, built, inlineKeyboardMarkup));
     }
 
     private void instructorMyRevenueHandle(Long chatId, User user) {
-
+        MentorIncomeProjection mentorIncomeStats = paymentRepository.findMentorIncomeStats(user.getId());
+        String built = buildMentorIncomeText(mentorIncomeStats);
+        InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.mentorRevenue();
+        bot.myExecute(sendMsg.sendMessage(chatId, built, inlineKeyboardMarkup));
     }
 
     /**
@@ -684,7 +1020,7 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
         String mentorStartText = """
                 <b>👋 Assalomu alaykum, hurmatli mentor!</b>
                 
-                <b>Online Education</b> platformasiga xush kelibsiz. 
+                <b>Online Education</b> platformasiga xush kelibsiz.
                 Quyidagi menyu orqali o‘z kurslaringizni boshqarishingiz mumkin.
                 """;
 
@@ -730,7 +1066,7 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
                         ✅ Aktiv kurslar: %d ta
                         ⏸️ Aktiv emas kurslar: %d ta
                         🎓 O‘quvchilar (sotib olgan): %d ta
-                        💰 Umumiy daromad: $%s""",
+                        💰 Umumiy daromad: %s""",
                 fullName,
                 email,
                 username,
@@ -741,6 +1077,40 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
                 formatAmount(totalIncome)
         );
     }
+
+    public String buildMentorIncomeText(MentorIncomeProjection p) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("<b>📊 Mentor daromadlari haqida hisobot</b>\n\n");
+
+        // Bugungi statistikalar
+        sb.append("📅 <u>Bugungi natijalar</u>\n");
+        sb.append("💰 Daromad: ").append(formatAmount(p.getTodayIncome())).append("\n");
+        sb.append("🛒 Sotuvlar soni: ").append(p.getTodaySales() != null ? p.getTodaySales() : 0).append(" ta\n\n");
+
+        // Oylik va umumiy
+        sb.append("📅 <u>Oylik va umumiy</u>\n");
+        sb.append("📆 Joriy oydagi daromad: ").append(formatAmount(p.getMonthlyIncome())).append("\n");
+        sb.append("💳 Umumiy daromad: ").append(formatAmount(p.getTotalIncome())).append("\n\n");
+
+        // Talabalar va kurslar
+        sb.append("👨‍🎓 Umumiy talabalar soni: ").append(p.getTotalStudents() != null ? p.getTotalStudents() : 0).append(" ta\n");
+        sb.append("⭐️ Kurslar bo‘yicha o‘rtacha reyting: ").append(
+                p.getAverageRating() != null ? String.format("%.1f", p.getAverageRating()) : "Noma'lum"
+        ).append("\n\n");
+
+        // Eng ko‘p sotilgan kurs
+        sb.append("🏆 <u>Eng ko‘p sotilgan kurs</u>\n");
+        if (p.getTopCourseName() != null) {
+            sb.append("📚 Kurs: ").append(p.getTopCourseName()).append("\n");
+            sb.append("🛒 Sotuvlar: ").append(p.getTopCourseSales() != null ? p.getTopCourseSales() : 0).append(" ta\n");
+        } else {
+            sb.append("⚠️ Hali kurs sotilmagan.\n");
+        }
+
+        return sb.toString();
+    }
+
 
     /**
      * Creates a simple text-based progress bar.
@@ -788,6 +1158,19 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
                 + emptyStar.repeat(empty);
     }
 
+    private String safe(String s) {
+        return s == null ? "" : s;
+    }
+
+    /**
+     * Matndagi maxsus HTML belgilarini xavfsiz holatga keltiradi.
+     */
+    private static String escapeHtml(String text) {
+        if (text == null) return "";
+        return text.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;");
+    }
 
     /**
      * Retrieves an existing TelegramUser or creates a new one if not found.

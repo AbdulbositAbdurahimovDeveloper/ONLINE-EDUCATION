@@ -94,8 +94,10 @@ public class LessonServiceImpl implements LessonService {
             );
         }
 
-        lesson.setTitle(lessonUpdateDTO.getTitle());
-        lesson.setContent(lessonUpdateDTO.getContent());
+        if (lessonUpdateDTO.getTitle() != null)
+            lesson.setTitle(lessonUpdateDTO.getTitle());
+        if (lessonUpdateDTO.getContent() != null)
+            lesson.setContent(lessonUpdateDTO.getContent());
         lesson.setFree(lessonUpdateDTO.isFree());
 
         Lesson saveLesson = lessonRepository.save(lesson);

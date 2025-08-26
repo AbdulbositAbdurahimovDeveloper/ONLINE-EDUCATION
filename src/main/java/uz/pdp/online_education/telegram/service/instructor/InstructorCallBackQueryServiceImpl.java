@@ -4,14 +4,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import uz.pdp.online_education.config.security.JwtService;
+import uz.pdp.online_education.enums.TransactionStatus;
 import uz.pdp.online_education.model.Abs.AbsDateEntity;
 import uz.pdp.online_education.model.Category;
 import uz.pdp.online_education.model.Course;
@@ -19,13 +20,13 @@ import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.payload.PageDTO;
 import uz.pdp.online_education.payload.category.CategoryDTO;
 import uz.pdp.online_education.payload.content.attachmentContent.AttachmentDTO;
-import uz.pdp.online_education.payload.course.CourseCreateDTO;
-import uz.pdp.online_education.payload.course.CourseDetailDTO;
-import uz.pdp.online_education.payload.course.CourseUpdateDTO;
+import uz.pdp.online_education.payload.course.*;
 import uz.pdp.online_education.payload.lesson.LessonCreatDTO;
 import uz.pdp.online_education.payload.lesson.LessonResponseDTO;
+import uz.pdp.online_education.payload.lesson.LessonUpdateDTO;
 import uz.pdp.online_education.payload.module.ModuleCreateDTO;
 import uz.pdp.online_education.payload.module.ModuleDetailDTO;
+import uz.pdp.online_education.payload.projection.*;
 import uz.pdp.online_education.payload.review.ReviewSummaryDTO;
 import uz.pdp.online_education.payload.text.TextContentResponseDTO;
 import uz.pdp.online_education.payload.user.UserDTO;
@@ -57,6 +58,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static uz.pdp.online_education.telegram.Utils.CallbackData.*;
+import static uz.pdp.online_education.telegram.Utils.Numbering.randomBookEmoji;
 
 
 @Slf4j
@@ -91,6 +93,9 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
     private final TextContentService textContentService;
     private final ModuleRepository moduleRepository;
     private final PaymentService paymentService;
+    private final LessonRepository lessonRepository;
+    private final UserRepository userRepository;
+    private final ReviewRepository reviewRepository;
 
 
     @Override
@@ -113,6 +118,7 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
 
             switch (prefix) {
                 case DELETED -> bot.myExecute(sendMsg.deleteMessage(chatId, messageId));
+                case BACK_TO_MAIN_MENU -> backToMain(chatId, messageId);
                 case AUTH_PREFIX -> handleAuthCallback(user, chatId, messageId, data);
                 case MY_COURSE_PREFIX -> instructorMyCourseHandle(chatId, user, messageId, data, queryData);
                 case STUDENT_PREFIX -> instructorMyStudentHandle(chatId, user, messageId, data, queryData);
@@ -159,12 +165,17 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
     private void instructorMyCourseHandle(Long chatId, User user, Integer messageId, String[] data, String queryData) {
         String type = data[1];
         switch (type) {
-            case Utils.CallbackData.ACTION_BACK ->
-                    processMessageService.instructorMyCourseHandle(chatId, user, messageId);
-            case Utils.CallbackData.ACTION_SUCCESS -> instructorMyCoursesSuccess(chatId, user, messageId, data);
-            case Utils.CallbackData.ACTION_DRAFT -> instructorMyCourseDraft(chatId, user, messageId, data);
-            case Utils.CallbackData.ACTION_COURSE -> instructorMyCourseViewId(chatId, messageId, data);
+            case ACTION_BACK -> processMessageService.instructorMyCourseHandle(chatId, user, messageId);
+            case ACTION_SUCCESS -> instructorMyCoursesSuccess(chatId, user, messageId, data);
+            case ACTION_DRAFT -> instructorMyCourseDraft(chatId, user, messageId, data);
+            case ACTION_COURSE -> instructorMyCourseViewId(chatId, messageId, data);
+            case ACTION_MODULE -> instructorMyModuleViewId(chatId, messageId, data);
         }
+    }
+
+    private void instructorMyModuleViewId(Long chatId, Integer messageId, String[] data) {
+
+
     }
 
 
@@ -647,6 +658,18 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
                 "0"
         );
         switch (type) {
+            case IS_PREE -> {
+
+                boolean isFree = Boolean.parseBoolean(data[3]);
+                LessonUpdateDTO lessonUpdateDTO = new LessonUpdateDTO();
+                lessonUpdateDTO.setFree(isFree);
+                LessonResponseDTO update = lessonService.update(id, lessonUpdateDTO);
+                String built = buildLessonDetailText(update);
+                String backButton = String.join(":", ACTION_VIEW, LESSON_ID, id.toString());
+                InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorEditLessons(update, backButton);
+                bot.myExecute(sendMsg.editMessage(chatId, messageId, built, inlineKeyboardMarkup));
+
+            }
             case CATEGORY -> {
 
                 if (data.length > 3) {
@@ -733,23 +756,22 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
                     }
                 }
             }
-            case ACTION_COURSE -> {
+            case ACTION_COURSE -> handleEditCourse(chatId, messageId, data, id, joined);
+            case ACTION_MODULE -> handleEditModule(chatId, messageId, data, id);
+            case LESSON_PREFIX -> {
 
-                CourseDetailDTO courseDetailDTO = courseService.read(id);
-                CategoryDTO categoryDTO = categoryService.read(courseDetailDTO.getCategoryId());
-                UserDTO userDTO = userService.read(courseDetailDTO.getInstructorId());
-
-                if (data.length == 4) {
+                LessonResponseDTO lessonResponseDTO = lessonService.read(id);
+                if (data.length > 3) {
 
                     InlineKeyboardMarkup cancelButton = inlineKeyboardService.createSingleButtonKeyboard("❌ Bekor qilish", String.join(":",
-                            ACTION_EDIT, ACTION_COURSE, id.toString()));
+                            ACTION_EDIT, LESSON_PREFIX, id.toString()));
 
                     String editType = data[3];
                     String sendMessage = "null";
                     switch (editType) {
                         case TITLE -> {
-                            telegramUserService.updateUserState(chatId, UserState.AWAITING_EDIT_COURSE_TITLE);
-                            String title = courseDetailDTO.getTitle();
+                            telegramUserService.updateUserState(chatId, UserState.AWAITING_EDIT_LESSON_TITLE);
+                            String title = lessonResponseDTO.getTitle();
                             sendMessage = """
                                     ✏️ <b>Sarlavha tahriri</b>
                                     
@@ -762,13 +784,15 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
                                     ✍️ Yangi sarlavhani kiriting:
                                     
                                     
-                                    ℹ️ Agar tahrir qilishni xohlamasangiz, pastdagi 
+                                    ℹ️ Agar tahrir qilishni xohlamasangiz, pastdagi
                                     "❌ Bekor qilish" tugmasini bosing.
                                     """.formatted(title);
+
                         }
                         case DESCRIPTION -> {
-                            telegramUserService.updateUserState(chatId, UserState.AWAITING_EDIT_COURSE_DESCRIPTION);
-                            String description = courseDetailDTO.getDescription();
+                            telegramUserService.updateUserState(chatId, UserState.AWAITING_EDIT_LESSON_DESCRIPTION);
+                            String description = lessonResponseDTO.getContent();
+
                             sendMessage = """
                                     📄 <b>Tavsif tahriri</b>
                                     
@@ -781,132 +805,314 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
                                     ✍️ Yangi tavsifni kiriting:
                                     
                                     
-                                    ℹ️ Agar tahrir qilishni xohlamasangiz, pastdagi 
-                                    "❌ Bekor qilish" tugmasini bosing.
-                                    """.formatted(description);
-                        }
-                        case PHOTO -> {
-                            telegramUserService.updateUserState(chatId, UserState.AWAITING_EDIT_COURSE_THUMBNAIL);
-                            if (courseDetailDTO.getThumbnailUrl() == null) {
-                                sendMessage = """
-                                        🖼 <b>Rasm qo‘shilmagan</b>
-                                        
-                                        
-                                        ✍️ Iltimos yangi rasmni yuklang ⬇️
-                                        
-                                        
-                                        ℹ️ Agar tahrir qilishni xohlamasangiz, pastdagi 
-                                        "❌ Bekor qilish" tugmasini bosing.
-                                        """;
-                            } else {
-                                sendMessage = """
-                                        🖼 <b>Rasm tahriri</b>
-                                        
-                                        
-                                        📌 Joriy rasm mavjud.
-                                        
-                                        ✍️ Iltimos yangi rasmni yuklang ⬇️
-                                        
-                                        
-                                        ℹ️ Agar tahrir qilishni xohlamasangiz, pastdagi 
-                                        "❌ Bekor qilish" tugmasini bosing.
-                                        """;
-                                InlineKeyboardMarkup button = inlineKeyboardService.createSingleButtonKeyboard("❌ Bekor qilish", String.join(":",
-                                        ACTION_EDIT, ACTION_COURSE, id.toString(), ACTION_DELETE, PHOTO));
-
-                                bot.myExecute(sendMsg.deleteMessage(chatId, messageId));
-                                AttachmentDTO attachmentDTO = attachmentService.read(Long.valueOf(courseDetailDTO.getThumbnailUrl()));
-                                bot.myExecute(sendMsg.sendPhoto(chatId, attachmentDTO.getTelegramFileId(), sendMessage, button));
-                                return;
-                            }
-                        }
-                        case CATEGORY -> {
-                            telegramUserService.updateUserState(chatId, UserState.AWAITING_EDIT_COURSE_CATEGORY_CHOICE);
-                            Page<Category> categories = categoryRepository.findAll(PageRequest.of(0, 10));
-
-                            StringBuilder stringBuilder = new StringBuilder();
-                            stringBuilder.append("Kerakli kategory tanlang \n");
-                            int number = 1;
-                            for (Category category : categories.getContent()) {
-                                stringBuilder.append(number++).append(". ").append(category.getName()).append("\n");
-                            }
-
-                            String name = categoryDTO.getName();
-                            String categoryMessage = """
-                                    🏷 <b>Kategoriya tahriri</b>
-                                    
-                                    📌 <i>Joriy kategoriya:</i>
-                                    
-                                    <b>%s</b>
-                                    
-                                    ✍️ Yangi kategoriyani tanlang:
-                                    %s
                                     ℹ️ Agar tahrir qilishni xohlamasangiz, pastdagi
                                     "❌ Bekor qilish" tugmasini bosing.
-                                    """.formatted(name, stringBuilder.toString());
-                            String processKey = String.join(":", ACTION_EDIT, ACTION_COURSE, chatId.toString());
-                            redisTemporaryDataService.startProcess(processKey, Map.of(COURSE_ID, id.toString(), CATEGORY_ID, categoryDTO.getId().toString()));
+                                    """.formatted(description);
 
-                            String cancelBtn = String.join(":", ACTION_EDIT, ACTION_COURSE, id.toString());
-                            InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.categorySelect(categories, cancelBtn);
 
-                            bot.myExecute(sendMsg.editMessage(chatId, messageId, categoryMessage, inlineKeyboardMarkup));
+                        }
+                        case IS_PREE -> {
+                            telegramUserService.updateUserState(chatId, UserState.AWAITING_EDIT_LESSON_IS_FREE);
+
+                            sendMessage = """
+                                    💰 <b>Dars narxi tahriri</b>
+                                    
+                                    
+                                    📌 <i>Joriy holat:</i> %s
+                                    
+                                    
+                                    ✍️ Yangi holatni tanlang:
+                                    
+                                    ✅ Bepul  
+                                    💵 Pullik
+                                    
+                                    
+                                    ℹ️ Agar tahrir qilishni xohlamasangiz, pastdagi
+                                    "❌ Bekor qilish" tugmasini bosing.
+                                    """.formatted(lessonResponseDTO.isFree() ? "Bepul" : "Pullik");
+
+
+                            InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.lessonEditIsFree(id);
+                            String processKey = String.join(":", ACTION_EDIT, LESSON_PREFIX, chatId.toString());
+                            redisTemporaryDataService.startProcess(processKey, Map.of(LESSON_ID, id.toString(), IS_PREE, lessonResponseDTO.isFree()));
+                            bot.myExecute(sendMsg.editMessage(chatId, messageId, sendMessage, inlineKeyboardMarkup));
                             return;
                         }
                     }
 
-                    String processKey = String.join(":", ACTION_EDIT, ACTION_COURSE, chatId.toString());
-                    redisTemporaryDataService.startProcess(processKey, Map.of(COURSE_ID, id.toString(), CATEGORY_ID, categoryDTO.getId().toString()));
+                    String processKey = String.join(":", ACTION_EDIT, LESSON_PREFIX, chatId.toString());
+                    redisTemporaryDataService.startProcess(processKey, Map.of(LESSON_ID, id.toString(), IS_PREE, lessonResponseDTO.isFree()));
                     bot.myExecute(sendMsg.editMessage(chatId, messageId, sendMessage, cancelButton));
+
                 } else {
 
-
-                    String text = String.format("""
-                                    📘 <b>Kurs Tafsilotlari</b>
-                                    
-                                    🔹 <b>Nomi:</b> %s \s
-                                    🔹 <b>Slug:</b> %s \s
-                                    🔹 <b>Kategoriya:</b> %s \s
-                                    🔹 <b>Mentor :</b> %s \s
-                                    
-                                    📖 <b>Tavsif:</b> \s
-                                    %s \s
-                                    
-                                    📊 <b>Statistika:</b> \s
-                                    - 📚 <b>Modullar:</b> %s \s
-                                    - ⭐ <b>Baholash:</b> %s  \s
-                                    - 📝 <b>Sharhlar:</b> %s ta \s
-                                    
-                                    🕒 <b>Qo‘shilgan sana:</b> %s \s
-                                    ♻️ <b>Yangilangan sana:</b> %s \s
-                                    
-                                    ✅ <b>Status:</b> %s
-                                    """,
-                            courseDetailDTO.getTitle(),
-                            courseDetailDTO.getSlug(),
-                            categoryDTO.getName(),
-                            userDTO.getFirstName() + " " + userDTO.getLastName(),
-                            courseDetailDTO.getDescription(),
-                            courseDetailDTO.getModulesCount(),
-                            generateStars(courseDetailDTO.getReviewSummary().getAverageRating()),
-                            courseDetailDTO.getReviewSummary().getCount(),
-                            formatDate(courseDetailDTO.getCreatedAt()),
-                            formatDate(courseDetailDTO.getUpdatedAt()),
-                            courseDetailDTO.isSuccess() ? "Faol" : "Faol emas"
-                    );
+                    String built = buildLessonDetailText(lessonResponseDTO);
+                    String backButton = String.join(":", ACTION_VIEW, LESSON_ID, id.toString());
+                    InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorEditLessons(lessonResponseDTO, backButton);
+                    bot.myExecute(sendMsg.editMessage(chatId, messageId, built, inlineKeyboardMarkup));
 
 
-                    String backButton = joined;
-                    String tgFile = courseDetailDTO.getThumbnailUrl();
-                    InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorEditCourses(courseDetailDTO, backButton);
+                }
 
-                    if (data.length > 4 && data[4].equals(PHOTO)) {
-                        bot.myExecute(sendMsg.deleteMessage(chatId, messageId));
-                        bot.myExecute(sendMsg.sendMessage(chatId, text, inlineKeyboardMarkup));
+            }
+        }
+    }
+
+    private void handleEditModule(Long chatId, Integer messageId, String[] data, Long id) {
+        ModuleDetailDTO moduleDetailDTO = moduleService.read(id);
+
+        if (data.length > 3) {
+
+            InlineKeyboardMarkup cancelButton = inlineKeyboardService.createSingleButtonKeyboard("❌ Bekor qilish", String.join(":",
+                    ACTION_EDIT, ACTION_MODULE, id.toString()));
+
+            String editType = data[3];
+            String sendMessage = "null";
+            switch (editType) {
+                case TITLE -> {
+                    telegramUserService.updateUserState(chatId, UserState.AWAITING_EDIT_MODULE_TITLE);
+                    String title = moduleDetailDTO.getTitle();
+                    sendMessage = """
+                            ✏️ <b>Sarlavha tahriri</b>
+                            
+                            
+                            📌 <i>Joriy sarlavha:</i>
+                            
+                            <b>%s</b>
+                            
+                            
+                            ✍️ Yangi sarlavhani kiriting:
+                            
+                            
+                            ℹ️ Agar tahrir qilishni xohlamasangiz, pastdagi
+                            "❌ Bekor qilish" tugmasini bosing.
+                            """.formatted(title);
+
+                }
+                case DESCRIPTION -> {
+                    telegramUserService.updateUserState(chatId, UserState.AWAITING_EDIT_MODULE_DESCRIPTION);
+                    String description = moduleDetailDTO.getDescription();
+                    sendMessage = """
+                            📄 <b>Tavsif tahriri</b>
+                            
+                            
+                            📌 <i>Joriy tavsif:</i>
+                            
+                            %s
+                            
+                            
+                            ✍️ Yangi tavsifni kiriting:
+                            
+                            
+                            ℹ️ Agar tahrir qilishni xohlamasangiz, pastdagi
+                            "❌ Bekor qilish" tugmasini bosing.
+                            """.formatted(description);
+
+                }
+                case PRICE -> {
+                    telegramUserService.updateUserState(chatId, UserState.AWAITING_EDIT_MODULE_PRICE);
+                    Long price = moduleDetailDTO.getPrice();
+                    sendMessage = """
+                            📄 <b>Narx tahriri</b>
+                            
+                            
+                            📌 <i>Joriy Narx:</i>
+                            
+                            %s
+                            
+                            
+                            ✍️ Yangi tavsifni kiriting:
+                            
+                            
+                            ℹ️ Agar tahrir qilishni xohlamasangiz, pastdagi
+                            "❌ Bekor qilish" tugmasini bosing.
+                            """.formatted(formatAmount(price));
+                }
+            }
+            String processKey = String.join(":", ACTION_EDIT, ACTION_MODULE, chatId.toString());
+            redisTemporaryDataService.startProcess(processKey, Map.of(MODULE_ID, id.toString()));
+            bot.myExecute(sendMsg.editMessage(chatId, messageId, sendMessage, cancelButton));
+
+        } else {
+
+            String built = buildModuleDetailText(moduleDetailDTO);
+            String backButton = String.join(":", ACTION_VIEW, MODULE_ID, id.toString());
+            InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorEditModules(moduleDetailDTO, backButton);
+            bot.myExecute(sendMsg.editMessage(chatId, messageId, built, inlineKeyboardMarkup));
+
+
+        }
+    }
+
+    private void handleEditCourse(Long chatId, Integer messageId, String[] data, Long id, String joined) {
+        CourseDetailDTO courseDetailDTO = courseService.read(id);
+        CategoryDTO categoryDTO = categoryService.read(courseDetailDTO.getCategoryId());
+        UserDTO userDTO = userService.read(courseDetailDTO.getInstructorId());
+
+        if (data.length == 4) {
+
+            InlineKeyboardMarkup cancelButton = inlineKeyboardService.createSingleButtonKeyboard("❌ Bekor qilish", String.join(":",
+                    ACTION_EDIT, ACTION_COURSE, id.toString()));
+
+            String editType = data[3];
+            String sendMessage = "null";
+            switch (editType) {
+                case TITLE -> {
+                    telegramUserService.updateUserState(chatId, UserState.AWAITING_EDIT_COURSE_TITLE);
+                    String title = courseDetailDTO.getTitle();
+                    sendMessage = """
+                            ✏️ <b>Sarlavha tahriri</b>
+                            
+                            
+                            📌 <i>Joriy sarlavha:</i>
+                            
+                            <b>%s</b>
+                            
+                            
+                            ✍️ Yangi sarlavhani kiriting:
+                            
+                            
+                            ℹ️ Agar tahrir qilishni xohlamasangiz, pastdagi 
+                            "❌ Bekor qilish" tugmasini bosing.
+                            """.formatted(title);
+                }
+                case DESCRIPTION -> {
+                    telegramUserService.updateUserState(chatId, UserState.AWAITING_EDIT_COURSE_DESCRIPTION);
+                    String description = courseDetailDTO.getDescription();
+                    sendMessage = """
+                            📄 <b>Tavsif tahriri</b>
+                            
+                            
+                            📌 <i>Joriy tavsif:</i>
+                            
+                            %s
+                            
+                            
+                            ✍️ Yangi tavsifni kiriting:
+                            
+                            
+                            ℹ️ Agar tahrir qilishni xohlamasangiz, pastdagi 
+                            "❌ Bekor qilish" tugmasini bosing.
+                            """.formatted(description);
+                }
+                case PHOTO -> {
+                    telegramUserService.updateUserState(chatId, UserState.AWAITING_EDIT_COURSE_THUMBNAIL);
+                    if (courseDetailDTO.getThumbnailUrl() == null) {
+                        sendMessage = """
+                                🖼 <b>Rasm qo‘shilmagan</b>
+                                
+                                
+                                ✍️ Iltimos yangi rasmni yuklang ⬇️
+                                
+                                
+                                ℹ️ Agar tahrir qilishni xohlamasangiz, pastdagi 
+                                "❌ Bekor qilish" tugmasini bosing.
+                                """;
                     } else {
-                        bot.myExecute(sendMsg.editMessage(chatId, messageId, text, inlineKeyboardMarkup));
+                        sendMessage = """
+                                🖼 <b>Rasm tahriri</b>
+                                
+                                
+                                📌 Joriy rasm mavjud.
+                                
+                                ✍️ Iltimos yangi rasmni yuklang ⬇️
+                                
+                                
+                                ℹ️ Agar tahrir qilishni xohlamasangiz, pastdagi 
+                                "❌ Bekor qilish" tugmasini bosing.
+                                """;
+                        InlineKeyboardMarkup button = inlineKeyboardService.createSingleButtonKeyboard("❌ Bekor qilish", String.join(":",
+                                ACTION_EDIT, ACTION_COURSE, id.toString(), ACTION_DELETE, PHOTO));
+
+                        bot.myExecute(sendMsg.deleteMessage(chatId, messageId));
+                        AttachmentDTO attachmentDTO = attachmentService.read(Long.valueOf(courseDetailDTO.getThumbnailUrl()));
+                        bot.myExecute(sendMsg.sendPhoto(chatId, attachmentDTO.getTelegramFileId(), sendMessage, button));
+                        return;
                     }
                 }
+                case CATEGORY -> {
+                    telegramUserService.updateUserState(chatId, UserState.AWAITING_EDIT_COURSE_CATEGORY_CHOICE);
+                    Page<Category> categories = categoryRepository.findAll(PageRequest.of(0, 10));
+
+                    StringBuilder stringBuilder = new StringBuilder();
+                    stringBuilder.append("Kerakli kategory tanlang \n");
+                    int number = 1;
+                    for (Category category : categories.getContent()) {
+                        stringBuilder.append(number++).append(". ").append(category.getName()).append("\n");
+                    }
+
+                    String name = categoryDTO.getName();
+                    String categoryMessage = """
+                            🏷 <b>Kategoriya tahriri</b>
+                            
+                            📌 <i>Joriy kategoriya:</i>
+                            
+                            <b>%s</b>
+                            
+                            ✍️ Yangi kategoriyani tanlang:
+                            %s
+                            ℹ️ Agar tahrir qilishni xohlamasangiz, pastdagi
+                            "❌ Bekor qilish" tugmasini bosing.
+                            """.formatted(name, stringBuilder.toString());
+                    String processKey = String.join(":", ACTION_EDIT, ACTION_COURSE, chatId.toString());
+                    redisTemporaryDataService.startProcess(processKey, Map.of(COURSE_ID, id.toString(), CATEGORY_ID, categoryDTO.getId().toString()));
+
+                    String cancelBtn = String.join(":", ACTION_EDIT, ACTION_COURSE, id.toString());
+                    InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.categorySelect(categories, cancelBtn);
+
+                    bot.myExecute(sendMsg.editMessage(chatId, messageId, categoryMessage, inlineKeyboardMarkup));
+                    return;
+                }
+            }
+
+            String processKey = String.join(":", ACTION_EDIT, ACTION_COURSE, chatId.toString());
+            redisTemporaryDataService.startProcess(processKey, Map.of(COURSE_ID, id.toString(), CATEGORY_ID, categoryDTO.getId().toString()));
+            bot.myExecute(sendMsg.editMessage(chatId, messageId, sendMessage, cancelButton));
+        } else {
+
+
+            String text = String.format("""
+                            📘 <b>Kurs Tafsilotlari</b>
+                            
+                            🔹 <b>Nomi:</b> %s \s
+                            🔹 <b>Slug:</b> %s \s
+                            🔹 <b>Kategoriya:</b> %s \s
+                            🔹 <b>Mentor :</b> %s \s
+                            
+                            📖 <b>Tavsif:</b> \s
+                            %s \s
+                            
+                            📊 <b>Statistika:</b> \s
+                            - 📚 <b>Modullar:</b> %s \s
+                            - ⭐ <b>Baholash:</b> %s  \s
+                            - 📝 <b>Sharhlar:</b> %s ta \s
+                            
+                            🕒 <b>Qo‘shilgan sana:</b> %s \s
+                            ♻️ <b>Yangilangan sana:</b> %s \s
+                            
+                            ✅ <b>Status:</b> %s
+                            """,
+                    courseDetailDTO.getTitle(),
+                    courseDetailDTO.getSlug(),
+                    categoryDTO.getName(),
+                    userDTO.getFirstName() + " " + userDTO.getLastName(),
+                    courseDetailDTO.getDescription(),
+                    courseDetailDTO.getModulesCount(),
+                    generateStars(courseDetailDTO.getReviewSummary().getAverageRating()),
+                    courseDetailDTO.getReviewSummary().getCount(),
+                    formatDate(courseDetailDTO.getCreatedAt()),
+                    formatDate(courseDetailDTO.getUpdatedAt()),
+                    courseDetailDTO.isSuccess() ? "Faol" : "Faol emas"
+            );
+
+
+            InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorEditCourses(courseDetailDTO, joined);
+
+            if (data.length > 4 && data[4].equals(PHOTO)) {
+                bot.myExecute(sendMsg.deleteMessage(chatId, messageId));
+                bot.myExecute(sendMsg.sendMessage(chatId, text, inlineKeyboardMarkup));
+            } else {
+                bot.myExecute(sendMsg.editMessage(chatId, messageId, text, inlineKeyboardMarkup));
             }
         }
     }
@@ -917,8 +1123,6 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
         Long id = Long.valueOf(data[2]);
         switch (type) {
             case ACTION_COURSE -> {
-
-
                 long count = paymentRepository.countByModule_Course_Id(id);
                 if (count != 0) {
 
@@ -928,22 +1132,64 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
                             "Siz ushbu kursni ochira olmaysiz\n chunki bu kurs modulini  <b>" + count + "ta</b> oquvchilar sotib olgan !!!",
                             keyboard));
                 } else {
-
-
                     if (data.length > 3 && Boolean.parseBoolean(data[3])) {
                         InlineKeyboardMarkup keyboard = inlineKeyboardService.createSingleButtonKeyboard("Tushunarli",
                                 String.join(":", ACTION_VIEW, ACTION_COURSE, id.toString()));
                         courseService.delete(id);
                         bot.myExecute(sendMsg.editMessage(chatId, messageId, "Kurs ochirildi", keyboard));
                     } else {
-
                         InlineKeyboardMarkup keyboard = inlineKeyboardService.deleteCourse(id);
                         bot.myExecute(sendMsg.editMessage(chatId, messageId, "Kurs ochirish agar kurs o`chirilsa uni qaytarib tiklab bolmaydi ", keyboard));
-
                     }
                 }
+            }
+            case ACTION_MODULE -> {
+                long count = paymentRepository.countByModule_Id(id);
+                if (count != 0) {
 
+                    InlineKeyboardMarkup keyboard = inlineKeyboardService.createSingleButtonKeyboard("Tushunarli",
+                            String.join(":", ACTION_VIEW, MODULE_ID, id.toString()));
+                    bot.myExecute(sendMsg.editMessage(chatId, messageId,
+                            "Siz ushbu Moduleni ochira olmaysiz\n chunki bu moduli  <b>" + count + "ta</b> oquvchilar sotib olgan !!!",
+                            keyboard));
 
+                } else {
+
+                    if (data.length > 3 && Boolean.parseBoolean(data[3])) {
+                        ModuleDetailDTO moduleDetailDTO = moduleService.read(id);
+                        InlineKeyboardMarkup keyboard = inlineKeyboardService.createSingleButtonKeyboard("Tushunarli",
+                                String.join(":", MY_COURSE_PREFIX, ACTION_COURSE, ACTION_VIEW, moduleDetailDTO.getCourseId().toString(), ACTION_PAGE, "0"));
+                        moduleService.delete(id);
+                        bot.myExecute(sendMsg.editMessage(chatId, messageId, "Modulni ochirildi", keyboard));
+                    } else {
+                        InlineKeyboardMarkup keyboard = inlineKeyboardService.deleteModule(id);
+                        bot.myExecute(sendMsg.editMessage(chatId, messageId, "Modulni ochirish agar modul o`chirilsa uni qaytarib tiklab bolmaydi ", keyboard));
+                    }
+                }
+            }
+            case LESSON_PREFIX -> {
+                LessonResponseDTO lessonResponseDTO = lessonService.read(id);
+                long count = paymentRepository.countByModule_Id(lessonResponseDTO.getModuleId());
+                if (count != 0) {
+
+                    InlineKeyboardMarkup keyboard = inlineKeyboardService.createSingleButtonKeyboard("Tushunarli",
+                            String.join(":", ACTION_VIEW, LESSON_ID, id.toString()));
+                    bot.myExecute(sendMsg.editMessage(chatId, messageId,
+                            "Siz ushbu Darsni ochira olmaysiz\n chunki bu darsni  <b>" + count + "ta</b> oquvchilar sotib olgan !!!",
+                            keyboard));
+
+                } else {
+
+                    if (data.length > 3 && Boolean.parseBoolean(data[3])) {
+                        InlineKeyboardMarkup keyboard = inlineKeyboardService.createSingleButtonKeyboard("Tushunarli",
+                                String.join(":", ACTION_VIEW, MODULE_ID, lessonResponseDTO.getModuleId().toString()));
+                        lessonService.delete(id);
+                        bot.myExecute(sendMsg.editMessage(chatId, messageId, "Dars ochirildi", keyboard));
+                    } else {
+                        InlineKeyboardMarkup keyboard = inlineKeyboardService.deleteLesson(id);
+                        bot.myExecute(sendMsg.editMessage(chatId, messageId, "Darsni ochirish agar dars o`chirilsa uni qaytarib tiklab bolmaydi ", keyboard));
+                    }
+                }
             }
         }
 
@@ -953,6 +1199,81 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
     private void instructorActionViewHandle(Long chatId, User user, Integer messageId, String[] data, String queryData) {
         String type = data[1];
         switch (type) {
+            case ACTION_REVIEWS -> {
+                if (data.length == 6) {
+                    Long studentId = Long.valueOf(data[5]);
+                    Long courseId = Long.valueOf(data[3]);
+
+//                    CourseReviewDetailProjection studentDetailForCourse = courseRepository.findStudentDetailForCourse(courseId, studentId);
+                    CourseReviewDetailProjection studentDetailForCourse = userRepository.findStudentDetailForCourse(courseId, studentId);
+
+                    String built = buildReviewDetailHtml(studentDetailForCourse);
+                    InlineKeyboardMarkup keyboard = inlineKeyboardService.createSingleButtonKeyboard("⬅️ Orqaga", String.join(":", ACTION_VIEW, ACTION_REVIEWS, courseId.toString(), ACTION_PAGE, "0"));
+                    bot.myExecute(sendMsg.editMessage(chatId, messageId, built, keyboard));
+
+
+                } else if (data.length == 3 && data[2].equals(ACTION_BACK)) {
+                    ReviewStatsProjection projection = reviewRepository.getOverallReviewStatsByMentorId(user.getId());
+                    String built = buildReviewSummary(projection);
+                    InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.myReview();
+                    bot.myExecute(sendMsg.editMessage(chatId, messageId, built, inlineKeyboardMarkup));
+                } else if (data.length == 4) {
+                    int pageNumber = Integer.parseInt(data[3]);
+                    Page<CourseReviewStatsProjection> stats = courseRepository.findCourseReviewStatsByMentor(user.getId(), PageRequest.of(pageNumber, 5));
+                    String backButton = String.join(":", ACTION_VIEW, ACTION_REVIEWS, ACTION_BACK);
+                    InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorReviewCourses(stats, backButton);
+                    String built = buildCourseReviewStatsText(stats);
+                    bot.myExecute(sendMsg.editMessage(chatId, messageId, built, inlineKeyboardMarkup));
+                } else {
+                    Long id = Long.valueOf(data[2]);
+                    int pageNumber = Integer.parseInt(data[4]);
+
+                    Sort sortByRatingDesc = Sort.by(
+                            Sort.Order.desc("rating"),      // Asosiy saralash
+                            Sort.Order.desc("createdAt")    // Ikkilamchi saralash
+                    );
+                    Pageable pageable = PageRequest.of(pageNumber, 5, sortByRatingDesc);
+                    Page<CourseReviewProjection> reviews = reviewRepository.findReviewsByCourseId(id, pageable);
+                    String built = formatCourseReviewsPage(reviews);
+                    String backButton = String.join(":", ACTION_VIEW, ACTION_REVIEWS, ACTION_PAGE, "0");
+                    InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.courseReviews(reviews, id, backButton);
+                    bot.myExecute(sendMsg.editMessage(chatId, messageId, built, inlineKeyboardMarkup));
+                }
+            }
+            case ACTION_STUDENT -> {
+                if (data.length > 3) {
+                    int pageNumber = Integer.parseInt(data[3]);
+                    long count = paymentRepository.countTotalStudentsByMentor(user.getId(), TransactionStatus.SUCCESS);
+                    PageRequest pageable = PageRequest.of(pageNumber, 10);
+                    Page<CourseStudentStatsProjection> stats = courseRepository.findCourseStatsByInstructor(user.getId(), TransactionStatus.SUCCESS.name(), pageable);
+
+                    String built = buildStudentsDashboardText(count, stats);
+                    String backButton = String.join(":", BACK_TO_MAIN_MENU);
+                    InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorMyStudents(stats, backButton);
+                    bot.myExecute(sendMsg.editMessage(chatId, messageId, built, inlineKeyboardMarkup));
+                } else {
+                    Long courseId = Long.valueOf(data[2]);
+
+                    String built = buildCourseDetail(
+                            courseService.read(courseId),
+                            courseRepository.findCourseStatsById(courseId, TransactionStatus.SUCCESS.name())
+                    );
+                    String backButton = String.join(":", ACTION_VIEW, ACTION_STUDENT, ACTION_PAGE, "0");
+                    InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorCourseViewStudents(courseId, backButton);
+                    bot.myExecute(sendMsg.editMessage(chatId, messageId, built, inlineKeyboardMarkup));
+                }
+            }
+            case ACTION_STUDENT_ID -> {
+                Long id = Long.valueOf(data[2]);
+                int pageNumber = Integer.parseInt(data[4]);
+                Page<UserProjection> users = userRepository.findEnrolledStudentProfilesByCourseId(id, TransactionStatus.SUCCESS.name(), PageRequest.of(pageNumber, 5));
+
+                String built = formatUserPage(users);
+
+                String backButton = String.join(":", ACTION_VIEW, ACTION_STUDENT, id.toString());
+                InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorStudentCourseById(users, id, backButton);
+                bot.myExecute(sendMsg.editMessage(chatId, messageId, built, inlineKeyboardMarkup));
+            }
             case ACTION_COURSE -> {
                 int countTrue = courseRepository.countByInstructorIdAndSuccess(user.getId(), true);
                 int countFalse = courseRepository.countByInstructorIdAndSuccess(user.getId(), false);
@@ -1056,11 +1377,278 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
                 Long id = Long.valueOf(data[2]);
                 TextContentResponseDTO responseDTO = textContentService.getById(id);
 
-                InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.createSingleButtonKeyboard("delete", DELETED);
+                InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.createSingleButtonKeyboard("🗑 Xabarni ochirish", DELETED);
                 bot.myExecute(sendMsg.sendMessage(chatId, responseDTO.getText(), inlineKeyboardMarkup));
             }
         }
     }
+
+    private void backToMain(Long chatId, Integer messageId) {
+
+        ReplyKeyboardMarkup replyKeyboardMarkup = replyKeyboardService.buildMentorMenu();
+        bot.myExecute(sendMsg.deleteMessage(chatId, messageId));
+        bot.myExecute(sendMsg.sendMessage(chatId, "Bosh menyu!", replyKeyboardMarkup));
+
+    }
+
+    public String buildReviewDetailHtml(CourseReviewDetailProjection p) {
+        StringBuilder sb = new StringBuilder();
+
+        // Sotib olish va sharh sanalari
+        sb.append("📌 <b>Kurs sotib olingan:</b> ")
+                .append(p.getPurchasedAt() != null ? p.getPurchasedAt().toLocalDateTime().toLocalDate() : "❌ Ma'lumot yo‘q")
+                .append("\n");
+        sb.append("📝 <b>Sharh yozilgan:</b> ")
+                .append(p.getReviewDate() != null ? p.getReviewDate().toLocalDateTime().toLocalDate() : "❌ Ma'lumot yo‘q")
+                .append("\n\n");
+
+        // Foydalanuvchi ma'lumotlari
+        sb.append("👤 <b>Talaba:</b> ")
+                .append(p.getStudentName() != null && !p.getStudentName().isBlank() ? escapeHtml(p.getStudentName()) : "Anonim foydalanuvchi")
+                .append("\n");
+        if (p.getBio() != null && !p.getBio().isBlank()) {
+            sb.append("ℹ️ <b>Bio:</b> ").append(escapeHtml(p.getBio())).append("\n");
+        }
+        sb.append("📅 <b>Platformaga qo‘shilgan:</b> ")
+                .append(p.getJoinedAt() != null ? p.getJoinedAt().toLocalDateTime().toLocalDate() : "❌ Ma'lumot yo‘q")
+                .append("\n\n");
+
+        // Statistika
+        sb.append("📚 <b>Umumiy kurslar:</b> ").append(p.getTotalCourses() != null ? p.getTotalCourses() : 0).append("\n");
+        sb.append("⭐️ <b>O‘rtacha baho:</b> ")
+                .append(p.getAverageRating() != null ? String.format("%.1f", p.getAverageRating()) : "❌ Ma'lumot yo‘q")
+                .append("\n");
+        sb.append("🎯 <b>Ushbu kursdagi bahosi:</b> ")
+                .append(p.getRating() != null ? p.getRating() + " ⭐️" : "❌ Ma'lumot yo‘q")
+                .append("\n\n");
+
+        // Sharh matni
+        if (p.getComment() != null && !p.getComment().isBlank()) {
+            sb.append("💬 <b>Fikr:</b> ").append(escapeHtml(p.getComment())).append("\n");
+        } else {
+            sb.append("💬 <b>Fikr:</b> ❌ Sharh qoldirilmagan\n");
+        }
+
+        return sb.toString();
+    }
+
+    public String formatCourseReviewsPage(Page<CourseReviewProjection> page) {
+        if (page.isEmpty()) {
+            return "❌ Bu kurs uchun sharhlar topilmadi.";
+        }
+
+        StringBuilder sb = new StringBuilder("💬 <b>Kurs sharhlari</b>\n\n");
+
+        for (CourseReviewProjection review : page.getContent()) {
+            String name = review.getStudentName() != null ? review.getStudentName() : "Anonim foydalanuvchi";
+            String stars = "⭐️".repeat(review.getRating());
+            String comment = review.getComment() != null && !review.getComment().isBlank()
+                    ? "✍️ " + review.getComment()
+                    : "✍️ Fikr qoldirilmagan";
+
+            String date = review.getCreatedAt()
+                    .toLocalDateTime()
+                    .format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
+
+
+            sb.append("👤 ").append(name).append("\n")
+                    .append(stars).append(" ").append(review.getRating()).append("\n")
+                    .append(comment).append("\n")
+                    .append("⏰ ").append(date).append("\n\n");
+        }
+
+        sb.append("📄 Sahifa: ").append(page.getNumber() + 1)
+                .append(" / ").append(page.getTotalPages());
+
+        return sb.toString();
+    }
+
+
+    public static String buildReviewSummary(ReviewStatsProjection stats) {
+        DecimalFormat df = new DecimalFormat("#.##");
+        String avgRating = stats.getAverageRating() == null ? "0.0" : df.format(stats.getAverageRating());
+
+        return """
+                💬 <b>Kurs sharhlari va fikrlar</b>
+                
+                📊 Umumiy baho: ⭐️ %s (%d ta sharh)
+                📝 Jami fikrlar soni: %d
+                👥 Faol ishtirokchilar: %d
+                
+                Quyidagi tugmalar orqali sharhlarni ko‘rishingiz yoki filtr qilishingiz mumkin 👇
+                """.formatted(
+                avgRating,
+                stats.getTotalReviews(),
+                stats.getTotalComments(),
+                stats.getActiveStudents()
+        );
+    }
+
+    public String buildCourseReviewStatsText(Page<CourseReviewStatsProjection> stats) {
+        if (stats == null || stats.isEmpty()) {
+            return """
+                    📚 <b>Sizning kurslaringiz bo‘yicha sharhlar</b>
+                    
+                    ❌ Hozircha sharhlar mavjud emas.
+                    """;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("📚 <b>Sizning kurslaringiz bo‘yicha sharhlar</b>\n\n");
+
+        int startIndex = 0;
+
+        for (int i = 0; i < stats.getContent().size(); i++) {
+            CourseReviewStatsProjection course = stats.getContent().get(i);
+
+            int number = startIndex + i + 1;
+
+            sb.append("%d️⃣ <b>%s</b>\n".formatted(number, course.getCourseTitle()));
+
+            if (course.getTotalReviews() == null || course.getTotalReviews() == 0) {
+                sb.append("⭐️ O‘rtacha baho: - \n 💬 Sharhlar mavjud emas\n\n");
+            } else {
+                String avgRating = String.format("%.2f", course.getAverageRating());
+                sb.append("⭐️ O‘rtacha baho: %s \n 💬 %d ta sharh \n 📝 %d ta fikr\n\n"
+                        .formatted(
+                                avgRating,
+                                course.getTotalReviews(),
+                                course.getTotalComments()
+                        )
+                );
+            }
+        }
+
+        return sb.toString();
+    }
+
+
+    public String formatUserPage(Page<UserProjection> usersPage) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("👥 <b>O'quvchilar ro'yxati</b>\n");
+        sb.append("Sahifa: ").append(usersPage.getNumber() + 1)
+                .append(" / ").append(usersPage.getTotalPages()).append("\n\n");
+
+        int index = usersPage.getNumber() * usersPage.getSize();
+
+        for (UserProjection user : usersPage.getContent()) {
+            index++;
+            sb.append(index).append(". ");
+
+            // Agar FirstName + LastName bo‘lsa
+            if (user.getFirstName() != null || user.getLastName() != null) {
+                sb.append("👤 <b>")
+                        .append(user.getFirstName() != null ? user.getFirstName() : "")
+                        .append(" ")
+                        .append(user.getLastName() != null ? user.getLastName() : "")
+                        .append("</b>\n");
+            } else {
+                sb.append("👤 <b>").append(user.getUsername()).append("</b>\n");
+            }
+
+            // Email
+            if (user.getEmail() != null) {
+                sb.append("📧 ").append(user.getEmail()).append("\n");
+            }
+
+            // Telefon
+            if (user.getPhoneNumber() != null) {
+                sb.append("📱 ").append(user.getPhoneNumber()).append("\n");
+            }
+
+            // Bio
+            if (user.getBio() != null) {
+                sb.append("📝 ").append(user.getBio()).append("\n");
+            }
+
+            // Reyting
+            if (user.getRating() != null) {
+                sb.append("⭐ Reyting: ").append(generateStars(user.getRating())).append("\n");
+            }
+
+            sb.append("〰️〰️〰️〰️〰️\n");
+        }
+
+        return sb.toString();
+    }
+
+
+    public String buildCourseDetail(CourseDetailDTO detail,
+                                    CourseStudentStatsProjection stats) {
+        StringBuilder sb = new StringBuilder();
+
+        // 📘 Kitob emoji — random qilmoqchi bo‘lsangiz, o‘sha oldingi Utils.getRandomBookEmoji() dan foydalaning
+        sb.append("📘 <b>").append(detail.getTitle()).append("</b>\n\n");
+
+        if (detail.getDescription() != null) {
+            sb.append("📝 ").append(detail.getDescription()).append("\n\n");
+        }
+
+        UserDTO userDTO = userService.read(detail.getId());
+        CategoryDTO categoryDTO = categoryService.read(detail.getCategoryId());
+
+        sb.append("👨‍🏫 <b>Mentor ID:</b> ").append(userDTO.getLastName()).append(" ").append(userDTO.getFirstName()).append("\n");
+        sb.append("📂 <b>Kategoriya ID:</b> ").append(categoryDTO.getName()).append("\n");
+        sb.append("📚 <b>Modullar soni:</b> ").append(detail.getModulesCount()).append("\n\n");
+
+        // Statistikalar
+        if (stats != null) {
+            sb.append("📊 <b>Statistika:</b>\n");
+            sb.append("👥 Unikal o‘quvchilar: <b>").append(stats.getUnique_student_count()).append("</b>\n");
+            sb.append("💳 Jami sotuvlar: <b>").append(stats.getTotal_sales_count()).append("</b>\n\n");
+        }
+
+        // Review summary
+        if (detail.getReviewSummary() != null) {
+            sb.append("⭐️ Reyting: ").append(generateStars(detail.getReviewSummary().getAverageRating()))
+                    .append(" (").append(detail.getReviewSummary().getCount()).append(" ta sharh)\n\n");
+        }
+
+        // Vaqt (agar kerak bo‘lsa human-readable formatga aylantirishingiz mumkin)
+        sb.append("📅 Yaratilgan: ").append(formatDate(detail.getCreatedAt())).append("\n");
+
+        return sb.toString();
+    }
+
+    private String buildStudentsDashboardText(long totalUniqueStudents, Page<CourseStudentStatsProjection> courseStatsPage) {
+        // --- Kurslar ro'yxatini formatlaymiz ---
+        List<CourseStudentStatsProjection> courseStats = courseStatsPage.getContent();
+        StringBuilder coursesFormattedText = new StringBuilder();
+        if (courseStats.isEmpty()) {
+            coursesFormattedText.append("<i>Hozircha birorta ham kursingizga o'quvchilar yozilmagan.</i>");
+        } else {
+
+            for (CourseStudentStatsProjection stat : courseStats) {
+                coursesFormattedText.append(String.format(
+                        "%s <b>%s:</b> %d ta o'quvchi\n\n",
+                        randomBookEmoji(),
+                        escapeHtml(stat.getCourse_title()),
+                        stat.getUnique_student_count() != null ? stat.getUnique_student_count() : 0 // null'dan himoya
+                ));
+            }
+        }
+
+        // --- Asosiy shablonni to'ldiramiz ---
+        String dashboardTemplate = """
+                🎓 <b>O'quvchilarim Sahifasi</b>
+                
+                Sizda jami <b>%d ta</b> unikal o'quvchi mavjud.
+                
+                〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️
+                
+                📊 <b>Kurslar bo'yicha statistika:</b>
+                
+                %s
+                
+                <i>Quyidagi amallardan birini tanlashingiz mumkin:</i>""";
+
+        return String.format(
+                dashboardTemplate,
+                totalUniqueStudents,
+                coursesFormattedText.toString().trim()
+        );
+    }
+
 
     private String buildLessonsPage(PageDTO<LessonResponseDTO> page) {
         StringBuilder sb = new StringBuilder();
@@ -1198,26 +1786,6 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
         );
         InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorViewCourses(courseDetailDTO.getId(), backButton, courseDetailDTO.getModulesCount());
         bot.myExecute(sendMsg.editMessage(chatId, messageId, text, inlineKeyboardMarkup));
-//        if (courseDetailDTO.getThumbnailUrl() == null) {
-//        } else {
-//            AttachmentDTO attachmentDTO = attachmentService.read(Long.valueOf(courseDetailDTO.getThumbnailUrl()));
-//
-//            bot.myExecute(sendMsg.deleteMessage(chatId, messageId));
-////            bot.myExecute(sendMsg.sendPhoto(chatId, attachmentDTO.getTelegramFileId()));
-//            bot.myExecute(sendMsg.sendMessage(chatId,text,inlineKeyboardMarkup));
-//
-//
-////            try {
-////                bot.myExecute(sendMsg.editMessageCaption(chatId, messageId, text, inlineKeyboardMarkup));
-////            } catch (Exception e) {
-////                try {
-////                    bot.myExecute(sendMsg.editMessage(chatId, messageId, text, inlineKeyboardMarkup));
-////                } catch (Exception ex) {
-////
-////
-////                }
-////            }
-//        }
     }
 
     private void instructorMyCoursesSuccess(Long chatId, User user, Integer messageId, String[] data) {
@@ -1358,5 +1926,15 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
         return filledStar.repeat(filled)
                 + (half ? halfStar : "")
                 + emptyStar.repeat(empty);
+    }
+
+    /**
+     * Matndagi maxsus HTML belgilarini xavfsiz holatga keltiradi.
+     */
+    private static String escapeHtml(String text) {
+        if (text == null) return "";
+        return text.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;");
     }
 }
