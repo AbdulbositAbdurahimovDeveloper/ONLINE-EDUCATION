@@ -371,4 +371,47 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
     }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // --- BROADCAST UCHUN YANGI METODLAR ---
+
+    @Override
+    public InlineKeyboardMarkup broadcastTypeMenu() {
+        return new InlineKeyboardMarkup(List.of(
+                List.of(createButton("🖼 Rasm + Matn", "admin:broadcast:type:PHOTO_WITH_TEXT")),
+                List.of(createButton("📄 Faqat Matn", "admin:broadcast:type:TEXT_ONLY")),
+                List.of(createButton("🚫 Bekor qilish", "admin:broadcast:cancel:main"))
+        ));
+    }
+
+    @Override
+    public InlineKeyboardMarkup broadcastTargetRolesMenu() {
+        return new InlineKeyboardMarkup(List.of(
+                List.of(createButton("👨‍🎓 Talabalarga", "admin:broadcast:target:STUDENT")),
+                List.of(createButton("👨‍🏫 Instruktorlarga", "admin:broadcast:target:INSTRUCTOR")),
+                List.of(createButton("👤 Hammaga (Talaba+Instruktor)", "admin:broadcast:target:ALL")),
+                List.of(createButton("🚫 Bekor qilish", "admin:broadcast:cancel:main"))
+        ));
+    }
+
+    @Override
+    public InlineKeyboardMarkup confirmationMenu(String confirmCallback, String cancelCallback) {
+        return new InlineKeyboardMarkup(List.of(
+                List.of(createButton("✅ Yuborish", confirmCallback)),
+                List.of(createButton("🚫 Bekor qilish", cancelCallback))
+        ));
+    }
+
+
 }

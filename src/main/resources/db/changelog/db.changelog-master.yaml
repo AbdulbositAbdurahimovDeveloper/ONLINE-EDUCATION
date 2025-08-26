@@ -81,4 +81,6 @@ databaseChangeLog:
       file: db/changelog/changes/320251008_01_add-telegram-file-id-to-attachment.yaml
   - include:
       file: db/changelog/changes/320251208-1-create-quiz-attempt-and-answer-tables.yaml
+  - include:
+      file: db/changelog/changes/20252308-1-add-temp-data-to-telegram-users.yaml
 

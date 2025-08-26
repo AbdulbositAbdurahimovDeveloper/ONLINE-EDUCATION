@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20252308-1-add-temp-data-to-telegram-users
+      author: Eldor04
+      comment: "Adds a temporary_data column to the telegram_users table for multi-step bot operations like broadcast"
+      changes:
+        - addColumn:
+            tableName: telegram_users
+            columns:
+              - column:
+                  name: temporary_data
+                  type: TEXT
+                  remarks: "Stores temporary data for multi-step operations as a JSON string"
+                  constraints:
+                    nullable: true # Bu ustun bo'sh bo'lishi mumkin
+
+      rollback:
+        - dropColumn:
+            tableName: telegram_users
+            columnName: temporary_data

@@ -1,5 +1,7 @@
 package uz.pdp.online_education.telegram.service.admin;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -10,12 +12,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.PhotoSize;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.model.UserProfile;
 import uz.pdp.online_education.payload.AdminDashboardDTO;
+import uz.pdp.online_education.payload.BroadcastDataDTO;
 import uz.pdp.online_education.repository.CourseRepository;
 import uz.pdp.online_education.repository.TelegramUserRepository;
 import uz.pdp.online_education.repository.UserRepository;
@@ -33,7 +37,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
+import java.util.*;
 
 /**
  * The primary service for handling text-based messages and commands for the Administrator role.
@@ -41,6 +45,7 @@ import java.util.List;
  */
 @Slf4j
 @Service
+@Getter
 @RequiredArgsConstructor
 public class AdminMessageServiceImpl implements AdminMessageService {
 
@@ -53,6 +58,11 @@ public class AdminMessageServiceImpl implements AdminMessageService {
     private final InlineKeyboardService inlineKeyboardService;
     private final SendMsg sendMsg;
     private final CourseRepository courseRepository;
+    private final ObjectMapper objectMapper;
+
+    private final Map<Long, String> broadcastTypeCache = new HashMap<>();
+    private final Map<Long, String> broadcastTextCache = new HashMap<>();
+    private final Map<Long, String> broadcastPhotoCache = new HashMap<>();
 
     /**
      * {@inheritDoc}
@@ -61,36 +71,54 @@ public class AdminMessageServiceImpl implements AdminMessageService {
     @Override
     public void handleMessage(Message message) {
         Long chatId = message.getChatId();
-        String text = message.getText();
-
         TelegramUser telegramUser = getOrCreateTelegramUser(chatId);
         if (telegramUser.getUser() == null) {
-            onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, "Please authenticate first."));
+            onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, "Iltimos, avval profilingizni bog'lang."));
             return;
-        }
-
-        User user = telegramUser.getUser();
-        UserProfile profile = user.getProfile();
-
-
-        // Agar holat boshqacha bo'lsa, unda tugmalarni tekshiramiz.
-        switch (text) {
-            case Utils.START -> sendAdminWelcomeMessage(chatId, profile);
-            case Utils.DASHBOARD -> sendDashboardMessage(chatId, user, profile);
-            case Utils.ReplyButtons.ADMIN_USERS -> sendUsersMainMenu(chatId);
-            case Utils.ReplyButtons.ADMIN_COURSES -> sendCoursesMainMenu(chatId);
-            case Utils.ReplyButtons.ADMIN_SEND_MESSAGE -> initiateBroadcast(chatId);
-            case Utils.ReplyButtons.ADMIN_STATISTICS -> sendStatisticsMessage(chatId);
         }
 
         UserState currentState = telegramUser.getUserState();
-        if (currentState == UserState.ADMIN_AWAITING_USER_SEARCH_QUERY) {
-            processUserSearch(chatId, text);
+
+        // 1. Maxsus holatlarni birinchi bo'lib tekshiramiz
+        switch (currentState) {
+            case ADMIN_AWAITING_USER_SEARCH_QUERY:
+                if (message.hasText()) processUserSearch(chatId, message.getText());
+                return;
+            case ADMIN_AWAITING_COURSE_SEARCH_QUERY:
+                if (message.hasText()) processCourseSearch(chatId, message.getText());
+                return;
+            case ADMIN_BROADCAST_AWAITING_TEXT:
+                if (message.hasText() && !message.getText().isBlank()) {
+                    processBroadcastText(chatId, message.getText());
+                } else {
+                    // Agar matn o'rniga boshqa narsa kelsa
+                    onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, "Noto'g'ri format. Iltimos, faqat matn kiriting."));
+                    cancelBroadcastAndReturnToMainMenu(chatId, "Matn kiritishda xatolik.");
+                }
+                return;
+            case ADMIN_BROADCAST_AWAITING_PHOTO:
+                if (message.hasPhoto()) { // <-- FAQAT .hasPhoto() TEKSHIRILADI
+                    processBroadcastPhoto(chatId, message);
+                } else {
+                    // Agar rasm o'rniga boshqa narsa kelsa
+                    onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, "Noto'g'ri format. Iltimos, faqat rasm yuboring (fayl sifatida emas)."));
+                    cancelBroadcastAndReturnToMainMenu(chatId, "Rasm kiritishda xatolik.");
+                }
+                return;
         }
-        if (currentState == UserState.ADMIN_AWAITING_COURSE_SEARCH_QUERY) {
-            // --- YANGI QISM ---
-            processCourseSearch(chatId, text); // Kurs qidiruvini boshlaymiz
-            return;
+
+        // 2. Agar maxsus holat bo'lmasa, demak bu yangi buyruq.
+        if (message.hasText()) {
+            String text = message.getText();
+            switch (text) {
+                case Utils.START -> sendAdminWelcomeMessage(chatId, telegramUser.getUser().getProfile());
+                case Utils.DASHBOARD -> sendDashboardMessage(chatId, telegramUser.getUser(), telegramUser.getUser().getProfile());
+                case Utils.ReplyButtons.ADMIN_USERS -> sendUsersMainMenu(chatId);
+                case Utils.ReplyButtons.ADMIN_COURSES -> sendCoursesMainMenu(chatId);
+                case Utils.ReplyButtons.ADMIN_SEND_MESSAGE -> initiateBroadcast(chatId);
+                // case Utils.ReplyButtons.ADMIN_STATISTICS -> ...
+                default -> onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, "Tushunarsiz buyruq."));
+            }
         }
     }
 
@@ -113,9 +141,13 @@ public class AdminMessageServiceImpl implements AdminMessageService {
     }
 
     private void initiateBroadcast(Long chatId) {
-        telegramUserRepository.updateStateByChatId(chatId, UserState.AWAITING_BROADCAST_MESSAGE);
-        String infoText = messageService.getMessage(BotMessage.ADMIN_BROADCAST_INIT);
-        onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, infoText));
+        broadcastTypeCache.remove(chatId);
+        broadcastTextCache.remove(chatId);
+        broadcastPhotoCache.remove(chatId);
+
+        telegramUserRepository.updateStateByChatId(chatId, UserState.ADMIN_BROADCAST_CHOOSE_TYPE);
+        String text = "Yuboriladigan xabar turini tanlang:";
+        onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, text, inlineKeyboardService.broadcastTypeMenu()));
     }
 
     private void sendUsersMainMenu(Long chatId) {
@@ -268,6 +300,7 @@ public class AdminMessageServiceImpl implements AdminMessageService {
         message.setParseMode("Markdown");
         onlineEducationBot.myExecute(message);
     }
+
     private String escapeMarkdown(String text) {
         if (text == null) return "";
         return text.replace("_", "\\_").replace("*", "\\*").replace("`", "\\`")
@@ -301,11 +334,62 @@ public class AdminMessageServiceImpl implements AdminMessageService {
             text.append("\n🔽 Tanlash uchun tegishli tugmani bosing.");
 
             // Klaviatura yasashda 'searchTerm'ni berib yuboramiz
-            keyboard = inlineKeyboardService.coursesPageMenu(coursePage, searchTerm, null,null);
+            keyboard = inlineKeyboardService.coursesPageMenu(coursePage, searchTerm, null, null);
         }
 
         SendMessage message = sendMsg.sendMessage(chatId, text.toString(), keyboard);
         message.setParseMode("Markdown"); // Yoki MarkdownV2
         onlineEducationBot.myExecute(message);
     }
+
+
+//    habar yuborish
+
+
+    private void processBroadcastText(Long chatId, String text) {
+        broadcastTextCache.put(chatId, text);
+
+        String broadcastType = broadcastTypeCache.get(chatId);
+        if ("PHOTO_WITH_TEXT".equals(broadcastType)) {
+            telegramUserRepository.updateStateByChatId(chatId, UserState.ADMIN_BROADCAST_AWAITING_PHOTO);
+            onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, "✅ Matn qabul qilindi. Endi rasmni yuboring."));
+        } else { // TEXT_ONLY
+            askForTargetRoles(chatId, "✅ Matn qabul qilindi.");
+        }
+    }
+
+    private void processBroadcastPhoto(Long chatId, Message message) {
+        String fileId = message.getPhoto().stream()
+                .max(Comparator.comparing(PhotoSize::getFileSize)).orElseThrow()
+                .getFileId();
+
+        broadcastPhotoCache.put(chatId, fileId);
+        askForTargetRoles(chatId, "✅ Rasm va matn qabul qilindi.");
+    }
+
+    private void askForTargetRoles(Long chatId, String introText) {
+        telegramUserRepository.updateStateByChatId(chatId, UserState.ADMIN_BROADCAST_AWAITING_TARGETS);
+        String text = introText + "\n\nEndi bu xabarni kimlarga yuborish kerakligini tanlang:";
+        onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, text, inlineKeyboardService.broadcastTargetRolesMenu()));
+    }
+
+    private void cancelBroadcastAndReturnToMainMenu(Long chatId, String reason) {
+        log.warn("Broadcast cancelled for chatId: {}. Reason: {}", chatId, reason);
+        broadcastTypeCache.remove(chatId);
+        broadcastTextCache.remove(chatId);
+        broadcastPhotoCache.remove(chatId);
+
+        // Asosiy menyuni yuborish uchun AdminMessageService'dagi metodni chaqiramiz
+        // Buning uchun bizga UserProfile kerak bo'ladi
+        UserProfile profile = telegramUserRepository.findByChatId(chatId)
+                .map(TelegramUser::getUser)
+                .map(User::getProfile)
+                .orElse(null);
+
+        if (profile != null) {
+            initiateBroadcast(chatId);
+        }
+    }
+
+
 }
