@@ -44,11 +44,11 @@ public class DataLoader implements CommandLineRunner {
 
         User user = userRepository.findByUsername("admin").orElse(null);
         if (user != null) {
-            TelegramUser telegramUser = new TelegramUser(
-                    chatId,
-                    user,
-                    UserState.DEFAULT
-            );
+            TelegramUser telegramUser = TelegramUser.builder()
+                    .chatId(chatId)
+                    .user(user)
+                    .userState(UserState.DEFAULT)
+                    .build();
             telegramUserRepository.save(telegramUser);
         }
 

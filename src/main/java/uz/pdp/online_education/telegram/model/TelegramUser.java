@@ -8,6 +8,7 @@ import uz.pdp.online_education.telegram.enums.UserState;
 
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 @Getter
 @Setter
 @ToString
@@ -26,5 +27,9 @@ public class TelegramUser {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserState userState;
+
+    @Lob // Bu TEXT tipidagi ustun yaratishni bildiradi
+    @Column(name = "temporary_data")
+    private String temporaryData;
 
 }

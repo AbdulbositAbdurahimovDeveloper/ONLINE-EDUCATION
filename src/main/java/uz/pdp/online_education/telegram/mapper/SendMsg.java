@@ -62,4 +62,6 @@ public interface SendMsg {
     SendVideo sendVideo(Long chatId, String telegramFileId,InlineKeyboardMarkup keyboard);
 
     EditMessageCaption editMessageCaption(Long chatId, Integer messageId, String caption, InlineKeyboardMarkup keyboard);
+
+
 }
