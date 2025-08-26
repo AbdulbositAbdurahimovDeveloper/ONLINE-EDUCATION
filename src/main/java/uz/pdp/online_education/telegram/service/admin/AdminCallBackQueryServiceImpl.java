@@ -94,6 +94,8 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
         }
     }
 
+
+
     private void handleAuthCallback(User user, Long chatId, Integer messageId, String[] data) {
         String action = data[1]; // "logout"
         String step = data[2];  // "init", "confirm", "cancel"

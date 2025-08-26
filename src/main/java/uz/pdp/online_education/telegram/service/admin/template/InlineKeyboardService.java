@@ -70,4 +70,5 @@ public interface InlineKeyboardService {
      * Jarayonni tasdiqlash yoki bekor qilish uchun oddiy klaviatura.
      */
     InlineKeyboardMarkup confirmationMenu(String confirmCallback, String cancelCallback);
+
 }
