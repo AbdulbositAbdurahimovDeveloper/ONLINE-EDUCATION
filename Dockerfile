@@ -1,8 +1,9 @@
-# 1-qadam: Asosiy image
-FROM openjdk:24
+# 1-qadam: Asosiy image (JDK 21)
+FROM openjdk:21-jdk-slim
 
-# 2-qadam: JAR faylni "app.jar" deb qayta nomlab, nusxalash
+# 2-qadam: JAR faylni container ichiga nusxalash
+WORKDIR /app
 COPY target/*.jar online_education.jar
 
-# 3-qadam: "app.jar" ni ishga tushirish
+# 3-qadam: Ilovani ishga tushirish
 ENTRYPOINT ["java", "-jar", "online_education.jar"]
