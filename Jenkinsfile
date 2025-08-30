@@ -1,75 +1,62 @@
 pipeline {
-    // Pipeline asosiy Jenkins agent'ida ishlaydi
     agent any
 
-    // 'Global Tool Configuration'dagi sozlamalarni chaqirish
     tools {
-        // Bu nom 'Global Tool Configuration'dagi 'Name' maydoniga to'liq mos kelishi kerak
-        maven 'maven'
-        jdk 'JDK21'
+        maven 'maven'          // Global Tool Configuration → "maven"
+        jdk 'JDK21'            // Global Tool Configuration → "JDK21" (java-21 yo‘li bilan)
         dockerTool 'docker-cli'
     }
 
-    // Pipeline uchun o'zgaruvchilar
     environment {
-        IMAGE_NAME = "online_education/app:${env.BUILD_NUMBER}" // Har bir build uchun unikal teg
-        LATEST_IMAGE = "online_education/app:latest"         // Har doim eng so'nggi versiya uchun teg
-        CONTAINER_NAME = 'online_education-container'       // Ishga tushiriladigan container nomi
+        IMAGE_NAME = "online_education/app:${env.BUILD_NUMBER}" // Unikal image
+        LATEST_IMAGE = "online_education/app:latest"            // Always latest
+        CONTAINER_NAME = "online_education-container"
+        JAVA_TOOL_OPTIONS = "-Dorg.jenkinsci.plugins.durabletask.BourneShellScript.HEARTBEAT_CHECK_INTERVAL=86400"
     }
 
     stages {
         stage('1. Clone Repo') {
             steps {
-                // Tozalik uchun avvalgi build qoldiqlarini o'chiramiz
                 cleanWs()
-                echo 'Klonlash boshlandi...'
+                echo '📥 Repo klonlanmoqda...'
                 git url: 'https://github.com/AbdulbositAbdurahimovDeveloper/ONLINE-EDUCATION.git', branch: 'main'
-                echo 'Repo muvaffaqiyatli olindi.'
             }
         }
 
         stage('2. Build JAR') {
             steps {
-                echo 'JAR fayl qurilmoqda...'
-                // 'mvn' buyrug'i endi `tools` bloki tufayli topiladi
+                echo '📦 JAR fayl qurilmoqda...'
                 sh 'mvn clean package -DskipTests'
-                echo 'JAR fayl muvaffaqiyatli qurildi.'
+                echo '✅ JAR fayl tayyor.'
             }
         }
 
         stage('3. Build Docker Image') {
             steps {
-                echo "Docker image qurilmoqda: ${IMAGE_NAME}"
-                // JAR faylni joriy direktoriyaga nusxalash
-                sh 'cp target/*.jar .'
-
-                // Image'ni qurish va ikkita teg bilan belgilash
+                echo "🐳 Docker image qurilmoqda: ${IMAGE_NAME}"
                 sh "docker build -t ${IMAGE_NAME} -t ${LATEST_IMAGE} ."
-                echo "Docker image muvaffaqiyatli qurildi: ${IMAGE_NAME} va ${LATEST_IMAGE}"
+                echo "✅ Docker image qurildi: ${IMAGE_NAME}, ${LATEST_IMAGE}"
             }
         }
 
         stage('4. Deploy Application') {
             steps {
-                echo "Container ishga tushirilmoqda: ${CONTAINER_NAME}"
+                echo "🚀 Container ishga tushirilmoqda: ${CONTAINER_NAME}"
 
-                // Eski container'ni o'chirish (agar mavjud bo'lsa)
+                // Eski container bor bo‘lsa — tozalash
                 sh "docker rm -f ${CONTAINER_NAME} || true"
 
-                // Yangi container'ni ishga tushirish
-                // --- > --network oromland-network < --- QO'SHILDI
+                // Yangi container ishga tushirish
                 sh "docker run -d --name ${CONTAINER_NAME} -p 8888:8080 --network oromland-network ${LATEST_IMAGE}"
 
-                echo "Ilova http://localhost:8081 manzilida ishga tushdi."
+                echo "✅ Ilova http://localhost:8888 da ishga tushdi."
             }
         }
-    } // stages bloki shu yerda yopiladi
+    }
 
-    // Pipeline qanday tugashidan qat'iy nazar ishlaydigan blok
     post {
         always {
-            echo 'Pipeline tugadi. Ish joyini tozalash...'
-            // Build'dan qolgan fayllarni o'chirish
+            echo '🧹 Pipeline tugadi. Workspace tozalanmoqda...'
             cleanWs()
         }
     }
