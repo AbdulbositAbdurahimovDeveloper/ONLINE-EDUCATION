@@ -3,6 +3,7 @@ package uz.pdp.online_education.telegram.config.service;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -60,6 +61,7 @@ public class UpdateDispatcherService {
         this.telegramUserService = telegramUserService;
     }
 
+    @Transactional
     @Async
     public void dispatch(Update update) {
         Long userChatId = getUserChatId(update);

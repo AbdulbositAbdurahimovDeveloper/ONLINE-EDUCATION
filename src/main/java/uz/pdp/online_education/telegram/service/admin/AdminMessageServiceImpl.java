@@ -1,5 +1,7 @@
 package uz.pdp.online_education.telegram.service.admin;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -10,12 +12,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.PhotoSize;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.model.UserProfile;
 import uz.pdp.online_education.payload.AdminDashboardDTO;
+import uz.pdp.online_education.payload.projection.AdminDashboardStats;
 import uz.pdp.online_education.repository.CourseRepository;
 import uz.pdp.online_education.repository.TelegramUserRepository;
 import uz.pdp.online_education.repository.UserRepository;
@@ -31,9 +35,10 @@ import uz.pdp.online_education.telegram.service.admin.template.ReplyKeyboardServ
 import uz.pdp.online_education.telegram.service.message.MessageService;
 import org.springframework.data.domain.Pageable;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
+import java.util.*;
 
 /**
  * The primary service for handling text-based messages and commands for the Administrator role.
@@ -41,6 +46,7 @@ import java.util.List;
  */
 @Slf4j
 @Service
+@Getter
 @RequiredArgsConstructor
 public class AdminMessageServiceImpl implements AdminMessageService {
 
@@ -53,6 +59,11 @@ public class AdminMessageServiceImpl implements AdminMessageService {
     private final InlineKeyboardService inlineKeyboardService;
     private final SendMsg sendMsg;
     private final CourseRepository courseRepository;
+    private final ObjectMapper objectMapper;
+
+    private final Map<Long, String> broadcastTypeCache = new HashMap<>();
+    private final Map<Long, String> broadcastTextCache = new HashMap<>();
+    private final Map<Long, String> broadcastPhotoCache = new HashMap<>();
 
     /**
      * {@inheritDoc}
@@ -61,36 +72,54 @@ public class AdminMessageServiceImpl implements AdminMessageService {
     @Override
     public void handleMessage(Message message) {
         Long chatId = message.getChatId();
-        String text = message.getText();
-
         TelegramUser telegramUser = getOrCreateTelegramUser(chatId);
         if (telegramUser.getUser() == null) {
-            onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, "Please authenticate first."));
+            onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, "Iltimos, avval profilingizni bog'lang."));
             return;
-        }
-
-        User user = telegramUser.getUser();
-        UserProfile profile = user.getProfile();
-
-
-        // Agar holat boshqacha bo'lsa, unda tugmalarni tekshiramiz.
-        switch (text) {
-            case Utils.START -> sendAdminWelcomeMessage(chatId, profile);
-            case Utils.DASHBOARD -> sendDashboardMessage(chatId, user, profile);
-            case Utils.ReplyButtons.ADMIN_USERS -> sendUsersMainMenu(chatId);
-            case Utils.ReplyButtons.ADMIN_COURSES -> sendCoursesMainMenu(chatId);
-            case Utils.ReplyButtons.ADMIN_SEND_MESSAGE -> initiateBroadcast(chatId);
-            case Utils.ReplyButtons.ADMIN_STATISTICS -> sendStatisticsMessage(chatId);
         }
 
         UserState currentState = telegramUser.getUserState();
-        if (currentState == UserState.ADMIN_AWAITING_USER_SEARCH_QUERY) {
-            processUserSearch(chatId, text);
+
+        // 1. Maxsus holatlarni birinchi bo'lib tekshiramiz
+        switch (currentState) {
+            case ADMIN_AWAITING_USER_SEARCH_QUERY:
+                if (message.hasText()) processUserSearch(chatId, message.getText());
+                return;
+            case ADMIN_AWAITING_COURSE_SEARCH_QUERY:
+                if (message.hasText()) processCourseSearch(chatId, message.getText());
+                return;
+            case ADMIN_BROADCAST_AWAITING_TEXT:
+                if (message.hasText() && !message.getText().isBlank()) {
+                    processBroadcastText(chatId, message.getText());
+                } else {
+                    // Agar matn o'rniga boshqa narsa kelsa
+                    onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, "Noto'g'ri format. Iltimos, faqat matn kiriting."));
+                    cancelBroadcastAndReturnToMainMenu(chatId, "Matn kiritishda xatolik.");
+                }
+                return;
+            case ADMIN_BROADCAST_AWAITING_PHOTO:
+                if (message.hasPhoto()) { // <-- FAQAT .hasPhoto() TEKSHIRILADI
+                    processBroadcastPhoto(chatId, message);
+                } else {
+                    // Agar rasm o'rniga boshqa narsa kelsa
+                    onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, "Noto'g'ri format. Iltimos, faqat rasm yuboring (fayl sifatida emas)."));
+                    cancelBroadcastAndReturnToMainMenu(chatId, "Rasm kiritishda xatolik.");
+                }
+                return;
         }
-        if (currentState == UserState.ADMIN_AWAITING_COURSE_SEARCH_QUERY) {
-            // --- YANGI QISM ---
-            processCourseSearch(chatId, text); // Kurs qidiruvini boshlaymiz
-            return;
+
+        // 2. Agar maxsus holat bo'lmasa, demak bu yangi buyruq.
+        if (message.hasText()) {
+            String text = message.getText();
+            switch (text) {
+                case Utils.START -> sendAdminWelcomeMessage(chatId, telegramUser.getUser().getProfile());
+                case Utils.DASHBOARD -> sendDashboardMessage(chatId, telegramUser.getUser(), telegramUser.getUser().getProfile());
+                case Utils.ReplyButtons.ADMIN_USERS -> sendUsersMainMenu(chatId);
+                case Utils.ReplyButtons.ADMIN_COURSES -> sendCoursesMainMenu(chatId);
+                case Utils.ReplyButtons.ADMIN_SEND_MESSAGE -> initiateBroadcast(chatId);
+                case Utils.ReplyButtons.ADMIN_STATISTICS -> showFullStatistics(chatId);
+                default -> onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, "Tushunarsiz buyruq."));
+            }
         }
     }
 
@@ -113,9 +142,13 @@ public class AdminMessageServiceImpl implements AdminMessageService {
     }
 
     private void initiateBroadcast(Long chatId) {
-        telegramUserRepository.updateStateByChatId(chatId, UserState.AWAITING_BROADCAST_MESSAGE);
-        String infoText = messageService.getMessage(BotMessage.ADMIN_BROADCAST_INIT);
-        onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, infoText));
+        broadcastTypeCache.remove(chatId);
+        broadcastTextCache.remove(chatId);
+        broadcastPhotoCache.remove(chatId);
+
+        telegramUserRepository.updateStateByChatId(chatId, UserState.ADMIN_BROADCAST_CHOOSE_TYPE);
+        String text = "Yuboriladigan xabar turini tanlang:";
+        onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, text, inlineKeyboardService.broadcastTypeMenu()));
     }
 
     private void sendUsersMainMenu(Long chatId) {
@@ -134,7 +167,7 @@ public class AdminMessageServiceImpl implements AdminMessageService {
 
     private void sendStatisticsMessage(Long chatId) {
         AdminDashboardDTO stats = userRepository.getAdminDashboardStats();
-        String statsText = formatDashboardText("Admin", stats);
+        String statsText = formatDashboardText(stats);
         onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, statsText));
     }
 
@@ -211,10 +244,10 @@ public class AdminMessageServiceImpl implements AdminMessageService {
         onlineEducationBot.myExecute(sendMsg.editMessage(chatId, messageId, dashboardText, inlineKeyboardMarkup));
     }
 
-    private String formatDashboardText(String adminName, AdminDashboardDTO stats) {
+    private String formatDashboardText(AdminDashboardDTO stats) {
         return messageService.getMessage(
                 BotMessage.DASHBOARD_ADMIN,
-                adminName,
+                "Admin",
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy, HH:mm")),
                 stats.getTotalUsers(),
                 stats.getTotalInstructors(),
@@ -268,6 +301,7 @@ public class AdminMessageServiceImpl implements AdminMessageService {
         message.setParseMode("Markdown");
         onlineEducationBot.myExecute(message);
     }
+
     private String escapeMarkdown(String text) {
         if (text == null) return "";
         return text.replace("_", "\\_").replace("*", "\\*").replace("`", "\\`")
@@ -301,11 +335,116 @@ public class AdminMessageServiceImpl implements AdminMessageService {
             text.append("\n🔽 Tanlash uchun tegishli tugmani bosing.");
 
             // Klaviatura yasashda 'searchTerm'ni berib yuboramiz
-            keyboard = inlineKeyboardService.coursesPageMenu(coursePage, searchTerm, null,null);
+            keyboard = inlineKeyboardService.coursesPageMenu(coursePage, searchTerm, null, null);
         }
 
         SendMessage message = sendMsg.sendMessage(chatId, text.toString(), keyboard);
         message.setParseMode("Markdown"); // Yoki MarkdownV2
         onlineEducationBot.myExecute(message);
     }
+
+
+//    habar yuborish
+
+
+    private void processBroadcastText(Long chatId, String text) {
+        broadcastTextCache.put(chatId, text);
+
+        String broadcastType = broadcastTypeCache.get(chatId);
+        if ("PHOTO_WITH_TEXT".equals(broadcastType)) {
+            telegramUserRepository.updateStateByChatId(chatId, UserState.ADMIN_BROADCAST_AWAITING_PHOTO);
+            onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, "✅ Matn qabul qilindi. Endi rasmni yuboring."));
+        } else { // TEXT_ONLY
+            askForTargetRoles(chatId, "✅ Matn qabul qilindi.");
+        }
+    }
+
+    private void processBroadcastPhoto(Long chatId, Message message) {
+        String fileId = message.getPhoto().stream()
+                .max(Comparator.comparing(PhotoSize::getFileSize)).orElseThrow()
+                .getFileId();
+
+        broadcastPhotoCache.put(chatId, fileId);
+        askForTargetRoles(chatId, "✅ Rasm va matn qabul qilindi.");
+    }
+
+    private void askForTargetRoles(Long chatId, String introText) {
+        telegramUserRepository.updateStateByChatId(chatId, UserState.ADMIN_BROADCAST_AWAITING_TARGETS);
+        String text = introText + "\n\nEndi bu xabarni kimlarga yuborish kerakligini tanlang:";
+        onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, text, inlineKeyboardService.broadcastTargetRolesMenu()));
+    }
+
+    private void cancelBroadcastAndReturnToMainMenu(Long chatId, String reason) {
+        log.warn("Broadcast cancelled for chatId: {}. Reason: {}", chatId, reason);
+        broadcastTypeCache.remove(chatId);
+        broadcastTextCache.remove(chatId);
+        broadcastPhotoCache.remove(chatId);
+
+        // Asosiy menyuni yuborish uchun AdminMessageService'dagi metodni chaqiramiz
+        // Buning uchun bizga UserProfile kerak bo'ladi
+        telegramUserRepository.findByChatId(chatId)
+                .map(TelegramUser::getUser)
+                .map(User::getProfile).ifPresent(profile -> initiateBroadcast(chatId));
+
+    }
+
+
+    @Transactional(readOnly = true)
+    protected void showFullStatistics(Long chatId) {
+        // 1. Ma'lumotlarni yig'ish (bu qism o'zgarmaydi)
+        AdminDashboardStats stats = userRepository.getFullDashboardStatistics();
+
+        // --- NULL TEKSHIRUVLARI VA TIPLARNI O'GIRISH ---
+        // Bu kodni ancha barqaror qiladi.
+        BigDecimal totalRevenue = stats.getTotalRevenue() != null ? stats.getTotalRevenue() : BigDecimal.ZERO;
+        BigDecimal revenueThisMonth = stats.getRevenueThisMonth() != null ? stats.getRevenueThisMonth() : BigDecimal.ZERO;
+        BigDecimal revenueToday = stats.getRevenueToday() != null ? stats.getRevenueToday() : BigDecimal.ZERO;
+        Double avgPercentage = stats.getAverageQuizPercentage() != null ? stats.getAverageQuizPercentage() : 0.0;
+
+        // 2. Xabar matnini formatlash (YANGILANDI)
+        String reportText = String.format(
+                """
+                📊 *Umumiy Statistika (%s):*
+                
+                --- *Foydalanuvchilar* ---
+                👥 Jami: *%d* ta
+                👨‍🎓 Talabalar: *%d* ta | 👨‍🏫 Instruktorlar: *%d* ta
+                🚀 Bugun qo'shildi: *%d* ta
+                
+                --- *Moliya* ---
+                💰 Jami daromad: *$%.2f*
+                🗓️ Bu oygi daromad: *$%.2f*
+                💸 Bugungi savdo: *$%.2f*
+                
+                --- *Kontent* ---
+                📚 Jami kurslar: *%d* ta
+                📖 Jami modullar: *%d* ta
+                📄 Jami darslar: *%d* ta
+                
+                --- *Faollik* ---
+                📝 Jami sotib olingan modullar: *%d* ta
+                ✅ O'rtacha o'zlashtirish: *%.1f%%*
+                """,
+                java.time.LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")),
+                stats.getTotalUsers(),
+                stats.getTotalStudents(),
+                stats.getTotalInstructors(),
+                stats.getNewUsersToday(),
+                totalRevenue, // <-- ENDI BU YERDA 'BigDecimal' EMAS, 'double' BERILADI
+                revenueThisMonth,
+                revenueToday,
+                stats.getTotalCourses(),
+                stats.getTotalModules(),
+                stats.getTotalLessons(),
+                stats.getTotalEnrollments(),
+                avgPercentage
+        );
+
+        // 3. Xabarni yuborish
+        SendMessage sendMessage = sendMsg.sendMessage(chatId, reportText);
+
+        sendMessage.setParseMode("Markdown");
+        onlineEducationBot.myExecute(sendMessage);
+    }
+
 }

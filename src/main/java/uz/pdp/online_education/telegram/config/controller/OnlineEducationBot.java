@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramWebhookBot;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
-import org.telegram.telegrambots.meta.api.methods.send.SendVenue;
 import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageMedia;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -72,11 +71,15 @@ public class OnlineEducationBot extends TelegramWebhookBot {
         try {
             return this.execute(method);
         } catch (TelegramApiException e) {
-            e.printStackTrace();
-//            log.error("Failed to execute Telegram API method: {}", e.getMessage());
-//            return null; // Return null on failure
+            // --- MANA ENG MUHIM O'ZGARISH ---
+            // Xatolikni to'liq log'ga yozamiz. Bu bizga nima bo'layotganini ko'rsatadi.
+            log.error("Telegram API Exception. Method: {}, Error: {}", method.getMethod(), e.getMessage());
+            // Agar javob bo'lsa, uni ham yozamiz
+            if (e.getMessage() != null) {
+                log.error("Telegram API Response: {}", e.getMessage().toString());
+            }
+            return null; // Xato bo'lganda null qaytaramiz
         }
-        return  null;
     }
 
     /**
@@ -85,9 +88,11 @@ public class OnlineEducationBot extends TelegramWebhookBot {
      * It is recommended to use `executeMethod` directly for clarity.
      *
      * @param method The BotApiMethod object to be executed.
+     * @return
      */
-    public void myExecute(BotApiMethod<?> method) {
+    public boolean myExecute(BotApiMethod<?> method) {
         executeMethod(method);
+        return false;
     }
 
 //    public void myExecute(SendPhoto sendPhoto) {
@@ -107,6 +112,7 @@ public class OnlineEducationBot extends TelegramWebhookBot {
         }
         return null;
     }
+
 
     public void myExecute(SendVideo sendVideo) {
         try {

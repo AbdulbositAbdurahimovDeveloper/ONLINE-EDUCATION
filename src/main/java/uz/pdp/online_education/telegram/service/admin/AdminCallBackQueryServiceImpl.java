@@ -1,15 +1,20 @@
 package uz.pdp.online_education.telegram.service.admin;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import uz.pdp.online_education.enums.Role;
@@ -37,8 +42,9 @@ import uz.pdp.online_education.telegram.service.message.MessageService;
 
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -56,6 +62,8 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
     private final CourseMapper courseMapper;
     private final TelegramUserService telegramUserService;
     private final CategoryRepository categoryRepository;
+    private final ObjectMapper objectMapper;
+    private final AdminMessageServiceImpl adminMessageServiceImpl;
 
 
     @Override
@@ -78,12 +86,15 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
             case Utils.CallbackData.ACTION_LOGOUT -> handleAuthCallback(user, chatId, messageId, params);
             case "users" -> handleUserCallbacks(chatId, messageId, data);
             case "courses" -> handleCourseCallbacks(chatId, messageId, data);
+            case "broadcast" -> handleBroadcastCallbacks(callbackQuery, params);
             case "main_menu" -> {
                 onlineEducationBot.myExecute(sendMsg.deleteMessage(chatId, messageId));
                 adminMessageService.sendAdminWelcomeMessage(chatId, getProfile(chatId));
             }
         }
     }
+
+
 
     private void handleAuthCallback(User user, Long chatId, Integer messageId, String[] data) {
         String action = data[1]; // "logout"
@@ -670,4 +681,179 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
         button.setCallbackData(callbackData);
         return button;
     }
+
+
+
+
+//    Habar yuborish
+
+
+
+
+    // ===================================================================
+    // --- BROADCAST UCHUN CALLBACK HANDLER'LAR ---
+    // ===================================================================
+
+    private void handleBroadcastCallbacks(CallbackQuery callbackQuery, String[] paramss) {
+        Long chatId = callbackQuery.getMessage().getChatId();
+        Integer messageId = callbackQuery.getMessage().getMessageId();
+        String data = callbackQuery.getData();
+        String[] params = data.split(":");
+        if (params.length < 3) return;
+
+        String action = params[2];
+
+        switch (action) {
+            case "type":
+                // Kelgan callback: "admin:broadcast:type:PHOTO_WITH_TEXT"
+                processBroadcastTypeSelection(chatId, messageId, params[3]);
+                break;
+            case "target":
+                // Kelgan callback: "admin:broadcast:target:STUDENT"
+                processBroadcastTargetSelection(chatId, messageId, Role.valueOf(params[3]));
+                break;
+            case "send":
+                // Kelgan callback: "admin:broadcast:send:STUDENT"
+                processBroadcastSend(chatId, messageId, Role.valueOf(params[3]));
+                break;
+            case "cancel":
+                // Kelgan callback: "admin:broadcast:cancel:main" yoki "admin:broadcast:cancel:back_to_targets"
+                processBroadcastCancel(chatId, messageId, params[3]);
+                break;
+        }
+    }
+
+    /**
+     * Foydalanuvchi xabar turini ("Rasm+Matn" / "Faqat Matn") tanlaganda ishlaydi.
+     */
+    private void processBroadcastTypeSelection(Long chatId, Integer messageId, String type) {
+        adminMessageServiceImpl.getBroadcastTypeCache().put(chatId, type);
+
+        telegramUserRepository.updateStateByChatId(chatId, UserState.ADMIN_BROADCAST_AWAITING_TEXT);
+
+        onlineEducationBot.myExecute(sendMsg.editMessage(chatId, messageId, "Iltimos, yuboriladigan xabar matnini kiriting:", null));
+    }
+
+    /**
+     * Foydalanuvchi kimga yuborishni ("Talabalarga", ...) tanlaganda ishlaydi.
+     * Tasdiqlash menyusini chiqaradi.
+     */
+    private void processBroadcastTargetSelection(Long chatId, Integer messageId, Role role) {
+        String roleText = switch (role) {
+            case STUDENT -> "barcha Talabalarga";
+            case INSTRUCTOR -> "barcha Instruktorlarga";
+            default -> "barcha foydalanuvchilarga (Talaba+Instruktor)"; // ALL uchun
+        };
+        String text = String.format("Haqiqatan ham ushbu xabarni %s yubormoqchimisiz?", roleText);
+
+        String confirmCallback = "admin:broadcast:send:" + role.name();
+        String cancelCallback = "admin:broadcast:cancel:back_to_targets";
+        InlineKeyboardMarkup keyboard = inlineKeyboardService.confirmationMenu(confirmCallback, cancelCallback);
+
+        onlineEducationBot.myExecute(sendMsg.editMessage(chatId, messageId, text, keyboard));
+    }
+
+    /**
+     * Foydalanuvchi "Yuborish" tugmasini tasdiqlaganda ishlaydi.
+     */
+    private void processBroadcastSend(Long chatId, Integer messageId, Role role) {
+        // Ma'lumotlarni 'cache' dan olamiz
+        String text = adminMessageServiceImpl.getBroadcastTextCache().get(chatId);
+        String photoFileId = adminMessageServiceImpl.getBroadcastPhotoCache().get(chatId);
+
+        // Jarayon tugagach, 'cache'ni tozalaymiz va holatni o'zgartiramiz
+        adminMessageServiceImpl.getBroadcastTextCache().remove(chatId);
+        adminMessageServiceImpl.getBroadcastPhotoCache().remove(chatId);
+        telegramUserRepository.updateStateByChatId(chatId, UserState.ADMIN_MAIN_MENU);
+
+        if (text == null || text.isBlank()) {
+            log.error("Broadcast text not found in cache for admin {}", chatId);
+            onlineEducationBot.myExecute(sendMsg.editMessage(chatId, messageId, "Xatolik: Yuboriladigan matn topilmadi.", null));
+            return;
+        }
+
+        Set<Role> targetRoles = new HashSet<>();
+        if (role == Role.ALL) {
+            targetRoles.add(Role.STUDENT);
+            targetRoles.add(Role.INSTRUCTOR);
+        } else {
+            targetRoles.add(role);
+        }
+
+        List<Long> targetChatIds = telegramUserRepository.findAllChatIdsByRoles(targetRoles);
+
+        onlineEducationBot.myExecute(sendMsg.editMessage(chatId, messageId,
+                String.format("✅ Xabar %d ta foydalanuvchiga yuborish uchun navbatga qo'yildi...", targetChatIds.size()), null));
+
+        // Yuborishni fonli rejimda ishga tushiramiz
+        startBroadcasting(chatId, text, photoFileId, targetChatIds);
+    }
+
+    /**
+     * Foydalanuvchi "Bekor qilish" tugmasini bosganda ishlaydi.
+     */
+    private void processBroadcastCancel(Long chatId, Integer messageId, String target) {
+        if ("main".equals(target)) {
+            // Butun jarayonni bekor qilish
+            telegramUserRepository.updateStateByChatId(chatId, UserState.ADMIN_MAIN_MENU);
+            adminMessageServiceImpl.getBroadcastTextCache().remove(chatId);
+            adminMessageServiceImpl.getBroadcastPhotoCache().remove(chatId);
+            onlineEducationBot.myExecute(sendMsg.editMessage(chatId, messageId, "Amal bekor qilindi.", null));
+        } else { // "back_to_targets"
+            // Faqat tasdiqlashni bekor qilib, rollarni tanlash menyusiga qaytish
+            String text = "Tanlov o'zgartirildi. Qayta tanlang:";
+            onlineEducationBot.myExecute(sendMsg.editMessage(chatId, messageId, text, inlineKeyboardService.broadcastTargetRolesMenu()));
+        }
+    }
+
+    /**
+     * Xabarlarni alohida 'thread'da, barchaga birma-bir yuboradi.
+     */
+    @Async
+    public void startBroadcasting(Long adminChatId, String text, String photoFileId, List<Long> targetChatIds) {
+        log.info("Starting broadcast to {} users.", targetChatIds.size());
+        int successCount = 0;
+        int failureCount = 0;
+
+        String htmlCaption = formatBroadcastMessageAsPost(text);
+
+        for (Long targetChatId : targetChatIds) {
+            try {
+                if (photoFileId != null && !photoFileId.isBlank()) {
+                    SendPhoto sendPhoto = new SendPhoto(String.valueOf(targetChatId), new InputFile(photoFileId));
+                    sendPhoto.setCaption(htmlCaption);
+                    sendPhoto.setParseMode("HTML");
+                    onlineEducationBot.myExecute(sendPhoto);
+                } else {
+                    SendMessage sendMessage = new SendMessage(String.valueOf(targetChatId), text); // Matnli xabarni formatsiz yuboramiz
+                    onlineEducationBot.myExecute(sendMessage);
+                }
+                successCount++;
+            } catch (Exception e) {
+                log.warn("Could not send broadcast message to chatId: {}", targetChatId);
+                failureCount++;
+            }
+            try { Thread.sleep(35); } catch (InterruptedException ignored) { Thread.currentThread().interrupt(); }
+        }
+
+        String report = String.format("✅ Yuborish yakunlandi.\nMuvaffaqiyatli: %d\nXatolik: %d", successCount, failureCount);
+        onlineEducationBot.myExecute(sendMsg.sendMessage(adminChatId, report));
+    }
+
+    // Matnni HTML formatlaydigan yordamchi metod
+    private String formatBroadcastMessageAsPost(String rawText) {
+        if (rawText == null || rawText.isBlank()) return "";
+        String[] lines = rawText.split("\n", 2);
+        String title = escapeHtml(lines[0]);
+        String body = (lines.length > 1) ? escapeHtml(lines[1]) : "";
+        return "<b>" + title + "</b>" + (!body.isEmpty() ? "\n\n" + body : "");
+    }
+
+    private String escapeHtml(String text) {
+        if (text == null) return "";
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
+
+
 }

@@ -169,6 +169,7 @@ public class SendMsgImpl implements SendMsg {
     /**
      * @param callbackQueryId
      * @param text
+     * @param b
      * @return
      */
     @Override

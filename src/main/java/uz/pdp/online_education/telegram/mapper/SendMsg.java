@@ -61,6 +61,7 @@ public interface SendMsg {
 
     EditMessageCaption editMessageCaption(Long chatId, Integer messageId, String caption, InlineKeyboardMarkup keyboard);
 
+
     SendPhoto sendPhoto(String channelId, String fileId, String caption);
 
     SendVideo sendVideo(String channelId, String fileId, String caption);
@@ -70,4 +71,5 @@ public interface SendMsg {
     SendVoice sendVoice(String channelId, String fileId, String caption);
 
    SendVideoNote sendVideoNote(String channelId, String fileId);
+
 }
