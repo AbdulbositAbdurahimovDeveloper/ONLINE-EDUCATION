@@ -1,4 +1,4 @@
-package uz.pdp.online_education;
+package uz.pdp.online_education.config;
 
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;

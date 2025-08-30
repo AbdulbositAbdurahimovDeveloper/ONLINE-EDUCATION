@@ -7,6 +7,9 @@ public enum UserState {
     UNREGISTERED,
     DASHBOARD,
 
+    STUDENT_SUPPORT_SEND_MESSAGE,
+    STUDENT_SUPPORT_MESSAGE_CONFIRMATION,
+
     // --- ADMIN PANEL STATES ---
     ADMIN_MAIN_MENU,                // Asosiy admin menyusida (boshlang'ich holat)
     ADMIN_MANAGING_USERS,           // "Foydalanuvchilar" bo'limida

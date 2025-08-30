@@ -1,9 +1,7 @@
 package uz.pdp.online_education.telegram.mapper;
 
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
-import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
+import org.telegram.telegrambots.meta.api.methods.send.*;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.*;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -62,4 +60,14 @@ public interface SendMsg {
     SendVideo sendVideo(Long chatId, String telegramFileId,InlineKeyboardMarkup keyboard);
 
     EditMessageCaption editMessageCaption(Long chatId, Integer messageId, String caption, InlineKeyboardMarkup keyboard);
+
+    SendPhoto sendPhoto(String channelId, String fileId, String caption);
+
+    SendVideo sendVideo(String channelId, String fileId, String caption);
+
+    SendAudio sendAudio(String channelId, String fileId, String caption);
+
+    SendVoice sendVoice(String channelId, String fileId, String caption);
+
+   SendVideoNote sendVideoNote(String channelId, String fileId);
 }

@@ -124,6 +124,8 @@ public interface Utils {
         String ACTION_DELETE = "del";
         String ACTION_STUDENT = "std";
         String ACTION_STUDENT_ID = "std_id";
+        String ACTION_SUPPORT = "support";
+        String ACTION_QUESTION = "question";
 
         // --- SPECIFIC ACTIONS & KEYS ---
         /**
@@ -154,9 +156,21 @@ public interface Utils {
         String TITLE = "title";
         String DESCRIPTION = "description";
         String PRICE = "price";
-//        String THUMBNAIL_ID = "thumbnail_id";
+        String ACTION_MESSAGE = "message";
+        String CHAT_ID = "chat_id";
 
-//        String CATEGORY_ID = "category_id";
+        String SUPPORT_TEXT = "support_text";
+        String SUPPORT_PHOTO_ID = "support_photo_id";
+        String SUPPORT_VIDEO_ID = "support_video_id";
+        String SUPPORT_AUDIO_ID = "support_audio_id";
+        String SUPPORT_VOICE_ID = "support_voice_id";
+        String SUPPORT_VIDEO_NOTE_ID = "support_video_note_id";
+        String SUPPORT_DOCUMENT_ID = "support_document_id";
+        String SUPPORT_CHANNEL_MSG_ID =  "support_channel_msg_id";
+
+        String SUPPORT_CONFIRM_STATE = "support_confirm_state";
+
+
 
         String COURSE_LIST_CALLBACK = "admin:courses:list:init";
 
