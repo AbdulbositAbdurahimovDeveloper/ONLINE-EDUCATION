@@ -2,6 +2,7 @@ package uz.pdp.online_education.telegram.service.student;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -12,12 +13,10 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import uz.pdp.online_education.enums.TransactionStatus;
-import uz.pdp.online_education.model.Course;
+import uz.pdp.online_education.model.*;
 import uz.pdp.online_education.model.Module;
-import uz.pdp.online_education.model.Payment;
-import uz.pdp.online_education.model.User;
-import uz.pdp.online_education.model.UserProfile;
 import uz.pdp.online_education.repository.*;
 import uz.pdp.online_education.telegram.Utils;
 import uz.pdp.online_education.telegram.config.controller.OnlineEducationBot;
@@ -25,6 +24,8 @@ import uz.pdp.online_education.telegram.enums.BotMessage;
 import uz.pdp.online_education.telegram.enums.UserState;
 import uz.pdp.online_education.telegram.mapper.SendMsg;
 import uz.pdp.online_education.telegram.model.TelegramUser;
+import uz.pdp.online_education.telegram.service.RedisTemporaryDataService;
+import uz.pdp.online_education.telegram.service.TelegramUserService;
 import uz.pdp.online_education.telegram.service.message.MessageService;
 import uz.pdp.online_education.telegram.service.student.template.StudentInlineKeyboardService;
 import uz.pdp.online_education.telegram.service.student.template.StudentProcessMessageService;
@@ -35,6 +36,12 @@ import java.text.DecimalFormat;
 import java.time.format.DateTimeFormatter;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+
+import static uz.pdp.online_education.telegram.Utils.CallbackData.*;
+import static uz.pdp.online_education.telegram.Utils.CallbackData.CHAT_ID;
 
 
 @Slf4j
@@ -43,6 +50,9 @@ import java.util.List;
 public class StudentProcessMessageServiceImpl implements StudentProcessMessageService {
 
     private static final int PAGE_SIZE = 5; // Sahifadagi elementlar soni
+
+    @Value("${telegram.bot.channel-id}")
+    private String CHANNEL_ID;
 
     // --- DEPENDENCIES ---
     private final SendMsg sendMsg;
@@ -54,6 +64,9 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
     private final CourseRepository courseRepository;
     private final ModuleEnrollmentRepository moduleEnrollmentRepository;
     private final PaymentRepository paymentRepository;
+    private final FaqRepository faqRepository;
+    private final TelegramUserService telegramUserService;
+    private final RedisTemporaryDataService redisTemporaryDataService;
 
     // --- PUBLIC METHODS (from Interface) ---
 
@@ -80,7 +93,6 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
             case Utils.ReplyButtons.STUDENT_HELP -> askForSupportMessage(chatId);
         }
     }
-
     @Override
     public void showMainMenu(User user, Long chatId) {
         String welcomeMessage = messageService.getMessage(
@@ -256,13 +268,48 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
     }
 
     private void askForSupportMessage(Long chatId) {
-        telegramUserRepository.updateStateByChatId(chatId, UserState.STUDENT_AWAITING_SUPPORT_MESSAGE);
-        // TODO: Implement logic for asking for a support message
-        onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, "'Yordam' bo'limi ishlab chiqilmoqda."));
+        int pageNumber = 0;
+        Page<Faq> faqs = faqRepository.findAll(PageRequest.of(pageNumber, 5));
+        String built = buildFaqListText(faqs);
+        InlineKeyboardMarkup inlineKeyboardMarkup = studentInlineKeyboardService.studentSupportMessage(faqs, String.join("", ACTION_SUPPORT, BACK_TO_MAIN_MENU), pageNumber);
+        onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, built, inlineKeyboardMarkup));
     }
 
 
     // --- HELPER METHODS ---
+
+    public String buildFaqListText(Page<Faq> faqPage) {
+        if (faqPage.isEmpty()) {
+            return "<b>📖 Yordam markazi (FAQ)</b>\n\n" +
+                    "❌ Hozircha savollar mavjud emas.";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("<b>📖 Yordam markazi (FAQ)</b>\n\n");
+        sb.append("Sizni qiziqtirgan savolni tanlang 👇\n\n");
+
+        int startNumber = faqPage.getNumber() * faqPage.getSize() + 1;
+        for (int i = 0; i < faqPage.getContent().size(); i++) {
+            Faq faq = faqPage.getContent().get(i);
+            sb.append("👉 <b>").append(startNumber + i).append(")</b> ")
+                    .append(faq.getQuestion()).append("\n");
+        }
+
+        sb.append("\n");
+
+        // Pagination bo‘yicha eslatma
+        if (faqPage.hasNext()) {
+            sb.append("▶️ Keyingi savollar uchun pastdagi tugmadan foydalaning.\n");
+        }
+        if (faqPage.hasPrevious()) {
+            sb.append("◀️ Oldingi savollarni ham ko‘rishingiz mumkin.\n");
+        }
+
+        sb.append("\n🏠 Asosiy menyuga qaytish uchun <b>Asosiy menyu</b> tugmasini bosing.");
+
+        return sb.toString();
+    }
+
 
     /**
      * Prepares the formatted text for the student's dashboard.

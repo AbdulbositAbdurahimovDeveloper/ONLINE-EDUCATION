@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.CacheManager;
+import org.springframework.data.redis.connection.DataType;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.cache.Cache;
 
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -47,7 +49,8 @@ public class CacheController {
     public record CacheDTO(
             @Schema(description = "The original cache key (without the cache name prefix)", example = "123") Object key,
             @Schema(description = "The cached value", example = "{id:123, title:'Java Basics'}") Object value
-    ) {}
+    ) {
+    }
 
     /**
      * Berilgan cache nomi bo‘yicha barcha key-value juftliklarni olish.
@@ -125,4 +128,135 @@ public class CacheController {
         log.warn("Cache '{}' not found, nothing to clear", cacheName);
         return "Cache not found: " + cacheName;
     }
+
+    /**
+     * Tizimda mavjud bo‘lgan cache nomlari ro‘yxatini ko‘rsatadi.
+     */
+    @Operation(summary = "Get all cache names", description = "Retrieve a list of all cache names registered in the CacheManager")
+    @GetMapping("/names")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Collection<String> getCacheNames() {
+        log.info("Request to list all cache names");
+        return cacheManager.getCacheNames();
+    }
+
+
+    /// reidis saqlangan table malumitlarni keylarni korish uchun get sorov va malum bir keyga saqlangan malumoitlarni korsatuvchi get sorov yoz ber
+    /**
+     * Cache ichidagi barcha keylarni ko‘rish.
+     *
+     * @param cacheName Cache nomi (masalan: "courses")
+     * @return Keylar ro‘yxati
+     */
+    @Operation(summary = "List all keys from a cache",
+            description = "Retrieves only the keys (without values) from a specific Redis cache.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Cache keys retrieved successfully",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = String.class)))),
+            @ApiResponse(responseCode = "403", description = "Forbidden: Only ADMIN can access this endpoint"),
+            @ApiResponse(responseCode = "404", description = "Cache not found or empty")
+    })
+    @GetMapping("/{cacheName}/keys")
+    @PreAuthorize(value = "hasRole('ADMIN')")
+    public Set<String> listKeys(
+            @Parameter(description = "Cache name", example = "courses")
+            @PathVariable String cacheName) {
+
+        log.info("Listing keys for cacheName={}", cacheName);
+
+        String keyPattern = cacheName + "::*";
+        Set<String> redisKeys = redisTemplate.keys(keyPattern);
+
+        if (redisKeys == null || redisKeys.isEmpty()) {
+            log.warn("No keys found for cache '{}'", cacheName);
+            return Set.of();
+        }
+
+        // Prefiksni olib tashlab faqat original key qaytaramiz
+        return redisKeys.stream()
+                .map(key -> key.substring(cacheName.length() + 2))
+                .collect(Collectors.toSet());
+    }
+
+
+    /**
+     * Cache ichidan ma’lum bir key bo‘yicha qiymatni olish.
+     *
+     * @param cacheName Cache nomi
+     * @param key       Cache ichidagi kalit
+     * @return Kalit va qiymat juftligi
+     */
+    @Operation(summary = "Get value by cache key",
+            description = "Retrieves the value stored in a specific cache by its key.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Cache entry found",
+                    content = @Content(schema = @Schema(implementation = CacheDTO.class))),
+            @ApiResponse(responseCode = "403", description = "Forbidden: Only ADMIN can access this endpoint"),
+            @ApiResponse(responseCode = "404", description = "Key not found in cache")
+    })
+    @GetMapping("/{cacheName}/{key}")
+    @PreAuthorize(value = "hasRole('ADMIN')")
+    public CacheDTO getByKey(
+            @Parameter(description = "Cache name", example = "courses")
+            @PathVariable String cacheName,
+            @Parameter(description = "Key inside the cache", example = "123")
+            @PathVariable String key) {
+
+        log.info("Fetching value for cacheName={} and key={}", cacheName, key);
+
+        String redisKey = cacheName + "::" + key;
+        Object value = redisTemplate.opsForValue().get(redisKey);
+
+        if (value == null) {
+            log.warn("Key '{}' not found in cache '{}'", key, cacheName);
+            return null;
+        }
+
+        return new CacheDTO(key, value);
+    }
+
+    /**
+     * Redis ichidagi barcha mavjud keylarni olish.
+     * EHTIYOT BO'LING: KEYS * katta hajmdagi production bazalarda sekin ishlashi mumkin.
+     */
+    @Operation(summary = "Get all Redis keys", description = "Retrieve all keys stored directly in Redis (non-cache data)")
+    @GetMapping("/redis/keys")
+//    @PreAuthorize("hasRole('ADMIN')")
+    public Set<String> getAllRedisKeys() {
+        log.info("Request to fetch all Redis keys");
+        return redisTemplate.keys("*"); // barcha keylarni oladi
+    }
+
+    /**
+     * Redis ichida ma'lum bir key bo‘yicha saqlangan qiymatni olish.
+     */
+    @Operation(summary = "Get value by Redis key", description = "Retrieve the value stored under a specific Redis key")
+    @GetMapping("/redis/key/{key}")
+//    @PreAuthorize("hasRole('ADMIN')")
+    public Object getRedisValue(@PathVariable String key) {
+        DataType type = redisTemplate.type(key);
+        log.info("Redis key '{}' type: {}", key, type);
+
+        switch (type.code()) {
+            case "string":
+                return redisTemplate.opsForValue().get(key);
+
+            case "hash":
+                return redisTemplate.opsForHash().entries(key);
+
+            case "list":
+                return redisTemplate.opsForList().range(key, 0, -1);
+
+            case "set":
+                return redisTemplate.opsForSet().members(key);
+
+            case "zset":
+                return redisTemplate.opsForZSet().range(key, 0, -1);
+
+            default:
+                return "❌ Unknown type: " + type.code();
+        }
+    }
+
+
 }
