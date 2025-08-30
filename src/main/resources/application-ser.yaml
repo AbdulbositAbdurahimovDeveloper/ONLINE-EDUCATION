@@ -1,0 +1,74 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ONLINE-EDUCATION
+  servlet:
+    multipart:
+      max-file-size: 2GB
+      max-request-size: 2GB
+  banner:
+    location: classpath:banner.txt
+
+  datasource:
+    url: jdbc:postgresql://central_postgres_db:5432/online_education
+    username: postgres
+    password: 2503
+    driver-class-name: org.postgresql.Driver
+
+  liquibase:
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
+
+  data:
+    redis:
+      host: 176.57.188.165
+      port: 6379
+      password: 2503
+
+  jpa:
+    hibernate:
+      ddl-auto: none # Production uchun 'none' yoki 'validate' eng to'g'ri
+    properties:
+      hibernate:
+        format_sql: true
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: abdulbositabdurahimov70@gmail.com
+    password: cphf yxno yydk sufr
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+# Ilovaning maxsus sozlamalari
+application:
+  jwt:
+    secret: ZTAyOWY4YTNiODhjMWQ1ZjdlNmE0YjJjMWQwZTlmOGEzYjJjMWQwZjllOGE3YjZjNWQ0ZTNmMmExYjBjOWQ4ZQ==
+    access-token-expiration: 1d
+    refresh-token-expiration: 7d
+  cache:
+    temporary-process-ttl-seconds: 3600
+  minio:
+    endpoint: http://176.57.188.165:9001
+    access-key: minioadmin
+    secret-key: minioadmin
+    buckets:
+      - images
+      - other
+      - icons
+  telegram:
+    bot:
+      token: 8481051986:AAEl9l4rDExYaZ7x5GdQIj4NT-cpMU-XL-c
+      username: onlineducation_bot
+      webhook-path: ${APPLICATION_TELEGRAM_BOT_WEBHOOK_PATH}
+      chat-id: 5902268851
+      channel-id: -1002895768675
