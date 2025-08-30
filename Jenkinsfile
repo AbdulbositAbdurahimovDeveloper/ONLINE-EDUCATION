@@ -6,7 +6,7 @@ pipeline {
     tools {
         // Bu nom 'Global Tool Configuration'dagi 'Name' maydoniga to'liq mos kelishi kerak
         maven 'maven'
-        jdk 'JDK24'
+        jdk 'JDK21'
         dockerTool 'docker-cli'
     }
 

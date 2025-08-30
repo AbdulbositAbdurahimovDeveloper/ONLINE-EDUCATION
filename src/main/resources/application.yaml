@@ -6,7 +6,7 @@ spring:
     import: optional:env[.env]
 
   profiles:
-    active: dev
+    active: ser
 
   banner:
     location: classpath:banner.txt
