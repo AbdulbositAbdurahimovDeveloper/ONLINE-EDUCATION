@@ -38,7 +38,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class GenerateService  {
 
-    //<editor-fold desc="Dependencies">
+
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
@@ -50,9 +50,9 @@ public class GenerateService  {
     private final CourseMapper courseMapper;
     private final PaymentService paymentService;
     private final PasswordEncoder passwordEncoder;
-    //</editor-fold>
 
-    //<editor-fold desc="Helper Tools and Constants">
+
+
     private final Faker faker = new Faker(new Locale("en-US"));
     private final Slugify slugify = Slugify.builder().build();
     private final Random random = new Random();
@@ -72,7 +72,7 @@ public class GenerateService  {
     private static final List<Long> PREDEFINED_PRICES_IN_SOM = Arrays.asList(
             100_000L, 200_000L, 300_000L, 400_000L, 500_000L
     );
-    //</editor-fold>
+
 
     @Transactional
     public void generateFullStackCourses(int count) {
@@ -103,17 +103,17 @@ public class GenerateService  {
         log.info("Successfully generated and saved {} courses.",count);
     }
 
-    @Transactional // Barcha operatsiyalar bitta tranzaksiyada bajariladi
+    @Transactional
     public List<CourseDetailDTO> generateCoursesAndModules(int count) {
 
-        // Agar bazada o'qituvchi va kategoriya bo'lmasa, test uchun yaratib olamiz
+
         User instructor = getOrCreateTestInstructor();
         Category category = getOrCreateTestCategory();
 
         List<Course> coursesToSave = new ArrayList<>();
 
         for (int i = 0; i < count; i++) {
-            // --- Kurs Yaratish ---
+
             Course course = new Course();
             String courseTitle = faker.educator().course() + " - " + faker.number().digits(4);
             course.setTitle(courseTitle);
@@ -121,9 +121,9 @@ public class GenerateService  {
             course.setSlug(courseTitle.toLowerCase().replace(" ", "-"));
             course.setInstructor(instructor);
             course.setCategory(category);
-            // thumbnailUrl'ni hozircha null qoldiramiz
 
-            // --- Modullar Yaratish ---
+
+
             List<Module> modules = new ArrayList<>();
             for (int j = 0; j < 5; j++) {
                 Module module = new Module();
@@ -131,69 +131,69 @@ public class GenerateService  {
                 module.setDescription(faker.lorem().paragraph(2));
                 long priceInSom = faker.number().numberBetween(500_000L, 1_500_000L);
                 long priceInTiyin = priceInSom * 100;
-                module.setPrice(priceInTiyin); // Agar price tiyinda saqlansa
+                module.setPrice(priceInTiyin);
 
                 module.setOrderIndex(j);
 
-                // Eng muhim qadam: Modulni kursga bog'lash
+
                 module.setCourse(course);
 
                 modules.add(module);
             }
 
-            // Kursga modullar ro'yxatini o'rnatamiz
+
             course.setModules(modules);
 
             coursesToSave.add(course);
         }
 
-        // Barcha yaratilgan kurslarni bitta so'rovda saqlaymiz (cascade bo'lgani uchun modullar ham saqlanadi)
+
         courseRepository.saveAll(coursesToSave);
 
         return coursesToSave.stream().map(courseMapper::courseToCourseDetailDTO).toList();
 
     }
 
-    // Bu metodni GenerateService klassingizga qo'shing
+
 
     @Transactional
     public void generateUserStudent(int count) {
         log.info("Starting generation of {} student users...", count);
 
-        // 1. Fetch existing unique constraints to avoid database errors
-        Set<String> existingUsernames = userRepository.findAllUsernames(); // Bu metodni repository'ga qo'shish kerak
-        Set<String> existingEmails = userProfileRepository.findAllEmails();   // Bu metodni repository'ga qo'shish kerak
+
+        Set<String> existingUsernames = userRepository.findAllUsernames();
+        Set<String> existingEmails = userProfileRepository.findAllEmails();
         log.debug("Found {} existing usernames and {} existing emails.", existingUsernames.size(), existingEmails.size());
 
         List<User> usersToSave = new ArrayList<>();
 
         for (int i = 0; i < count; i++) {
-            // --- Asosiy obyektlarni yaratish ---
+
             User newUser = new User();
             UserProfile profile = new UserProfile();
 
-            // --- Ma'lumotlarni generatsiya qilish ---
+
             String firstName = faker.name().firstName();
             String lastName = faker.name().lastName();
 
-            // 2. Generate unique username and email
+
             String username = generateUniqueUsername(existingUsernames, firstName, lastName);
             String email = generateUniqueEmail(existingEmails, username);
 
-            // --- UserProfile'ni to'ldirish ---
+
             profile.setFirstName(firstName);
             profile.setLastName(lastName);
             profile.setEmail(email);
             profile.setPhoneNumber(faker.phoneNumber().cellPhone());
-            profile.setBio(faker.lorem().sentence(10)); // Talaba uchun qisqa bio
+            profile.setBio(faker.lorem().sentence(10));
 
-            // --- User'ni to'ldirish ---
+
             newUser.setUsername(username);
-            newUser.setPassword(passwordEncoder.encode("123")); // Barcha studentlar uchun standart parol
-            newUser.setRole(Role.STUDENT); // Rolni STUDENT qilib belgilaymiz
-            newUser.setEnabled(true); // Foydalanuvchi aktiv holatda
+            newUser.setPassword(passwordEncoder.encode("123"));
+            newUser.setRole(Role.STUDENT);
+            newUser.setEnabled(true);
 
-            // 3. Establish the bidirectional relationship
+
             newUser.setProfile(profile);
             profile.setUser(newUser);
 
@@ -203,7 +203,7 @@ public class GenerateService  {
 
 
 
-        // 4. Save all new users in a single batch operation
+
         if (!usersToSave.isEmpty()) {
             userRepository.saveAll(usersToSave);
             log.info("Successfully generated and saved {} new student users.", usersToSave.size());
@@ -212,14 +212,14 @@ public class GenerateService  {
         }
     }
 
-    // Bu metodni GenerateService klassingizga qo'shing
 
-    @Transactional // Bu operatsiya uzoq davom etishi mumkinligi uchun @Transactional shart
+
+    @Transactional
     public void generateStudentPayments() {
         log.info("Starting generation of payments for student users...");
 
-        // 1. Get all students and all modules from the database
-        List<User> students = userRepository.findAllByRole(Role.STUDENT); // Bu metodni repository'ga qo'shish kerak
+
+        List<User> students = userRepository.findAllByRole(Role.STUDENT);
         List<Module> allModules = moduleRepository.findAll();
 
         if (students.isEmpty() || allModules.isEmpty()) {
@@ -231,45 +231,44 @@ public class GenerateService  {
         int totalPaymentsCreated = 0;
         int totalErrors = 0;
 
-        // 2. Iterate through each student to generate payments
+
         for (User student : students) {
             log.debug("Processing payments for student: {}", student.getUsername());
 
-            // Modullarni aralashtirib yuboramiz, toki har safar har xil modul sotib olinsin
+
             List<Module> shuffledModules = new ArrayList<>(allModules);
             Collections.shuffle(shuffledModules);
 
             int paymentsMadeForCurrentUser = 0;
-            int maxModulesToBuy = Math.min(shuffledModules.size(), 5); // Student maksimum 5 ta modul sotib olsin
-            int requiredPayments = 3; // Har bir student kamida 3 ta modul sotib olishi kerak
+            int maxModulesToBuy = Math.min(shuffledModules.size(), 5);
+            int requiredPayments = 3;
 
-            // 3. Try to purchase modules for the current student
+
             for (Module module : shuffledModules) {
 
-                // Agar student yetarlicha modul sotib olgan bo'lsa va tasodifiy shart bajarilmasa, keyingisiga o'tamiz
-                // Bu hamma student hamma modulni sotib olishining oldini oladi.
+
                 if (paymentsMadeForCurrentUser >= requiredPayments && !random.nextBoolean()) {
                     continue;
                 }
 
-                // Agar sotib olinadigan modullar soni maksimumga yetgan bo'lsa, to'xtatamiz
+
                 if (paymentsMadeForCurrentUser >= maxModulesToBuy) {
                     break;
                 }
 
                 try {
-                    // 4. Create a DTO to simulate a payment request from the frontend
+
                     PaymentCreateDTO paymentCreateDTO = new PaymentCreateDTO();
                     paymentCreateDTO.setModuleId(module.getId());
 
-                    // Narxni so'mda, Double tipida beramiz (servisdagi logikaga mos)
+
                     double amountInSom = (double) module.getPrice() / 100;
                     paymentCreateDTO.setAmount(amountInSom);
 
                     paymentCreateDTO.setMaskedCardNumber(faker.finance().creditCard());
                     paymentCreateDTO.setDescription("Automatic payment simulation");
 
-                    // 5. Use the existing PaymentService to create the payment
+
                     paymentService.create(paymentCreateDTO, student);
 
                     log.debug("  SUCCESS: Student '{}' purchased module '{}'.", student.getUsername(), module.getTitle());
@@ -277,17 +276,17 @@ public class GenerateService  {
                     totalPaymentsCreated++;
 
                 } catch (DataConflictException e) {
-                    // Bu xato kutilgan holat: student bu modulni allaqachon sotib olgan
+
                     log.trace("  INFO: Student '{}' already owns module '{}'. Skipping. ({})", student.getUsername(), module.getTitle(), e.getMessage());
                 } catch (Exception e) {
-                    // Boshqa kutilmagan xatoliklar
+
                     log.error("  ERROR: Failed to create payment for student '{}' and module '{}'. Reason: {}",
                             student.getUsername(), module.getTitle(), e.getMessage());
                     totalErrors++;
                 }
             }
 
-            // Agar birorta ham modul sotib ololmagan bo'lsa, logga yozamiz
+
             if (paymentsMadeForCurrentUser == 0) {
                 log.warn("  Could not make any new payments for student '{}'. They might own all modules already.", student.getUsername());
             }
@@ -296,13 +295,13 @@ public class GenerateService  {
         log.info("Payment generation finished. Total new payments created: {}. Total errors encountered: {}.", totalPaymentsCreated, totalErrors);
     }
 
-    // Bu metodni GenerateService klassingizga qo'shing
+
 
     @Transactional
     public void generateCourseReviews() {
         log.info("Starting generation of reviews for courses...");
 
-        // 1. Get all students who have made at least one payment
+
         List<User> studentsWithPayments = paymentRepository.findAllDistinctUsers(); // Bu metodni repository'ga qo'shish kerak
 
         if (studentsWithPayments.isEmpty()) {
@@ -314,11 +313,11 @@ public class GenerateService  {
         int totalReviewsCreatedOrUpdated = 0;
         int totalErrors = 0;
 
-        // 2. Iterate through each student
+
         for (User student : studentsWithPayments) {
             log.debug("Processing reviews for student: {}", student.getUsername());
 
-            // 3. Find all courses purchased by this student (via their payments)
+
             List<Course> purchasedCourses = paymentRepository.findCoursesByUserId(student.getId()); // Bu metodni repository'ga qo'shish kerak
 
             if (purchasedCourses.isEmpty()) {
@@ -326,27 +325,27 @@ public class GenerateService  {
                 continue;
             }
 
-            // 4. For each purchased course, create a review
+
             for (Course course : purchasedCourses) {
 
-                // 50/50 ehtimollik bilan sharh qoldirsin, hamma kursga ham emas
+
                 if (!random.nextBoolean()) {
                     log.trace("  Skipping review for course '{}' by chance.", course.getTitle());
                     continue;
                 }
 
                 try {
-                    // 5. Create a DTO to simulate a review submission
+
                     ReviewCreateDTO reviewCreateDTO = new ReviewCreateDTO();
                     reviewCreateDTO.setCourseId(course.getId());
 
-                    // Generate random rating (1 to 5)
-                    reviewCreateDTO.setRating(faker.number().numberBetween(1, 6)); // 6 kirmaydi, 1-5
 
-                    // Generate a random comment
+                    reviewCreateDTO.setRating(faker.number().numberBetween(1, 6));
+
+
                     reviewCreateDTO.setComment(faker.lorem().sentence(faker.number().numberBetween(5, 20)));
 
-                    // 6. Use the existing ReviewService to create or update the review
+
                     reviewService.create(reviewCreateDTO, student);
 
                     log.debug("  SUCCESS: Review created/updated for course '{}' by student '{}'. Rating: {}",
@@ -364,24 +363,21 @@ public class GenerateService  {
         log.info("Review generation finished. Total reviews created or updated: {}. Total errors: {}.", totalReviewsCreatedOrUpdated, totalErrors);
     }
 
-// ====================================================================
-// --- YORDAMCHI METODLAR (NOYOBLIK UCHUN) ---
-// ====================================================================
+
 
     private String generateUniqueUsername(Set<String> existingUsernames, String firstName, String lastName) {
         String username;
         int attempt = 0;
         do {
-            // Ism va familiyadan username yasaymiz
+
             username = (firstName + "." + lastName).toLowerCase();
             if (attempt > 0) {
-                // Agar band bo'lsa, oxiriga son qo'shamiz
                 username += attempt;
             }
             attempt++;
         } while (existingUsernames.contains(username));
 
-        existingUsernames.add(username); // Yangi username'ni to'plamga qo'shib qo'yamiz
+        existingUsernames.add(username);
         return username;
     }
 
@@ -389,7 +385,7 @@ public class GenerateService  {
         String email;
         int attempt = 0;
         do {
-            // Xavfsiz domen bilan email yaratamiz
+
             email = faker.internet().safeEmailAddress(username + (attempt > 0 ? attempt : ""));
             attempt++;
         } while (existingEmails.contains(email));
@@ -398,9 +394,9 @@ public class GenerateService  {
         return email;
     }
 
-    // Yordamchi metodlar
+
     private User getOrCreateTestInstructor() {
-        // "instructor" nomli user'ni qidiramiz, agar yo'q bo'lsa, yaratamiz
+
         return userRepository.findByUsername("admin")
                 .orElseGet(() -> {
                     User user = new User();

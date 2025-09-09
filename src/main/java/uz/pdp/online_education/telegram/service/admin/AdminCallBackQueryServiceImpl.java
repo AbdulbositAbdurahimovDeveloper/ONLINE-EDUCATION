@@ -129,8 +129,7 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
             case "page" -> sendUsersListPage(chatId, messageId, Integer.parseInt(params[3]), null);
             case "search_page" -> sendUsersListPage(chatId, messageId, Integer.parseInt(params[4]), params[3]);
             case "view" -> {
-                // Kontekstni aniqlaymiz: qidiruvdan keyinmi yoki oddiy ro'yxatdanmi?
-                // Hozircha oddiy, har doim ro'yxatga qaytadigan qilamiz.
+
                 String backCallback = "admin:users:page:0";
                 sendUserDetail(chatId, messageId, Long.parseLong(params[3]), backCallback);
             }
@@ -140,7 +139,7 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
         }
     }
 
-    // Bu metod endi 'searchTerm' ham qabul qiladi
+
     private void sendUsersListPage(Long chatId, Integer messageId, int pageNumber, String searchTerm) {
         Pageable pageable = PageRequest.of(pageNumber, 10, Sort.by("id"));
         Page<User> userPage;
@@ -167,7 +166,7 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
             text.append("\n🔽 Tanlash uchun tegishli tugmani bosing.");
         }
 
-        // Klaviatura yasashda 'searchTerm'ni berib yuboramiz. Bu PAGINATION uchun muhim!
+
         InlineKeyboardMarkup keyboard = inlineKeyboardService.usersPageMenu(userPage, searchTerm);
 
         EditMessageText editMessage = sendMsg.editMessage(chatId, messageId, text.toString(), keyboard);
@@ -227,7 +226,7 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
                 .getUser().getProfile();
     }
 
-    // Markdown maxsus belgilaridan qochish uchun yordamchi metod
+
     private String escapeMarkdown(String text) {
         if (text == null) return "";
         return text.replace("_", "\\_").replace("*", "\\*").replace("`", "\\`")
@@ -259,7 +258,7 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
                 sendCoursesListPage(chatId, messageId, page, null, mentorId, null);
             }
 
-            // SAHIFALASH
+
             case "page" -> sendCoursesListPage(chatId, messageId, Integer.parseInt(params[3]), null, null, null);
             case "search_page" ->
                     sendCoursesListPage(chatId, messageId, Integer.parseInt(params[4]), params[3], null, null);
@@ -267,14 +266,14 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
             case "list_by_mentor_courses" ->
                     sendCoursesByMentorPage(chatId, messageId, Long.parseLong(params[3]), Integer.parseInt(params[5]));
 
-            // KO'RISH
+
             case "view" -> {
-                if (params.length < 5) return; // Minimal formatni tekshirish
+                if (params.length < 5) return;
                 Long courseId = Long.parseLong(params[3]);
                 String fromContext = params[4];
                 String backCallback;
 
-                // Endi biz callback'dagi kontekstga qarab ish tutamiz
+
                 if (fromContext.equals("search")) {
                     if (params.length < 7) return;
                     String searchTerm = params[5];
@@ -286,14 +285,14 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
                     int page = Integer.parseInt(params[6]);
                     backCallback = "admin:courses:mentor_courses:" + mentorId + ":page:" + page;
                 } else if (fromContext.equals("category")) {
-                    // --- MANA O'SHA YANGI QISM ---
+
                     if (params.length < 7) return;
                     Long categoryId = Long.parseLong(params[5]);
                     int page = Integer.parseInt(params[6]);
-                    // Orqaga qaytish manzili - o'sha kategoriyaning kurslari ro'yxatiga
+
                     backCallback = "admin:courses:by_category_courses:" + categoryId + ":page:" + page;
                 } else {
-                    // Bu ODDIY "Barcha kurslar" RO'YXATIDAN kelgan
+
                     if (params.length < 6) return;
                     int page = Integer.parseInt(params[5]);
                     backCallback = "admin:courses:page:" + page;
@@ -306,7 +305,7 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
         }
     }
 
-    // AdminCallBackQueryServiceImpl.java
+
 
 //    private void handleCourseCallbacks(Long chatId, Integer messageId, String data) {
 //        String[] params = data.split(":");
@@ -315,36 +314,36 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
 //
 //        switch (action) {
 //            case "page":
-//                // Bu oddiy ro'yxat sahifasi
+//
 //                sendCoursesListPage(chatId, messageId, Integer.parseInt(params[3]), null, null);
 //                break;
 //            case "search_page":
-//                // Bu qidiruv natijalari sahifasi
+//
 //                sendCoursesListPage(chatId, messageId, Integer.parseInt(params[4]), params[3], null);
 //                break;
 //            case "list_by_mentor_courses":
-//                // Bu mentorning kurslari sahifasi
+//
 //                sendCoursesListPage(chatId, messageId, Integer.parseInt(params[5]), null, Long.parseLong(params[3]));
 //                break;
 //
-//            // --- MANA ENG MUHIM QISM ---
+//
 //            case "view":
 //                Long courseId = Long.parseLong(params[3]);
 //                String backCallback;
 //
-//                // Endi biz callback'ning uzunligiga qarab, qayerdan kelganini aniqlaymiz.
+//
 //                if (params.length > 5 && params[4].equals("search")) {
-//                    // Bu QIDIRUVdan kelgan, chunki formati: "admin:courses:view:ID:search:TERM:PAGE"
+//
 //                    String searchTerm = params[5];
 //                    int page = Integer.parseInt(params[6]);
 //                    backCallback = "admin:courses:search_page:" + searchTerm + ":" + page;
 //                } else if (params.length > 5 && params[4].equals("mentor")) {
-//                    // Bu MENTORdan kelgan, chunki formati: "admin:courses:view:ID:mentor:MENTOR_ID:PAGE"
+//
 //                    Long mentorId = Long.parseLong(params[5]);
 //                    int page = Integer.parseInt(params[6]);
 //                    backCallback = "admin:courses:list_by_mentor_courses:" + mentorId + ":page:" + page;
 //                } else {
-//                    // Bu ODDIY RO'YXATDAN kelgan, chunki formati: "admin:courses:view:ID:all:PAGE"
+//
 //                    int page = Integer.parseInt(params[5]);
 //                    backCallback = "admin:courses:page:" + page;
 //                }
@@ -527,7 +526,7 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
         }
     }
 
-    // --- YANGI YORDAMCHI METODLAR ---
+
     private void sendMentorsListPage(Long chatId, Integer messageId, int pageNumber) {
         Pageable pageable = PageRequest.of(pageNumber, 5, Sort.by("profile.firstName"));
         Page<User> mentorPage = userRepository.findAllByRole(Role.INSTRUCTOR, pageable);
@@ -537,11 +536,11 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
         onlineEducationBot.myExecute(sendMsg.editMessage(chatId, messageId, text, keyboard));
     }
 
-    // Bu metod tanlangan mentorning kurslari ro'yxatini chiqaradi
+
     private void sendCoursesByMentorPage(Long chatId, Integer messageId, Long mentorId, int pageNumber) {
         Pageable pageable = PageRequest.of(pageNumber, 10, Sort.by("id"));
 
-        // 1. Ma'lumotlarni bazadan olamiz
+
         Page<Course> coursePage = courseRepository.findAllByInstructorIdAndDeletedFalse(mentorId, pageable);
 
         User mentor = userRepository.findById(mentorId).orElse(null);
@@ -549,13 +548,12 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
                 ? mentor.getProfile().getFirstName() + " " + mentor.getProfile().getLastName()
                 : "Noma'lum mentor";
 
-        // 2. Xabar matnini yasashni boshlaymiz (sarlavha qismi)
+
         StringBuilder text = new StringBuilder();
         text.append(String.format("📚 *%s* mentorining kurslari\n", escapeMarkdown(mentorName)));
         text.append(String.format("_Sahifa: %d / %d_\n\n", pageNumber + 1, coursePage.getTotalPages()));
 
-        // --- MANA O'SHA QOLIB KETGAN QISM ---
-        // 3. Ro'yxatning o'zini formatlaymiz
+
         List<Course> coursesOnPage = coursePage.getContent();
         if (coursesOnPage.isEmpty()) {
             text.append("Bu mentorga tegishli aktiv kurslar topilmadi.");
@@ -564,7 +562,7 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
                 Course course = coursesOnPage.get(i);
                 String categoryName = (course.getCategory() != null) ? course.getCategory().getName() : "Noma'lum";
 
-                // Raqam, Kurs Nomi, Kategoriya
+
                 text.append(String.format("`%d.` 💻 **%s** — _%s_\n",
                         i + 1,
                         escapeMarkdown(course.getTitle()),
@@ -573,14 +571,12 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
             }
             text.append("\n🔽 Tanlash uchun tegishli tugmani bosing.");
         }
-        // --- FORMATLASH TUGADI ---
 
-        // 4. "Aqlli" klaviaturani yasaymiz
         InlineKeyboardMarkup keyboard = inlineKeyboardService.coursesPageMenu(coursePage, null, mentorId, null);
 
-        // 5. Xabarni tahrirlab, yuboramiz
+
         EditMessageText editMessage = sendMsg.editMessage(chatId, messageId, text.toString(), keyboard);
-        editMessage.setParseMode("Markdown"); // Yoki MarkdownV2, agar escapeMarkdownV2 ishlatsangiz
+        editMessage.setParseMode("Markdown");
         onlineEducationBot.myExecute(editMessage);
     }
 
@@ -597,25 +593,25 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
     private void sendCoursesByCategoryIdPage(Long chatId, Integer messageId, Long categoryId, int pageNumber) {
         Pageable pageable = PageRequest.of(pageNumber, 10, Sort.by("id"));
 
-        // 1. Ma'lumotlarni bazadan olamiz
+
         Page<Course> coursePage = courseRepository.findAllByCategoryIdAndDeletedFalse(categoryId, pageable);
 
         Category category = categoryRepository.findById(categoryId).orElse(null);
         String categoryName = (category != null) ? category.getName() : "Noma'lum kategoriya";
 
-        // 2. Xabar matnini yasashni boshlaymiz (sarlavha qismi)
+
         StringBuilder text = new StringBuilder();
         text.append(String.format("🗂 *'%s'* kategoriyasidagi kurslar\n", escapeMarkdown(categoryName)));
         text.append(String.format("_Sahifa: %d / %d_\n\n", pageNumber + 1, coursePage.getTotalPages()));
 
-        // 3. Ro'yxatning o'zini formatlaymiz
+
         List<Course> coursesOnPage = coursePage.getContent();
         if (coursesOnPage.isEmpty()) {
             text.append("Bu kategoriyaga tegishli aktiv kurslar topilmadi.");
         } else {
             for (int i = 0; i < coursesOnPage.size(); i++) {
                 Course course = coursesOnPage.get(i);
-                // Raqam, Kurs Nomi, (bu yerda kategoriya o'rniga mentor nomini chiqarsak bo'ladi)
+
                 String instructorName = (course.getInstructor() != null && course.getInstructor().getProfile() != null)
                         ? course.getInstructor().getProfile().getFirstName()
                         : "Noma'lum";
@@ -629,35 +625,33 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
             text.append("\n🔽 Tanlash uchun tegishli tugmani bosing.");
         }
 
-        // 4. "Aqlli" klaviaturani yasaymiz
-        // Hozircha bu 'coursesPageMenu' ga o'xshash, lekin 'back' tugmasi boshqacha
+
         InlineKeyboardMarkup keyboard = createCoursesPageMenuForCategory(coursePage, categoryId);
 
-        // 5. Xabarni tahrirlab, yuboramiz
+
         EditMessageText editMessage = sendMsg.editMessage(chatId, messageId, text.toString(), keyboard);
         editMessage.setParseMode("Markdown");
         onlineEducationBot.myExecute(editMessage);
     }
 
-    // --- YORDAMCHI METOD FAQAT SHU HOLAT UCHUN ---
-    // Bu kod takrorlanishiga olib keladi, lekin hozirgi vaziyatda eng tushunarli yo'l
+
     private InlineKeyboardMarkup createCoursesPageMenuForCategory(Page<Course> coursePage, Long categoryId) {
         List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>();
 
-        // 1-QATOR: Raqamli tugmalar
+
         List<InlineKeyboardButton> numberButtonsRow = new ArrayList<>();
         for (int i = 0; i < coursePage.getContent().size(); i++) {
             Course course = coursePage.getContent().get(i);
-            // todo
+
             String callback = "admin:courses:view:" + course.getId() + ":" + "category" + ":" + categoryId + ":" +  coursePage.getNumber();
-            // createButton yordamchi metodidan foydalanamiz
+
             numberButtonsRow.add(createButton(String.valueOf(i + 1), callback));
         }
         if (!numberButtonsRow.isEmpty()) {
             keyboardRows.add(numberButtonsRow);
         }
 
-        // 2-QATOR: Navigatsiya tugmalari
+
         List<InlineKeyboardButton> navRow = new ArrayList<>();
         String baseCallback = "admin:courses:by_category_courses:" + categoryId + ":page:";
         if (coursePage.hasPrevious()) {
@@ -670,7 +664,7 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
             keyboardRows.add(navRow);
         }
 
-        // 3-QATOR: Orqaga qaytish tugmasi
+
         keyboardRows.add(List.of(createButton("⬅️ Orqaga", "admin:courses:by_category:page:0")));
 
         return new InlineKeyboardMarkup(keyboardRows);
@@ -685,14 +679,12 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
 
 
 
-//    Habar yuborish
 
 
 
 
-    // ===================================================================
-    // --- BROADCAST UCHUN CALLBACK HANDLER'LAR ---
-    // ===================================================================
+
+
 
     private void handleBroadcastCallbacks(CallbackQuery callbackQuery, String[] paramss) {
         Long chatId = callbackQuery.getMessage().getChatId();
@@ -705,27 +697,25 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
 
         switch (action) {
             case "type":
-                // Kelgan callback: "admin:broadcast:type:PHOTO_WITH_TEXT"
+
                 processBroadcastTypeSelection(chatId, messageId, params[3]);
                 break;
             case "target":
-                // Kelgan callback: "admin:broadcast:target:STUDENT"
+
                 processBroadcastTargetSelection(chatId, messageId, Role.valueOf(params[3]));
                 break;
             case "send":
-                // Kelgan callback: "admin:broadcast:send:STUDENT"
+
                 processBroadcastSend(chatId, messageId, Role.valueOf(params[3]));
                 break;
             case "cancel":
-                // Kelgan callback: "admin:broadcast:cancel:main" yoki "admin:broadcast:cancel:back_to_targets"
+
                 processBroadcastCancel(chatId, messageId, params[3]);
                 break;
         }
     }
 
-    /**
-     * Foydalanuvchi xabar turini ("Rasm+Matn" / "Faqat Matn") tanlaganda ishlaydi.
-     */
+
     private void processBroadcastTypeSelection(Long chatId, Integer messageId, String type) {
         adminMessageServiceImpl.getBroadcastTypeCache().put(chatId, type);
 
@@ -734,15 +724,12 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
         onlineEducationBot.myExecute(sendMsg.editMessage(chatId, messageId, "Iltimos, yuboriladigan xabar matnini kiriting:", null));
     }
 
-    /**
-     * Foydalanuvchi kimga yuborishni ("Talabalarga", ...) tanlaganda ishlaydi.
-     * Tasdiqlash menyusini chiqaradi.
-     */
+
     private void processBroadcastTargetSelection(Long chatId, Integer messageId, Role role) {
         String roleText = switch (role) {
             case STUDENT -> "barcha Talabalarga";
             case INSTRUCTOR -> "barcha Instruktorlarga";
-            default -> "barcha foydalanuvchilarga (Talaba+Instruktor)"; // ALL uchun
+            default -> "barcha foydalanuvchilarga (Talaba+Instruktor)";
         };
         String text = String.format("Haqiqatan ham ushbu xabarni %s yubormoqchimisiz?", roleText);
 
@@ -753,15 +740,13 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
         onlineEducationBot.myExecute(sendMsg.editMessage(chatId, messageId, text, keyboard));
     }
 
-    /**
-     * Foydalanuvchi "Yuborish" tugmasini tasdiqlaganda ishlaydi.
-     */
+
     private void processBroadcastSend(Long chatId, Integer messageId, Role role) {
-        // Ma'lumotlarni 'cache' dan olamiz
+
         String text = adminMessageServiceImpl.getBroadcastTextCache().get(chatId);
         String photoFileId = adminMessageServiceImpl.getBroadcastPhotoCache().get(chatId);
 
-        // Jarayon tugagach, 'cache'ni tozalaymiz va holatni o'zgartiramiz
+
         adminMessageServiceImpl.getBroadcastTextCache().remove(chatId);
         adminMessageServiceImpl.getBroadcastPhotoCache().remove(chatId);
         telegramUserRepository.updateStateByChatId(chatId, UserState.ADMIN_MAIN_MENU);
@@ -785,30 +770,26 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
         onlineEducationBot.myExecute(sendMsg.editMessage(chatId, messageId,
                 String.format("✅ Xabar %d ta foydalanuvchiga yuborish uchun navbatga qo'yildi...", targetChatIds.size()), null));
 
-        // Yuborishni fonli rejimda ishga tushiramiz
+
         startBroadcasting(chatId, text, photoFileId, targetChatIds);
     }
 
-    /**
-     * Foydalanuvchi "Bekor qilish" tugmasini bosganda ishlaydi.
-     */
+
     private void processBroadcastCancel(Long chatId, Integer messageId, String target) {
         if ("main".equals(target)) {
-            // Butun jarayonni bekor qilish
+
             telegramUserRepository.updateStateByChatId(chatId, UserState.ADMIN_MAIN_MENU);
             adminMessageServiceImpl.getBroadcastTextCache().remove(chatId);
             adminMessageServiceImpl.getBroadcastPhotoCache().remove(chatId);
             onlineEducationBot.myExecute(sendMsg.editMessage(chatId, messageId, "Amal bekor qilindi.", null));
-        } else { // "back_to_targets"
-            // Faqat tasdiqlashni bekor qilib, rollarni tanlash menyusiga qaytish
+        } else {
+
             String text = "Tanlov o'zgartirildi. Qayta tanlang:";
             onlineEducationBot.myExecute(sendMsg.editMessage(chatId, messageId, text, inlineKeyboardService.broadcastTargetRolesMenu()));
         }
     }
 
-    /**
-     * Xabarlarni alohida 'thread'da, barchaga birma-bir yuboradi.
-     */
+
     @Async
     public void startBroadcasting(Long adminChatId, String text, String photoFileId, List<Long> targetChatIds) {
         log.info("Starting broadcast to {} users.", targetChatIds.size());
@@ -840,7 +821,7 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
         onlineEducationBot.myExecute(sendMsg.sendMessage(adminChatId, report));
     }
 
-    // Matnni HTML formatlaydigan yordamchi metod
+
     private String formatBroadcastMessageAsPost(String rawText) {
         if (rawText == null || rawText.isBlank()) return "";
         String[] lines = rawText.split("\n", 2);

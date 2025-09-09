@@ -29,7 +29,6 @@ public class ModuleEnrollmentServiceImpl implements ModuleEnrollmentService {
     private final ModuleEnrollmentRepository enrollmentRepository;
     private final UserRepository userRepository;
     private final ModuleRepository moduleRepository;
-    // You can use MapStruct here for mapping, but manual mapping is also fine.
 
     /**
      * {@inheritDoc}
@@ -39,22 +38,18 @@ public class ModuleEnrollmentServiceImpl implements ModuleEnrollmentService {
         Long userId = requestDTO.getUserId();
         Long moduleId = requestDTO.getModuleId();
 
-        // Step 1: Validate that the user and module exist.
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User with id " + userId + " not found."));
         Module module = moduleRepository.findById(moduleId)
                 .orElseThrow(() -> new EntityNotFoundException("Module with id " + moduleId + " not found."));
 
-        // Step 2: Check if the user is already enrolled in this module.
         if (enrollmentRepository.existsByUserIdAndModuleId(userId, moduleId)) {
             throw new DataConflictException("User is already enrolled in this module.");
         }
 
-        // Step 3: Create and save the new enrollment.
         ModuleEnrollment newEnrollment = new ModuleEnrollment();
         newEnrollment.setUser(user);
         newEnrollment.setModule(module);
-        // progressPercentage defaults to 0.0
 
         ModuleEnrollment savedEnrollment = enrollmentRepository.save(newEnrollment);
 
@@ -66,7 +61,7 @@ public class ModuleEnrollmentServiceImpl implements ModuleEnrollmentService {
      */
     @Override
     public List<ModuleEnrollmentResponseDTO> getEnrollmentsByUser(Long userId) {
-        // First, check if the user exists.
+
         if (!userRepository.existsById(userId)) {
             throw new EntityNotFoundException("User with id " + userId + " not found.");
         }
@@ -80,7 +75,7 @@ public class ModuleEnrollmentServiceImpl implements ModuleEnrollmentService {
      */
     @Override
     public List<ModuleEnrollmentResponseDTO> getEnrollmentsByModule(Long moduleId) {
-        // First, check if the module exists.
+
         if (!moduleRepository.existsById(moduleId)) {
             throw new EntityNotFoundException("Module with id " + moduleId + " not found.");
         }
@@ -94,7 +89,7 @@ public class ModuleEnrollmentServiceImpl implements ModuleEnrollmentService {
      */
     @Override
     public void unenrollUser(Long enrollmentId) {
-        // Check if the enrollment exists before trying to delete it.
+
         if (!enrollmentRepository.existsById(enrollmentId)) {
             throw new EntityNotFoundException("Enrollment with id " + enrollmentId + " not found.");
         }
@@ -110,7 +105,7 @@ public class ModuleEnrollmentServiceImpl implements ModuleEnrollmentService {
     private ModuleEnrollmentResponseDTO toResponseDTO(ModuleEnrollment enrollment) {
         User user = enrollment.getUser();
         Module module = enrollment.getModule();
-        Course course = module.getCourse(); // Assumes Module always has a non-null Course
+        Course course = module.getCourse();
 
         return new ModuleEnrollmentResponseDTO(
                 enrollment.getId(),

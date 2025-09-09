@@ -60,7 +60,7 @@ public interface UserMapper {
      */
     @Named("roleToString")
     default String roleToString(Role role) {
-        // Null qiymat kelishi mumkinligini hisobga olamiz
+
         return role != null ? role.name() : null;
     }
 }

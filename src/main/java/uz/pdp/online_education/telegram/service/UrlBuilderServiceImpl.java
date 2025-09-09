@@ -9,11 +9,11 @@ public class UrlBuilderServiceImpl implements UrlBuilderService {
     @Value("${telegram.bot.webhook-path}")
     private final String baseUrl;
 
-    // URL yo'llarini shu yerda, private konstantalarda saqlaymiz
+
     private static final String MODULE_CHECKOUT_PATH = "/checkout/module/";
     private static final String QUIZ_PATH = "/quiz/";
 
-    // Base URL'ni application.properties'dan faqat shu servis oladi
+
     public UrlBuilderServiceImpl(@Value("${telegram.bot.webhook-path}") String baseUrl) {
         this.baseUrl = baseUrl;
     }

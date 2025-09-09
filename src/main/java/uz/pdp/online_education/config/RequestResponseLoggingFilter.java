@@ -22,8 +22,8 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        String requestId = UUID.randomUUID().toString();  // Unique ID
-        MDC.put("requestId", requestId);  // 👈 Qo'shildi
+        String requestId = UUID.randomUUID().toString();
+        MDC.put("requestId", requestId);
 
         try {
             String method = request.getMethod();
@@ -39,7 +39,7 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
             int status = response.getStatus();
             log.info("⬅️ [{}] Response status: {} for [{}] {}", requestId, status, method, uri);
         } finally {
-            MDC.clear();  // 💡 Har bir request'dan keyin tozalash majburiy
+            MDC.clear();
         }
     }
 }

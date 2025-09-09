@@ -48,10 +48,10 @@ import io.swagger.v3.oas.annotations.servers.Server;
 )
 
 @SecurityScheme(
-        name = "bearerAuth", // Xavfsizlik sxemasiga berilgan nom (yuqoridagi bilan bir xil bo'lishi kerak)
-        type = SecuritySchemeType.HTTP, // Sxema turi
-        scheme = "bearer", // Sxema nomi (JWT uchun "bearer")
-        bearerFormat = "JWT", // Token formati haqida ma'lumot (ixtiyoriy, lekin tavsiya etiladi)
+        name = "bearerAuth",
+        type = SecuritySchemeType.HTTP,
+        scheme = "bearer",
+        bearerFormat = "JWT",
         description = "Autentifikatsiya uchun JWT tokenni 'Bearer ' prefiksi bilan kiriting. Masalan: Bearer eyJhbGciOiJI..."
 )
 @SecurityScheme(

@@ -18,14 +18,13 @@ import uz.pdp.online_education.telegram.config.controller.OnlineEducationBot;
 @RequiredArgsConstructor
 public class NotificationService {
 
-    private final EmailService emailService; // HTML yubora oladigan qilib o'zgartirilishi kerak
-    private final OnlineEducationBot onlineEducationBot; // Sizning bot klassingiz
+    private final EmailService emailService;
+    private final OnlineEducationBot onlineEducationBot;
 
-    @Async // Operatsiyani asosiy oqimdan ajratadi, foydalanuvchi kutib qolmaydi
+    @Async
     @Transactional(readOnly = true)
     public void sendReviewNotification(Review review, boolean isNewReview) {
-        // --- 1. KERAKLI MA'LUMOTLARNI YIG'ISH ---
-        // Barcha ma'lumotni 'review' obyektidan olamiz. BU ENG MUHIM O'ZGARISH!
+
         Course course = review.getCourse();
         User instructor = course.getInstructor();
         User reviewer = review.getUser();
@@ -35,15 +34,15 @@ public class NotificationService {
             return;
         }
 
-        // --- 2. XABARLARNI GENERATSIYA QILISH ---
+
         String subject = isNewReview ? "Yangi sharh qoldirildi!" : "Sharhingiz yangilandi!";
         String telegramMessage = buildTelegramMessage(review, reviewer, instructor, course, isNewReview);
         String emailBody = buildEmailHtmlBody(review, reviewer, instructor, course, isNewReview);
 
-        // --- 3. EMAILGA YUBORISH ---
+
         if (instructor.getProfile() != null && instructor.getProfile().getEmail() != null) {
             try {
-                // EmailService'da HTML yuborish uchun yangi metod kerak bo'ladi
+
                 emailService.sendSimpleNotification(instructor.getProfile().getEmail(), subject, emailBody);
                 log.info("Instruktorga email yuborildi: {}", instructor.getProfile().getEmail());
             } catch (Exception e) {
@@ -51,14 +50,14 @@ public class NotificationService {
             }
         }
 
-        // --- 4. TELEGRAMGA YUBORISH ---
+
         if (instructor.getTelegramUser() != null && instructor.getTelegramUser().getChatId() != null) {
             try {
                 SendMessage sendMessage = new SendMessage();
                 sendMessage.setChatId(instructor.getTelegramUser().getChatId().toString());
                 sendMessage.setText(telegramMessage);
-                sendMessage.setParseMode("HTML"); // HTML formatini yoqamiz
-                onlineEducationBot.execute(sendMessage); // Bot'ning execute metodi
+                sendMessage.setParseMode("HTML");
+                onlineEducationBot.execute(sendMessage);
                 log.info("Instruktorga telegram xabar yuborildi. Chat ID: {}", instructor.getTelegramUser().getChatId());
             } catch (Exception e) {
                 log.error("Instruktorga telegram xabar yuborishda xatolik: {}", e.getMessage());
@@ -66,7 +65,7 @@ public class NotificationService {
         }
     }
 
-    // Yordamchi metodlar (shu klass ichida private qilib yoziladi)
+
     private String getFullName(User user) {
         if (user.getProfile() != null && user.getProfile().getFirstName() != null) {
             return user.getProfile().getFirstName() + " " + user.getProfile().getLastName();
@@ -111,7 +110,7 @@ public class NotificationService {
                 ? review.getComment()
                 : "(Sharh matni qoldirilmagan)";
 
-        // Kursga link (saytingiz strukturasiga moslang)
+
         String courseLink = "https://sizning-saytingiz.uz/courses/" + course.getSlug();
 
         return "<!DOCTYPE html>"

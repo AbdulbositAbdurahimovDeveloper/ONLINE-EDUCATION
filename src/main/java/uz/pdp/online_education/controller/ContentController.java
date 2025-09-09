@@ -14,10 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import uz.pdp.online_education.payload.content.ContentUpdateOrderRequestDTO;
 import uz.pdp.online_education.service.interfaces.ContentService;
 
-/**
- * ContentController barcha kontent bilan bog‘liq API endpointlarini boshqaradi.
- * Bu yerda asosan lesson tarkibidagi contentlarni tartiblash va o‘chirish amallari mavjud.
- */
+
 @RestController
 @RequestMapping("api/v1/content")
 @RequiredArgsConstructor
@@ -25,13 +22,12 @@ public class ContentController {
 
     private final ContentService contentService;
 
-    /**
-     * Lesson ichidagi barcha contentlarni qayta tartiblaydi.
-     *
-     * @param lessonId - Lesson ID (misol uchun: 13)
-     * @param request  - Yangi tartibda joylashgan content IDlar ro‘yxati
-     * @return Muvaffaqiyatli bajarilganligi haqida xabar
-     */
+
+
+
+
+
+
     @Operation(
             summary = "Update content order in a lesson",
             description = "Reorders all contents in a specific lesson. Accessible only by ADMIN or INSTRUCTOR.",
@@ -52,12 +48,10 @@ public class ContentController {
         return ResponseEntity.ok("Content order updated successfully");
     }
 
-    /**
-     * Berilgan ID bo‘yicha contentni o‘chirish.
-     *
-     * @param contentId - Content ID (misol uchun: 42)
-     * @return Muvaffaqiyatli o‘chirilganligi haqida xabar
-     */
+
+
+
+
     @Operation(
             summary = "Delete content",
             description = "Deletes specific content by its ID. Accessible only by ADMIN or INSTRUCTOR."

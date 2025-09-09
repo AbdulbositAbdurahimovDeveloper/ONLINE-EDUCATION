@@ -42,8 +42,7 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
      */
     @Override
     public InlineKeyboardMarkup dashboardMenu() {
-        // Static import tufayli kod qisqaroq va o'qish uchun osonroq
-        // Tizimdan chiqish tugmasini yasash uchun yordamchi metodni chaqiramiz.
+
         return createSingleButtonKeyboard(
                 Utils.InlineButtons.LOGOUT_TEXT,
                 String.join(":", AUTH_PREFIX, ACTION_LOGOUT, ACTION_INIT)
@@ -716,19 +715,19 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
         List<InlineKeyboardButton> firstRow = new ArrayList<>();
 
-        // 1-qatorni yig'amiz
+
         if (hasPendingPayments) {
             String buttonText = messageService.getMessage(BotMessage.BALANCE_BUTTON_PENDING, pendingCount);
             firstRow.add(createButton(buttonText, String.join(":", BALANCED, BALANCE_PENDING_PAYMENTS, ACTION_PAGE, "0")));
         }
 
-        // "To'lovlar tarixi" tugmasini har doim qo'shamiz
+
         String historyButtonText = messageService.getMessage(BotMessage.BALANCE_BUTTON_HISTORY);
         firstRow.add(createButton(historyButtonText, String.join(":", BALANCED, BALANCE_PAYMENT_HISTORY, ACTION_PAGE, "0")));
 
         rows.add(firstRow);
 
-        // 2-qator (Orqaga tugmasi)
+
         List<InlineKeyboardButton> secondRow = new ArrayList<>();
         String backButtonText = messageService.getMessage(BotMessage.BALANCE_BUTTON_BACK);
         secondRow.add(createButton(backButtonText, String.join(":", STUDENT_PREFIX, ACTION_BACK, BACK_TO_MAIN_MENU)));
@@ -758,7 +757,7 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
             keyboard.add(paginationRow);
         }
 
-        // Orqaga tugmasi
+
         keyboard.add(List.of(
                 createButton("⬅️ Orqaga", String.join(":", BALANCED, ACTION_BACK))
         ));
@@ -785,7 +784,7 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
             row.add(createButton(buttonText, callbackData));
         }
 
-        // Barcha tugmalar bitta qatorda
+
         if (!row.isEmpty()) {
             keyboard.add(row);
         }
@@ -812,12 +811,12 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
     public InlineKeyboardMarkup buildModuleButtons(Module module) {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
 
-        // ✅ Sotib olish tugmasi (URL tugma)
+
         InlineKeyboardButton buyButton = new InlineKeyboardButton("✅ Sotib olish");
         buyButton.setUrl(urlBuilderService.generateModuleCheckoutUrl(module.getId()));
         rows.add(List.of(buyButton));
 
-        // ⬅️ Orqaga tugmasi
+
         rows.add(List.of(
                 createButton("⬅️ Orqaga", String.join(":",
                         BALANCED,
@@ -876,7 +875,7 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
 
     }
 
-    // --- PRIVATE HELPER METHODS ---
+
 
     private List<InlineKeyboardButton> createPaginationRow(PageDTO<?> page, String baseCallback) {
         List<InlineKeyboardButton> paginationRow = new ArrayList<>();

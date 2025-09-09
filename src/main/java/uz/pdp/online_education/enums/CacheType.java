@@ -18,7 +18,7 @@ public enum CacheType {
     LESSONS("lessons", 30 * 60, 2000),      // 30 daqiqa TTL, 2000 ta element
     USER_PROFILES("user_profiles", 10 * 60, 1000); // 10 daqiqa TTL, 1000 ta element
 
-    private final String cacheName; // Kesh nomi
-    private final long ttlSeconds;  // Keshning yashash vaqti (sekundlarda)
-    private final long maxSize;     // Keshdagi elementlarning maksimal soni
+    private final String cacheName;
+    private final long ttlSeconds;
+    private final long maxSize;
 }

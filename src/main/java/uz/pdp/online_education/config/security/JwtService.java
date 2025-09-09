@@ -29,22 +29,22 @@ public class JwtService {
 
     @PostConstruct
     public void init() {
-        // Secret kalitni faqat bir marta, servis ishga tushganda yaratib olamiz.
+
         byte[] keyBytes = Decoders.BASE64.decode(jwtProperties.getSecret());
         this.signingKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
-    // --- Token generatsiya qilish ---
+
 
     /**
      * Foydalanuvchi ma'lumotlari asosida Access Token yaratadi.
      */
     public String generateAccessToken(UserDetails userDetails) {
         Map<String, Object> extraClaims = new HashMap<>();
-        // Tokenga foydalanuvchining rollarini qo'shamiz
+
         extraClaims.put("roles", userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList());
 
-        // Agar sizning User klassingizda qo'shimcha ma'lumotlar bo'lsa, ularni ham qo'shishingiz mumkin
+
         if (userDetails instanceof User user) {
             extraClaims.put("userId", user.getId());
             extraClaims.put("profileId",user.getProfile().getId());
@@ -78,7 +78,7 @@ public class JwtService {
                 .compact();
     }
 
-    // --- Token ma'lumotlarini o'qish (Extraction) ---
+
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -97,7 +97,7 @@ public class JwtService {
                 .getBody();
     }
 
-    // --- Tokenni tekshirish (Validation) ---
+
 
     /**
      * Tokenning yaroqliligini (validligini) tekshiradi.

@@ -53,11 +53,11 @@ public interface CourseRepository extends JpaRepository<Course, Long>, CourseRep
 
     boolean existsByTitle(String title);
 
-    // Barcha mavjud title'larni olish uchun samarali so'rov
+
     @Query("SELECT c.title FROM courses c")
     Set<String> findAllTitles();
 
-    // Slug'lar ham unique bo'lishi kerakligi uchun
+
     @Query("SELECT c.slug FROM courses c")
     Set<String> findAllSlugs();
 
@@ -119,6 +119,19 @@ public interface CourseRepository extends JpaRepository<Course, Long>, CourseRep
     );
 
     Page<Course> findAllByInstructorIdAndDeletedFalse(Long instructorId, Pageable pageable);
+
+
+    @Query("SELECT c FROM courses c JOIN FETCH c.category JOIN FETCH c.instructor i JOIN FETCH i.profile")
+    Page<Course> findAllWithDetails(Pageable pageable);
+
+
+    @Query("SELECT c FROM courses c JOIN FETCH c.category JOIN FETCH c.instructor i JOIN FETCH i.profile WHERE LOWER(c.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) AND c.deleted = false")
+    Page<Course> searchActiveCoursesByTitleWithDetails(@Param("searchTerm") String searchTerm, Pageable pageable);
+
+
+    @Query("SELECT c FROM courses c JOIN FETCH c.category JOIN FETCH c.instructor i JOIN FETCH i.profile WHERE c.instructor.id = :instructorId AND c.deleted = false")
+    Page<Course> findAllByInstructorIdWithDetails(@Param("instructorId") Long instructorId, Pageable pageable);
+
 
     Page<Course> findAllByCategoryIdAndDeletedFalse(Long categoryId, Pageable pageable);
 
