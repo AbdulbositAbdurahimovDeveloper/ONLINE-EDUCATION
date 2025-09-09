@@ -1074,7 +1074,7 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
 
         sb.append("\n");
 
-        // Pagination bo‘yicha eslatma
+
         if (faqPage.hasNext()) {
             sb.append("▶️ Keyingi savollar uchun pastdagi tugmadan foydalaning.\n");
         }
