@@ -28,7 +28,7 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
     @Value("${telegram.bot.webapp.url}")
     private String webApp;
 
-    // --- YORDAMCHI METODLAR ---
+
     private InlineKeyboardButton createButton(String text, String callbackData) {
         InlineKeyboardButton button = new InlineKeyboardButton(text);
         button.setCallbackData(callbackData);
@@ -37,7 +37,7 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
 
     @Override
     public InlineKeyboardMarkup logoutConfirmation() {
-        // "Ha" va "Yo'q" tugmalarini yaratamiz.
+
         InlineKeyboardButton yesButton = createButton(
                 Utils.InlineButtons.LOGOUT_CONFIRM_YES_TEXT,
                 String.join(":", AUTH_PREFIX, ACTION_LOGOUT, ACTION_CONFIRM)
@@ -48,7 +48,7 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
                 String.join(":", AUTH_PREFIX, ACTION_LOGOUT, ACTION_CANCEL)
         );
 
-        // Tugmalarni bitta qatorga joylab, klaviaturani qaytaramiz.
+
         return new InlineKeyboardMarkup(List.of(List.of(yesButton, noButton)));
     }
 
@@ -57,7 +57,7 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
         return new InlineKeyboardMarkup(List.of(List.of(createButton(text, callbackData))));
     }
 
-    // --- ASOSIY MENYU TUGMALARI ---
+
     @Override
     public InlineKeyboardMarkup dashboardMenu() {
         return createSingleButtonKeyboard(
@@ -80,7 +80,7 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
         return inlineKeyboardMarkup;
     }
 
-    // --- FOYDALANUVCHILARNI BOSHQARISH UCHUN KLAAVIATURALAR ---
+
     @Override
     public InlineKeyboardMarkup usersMainMenu() {
         InlineKeyboardButton listBtn = createButton(Utils.InlineButtons.USER_LIST_TEXT, "admin:users:page:0");
@@ -99,7 +99,7 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
         List<InlineKeyboardButton> numberButtonsRow = new ArrayList<>();
         List<User> usersOnPage = userPage.getContent();
 
-        // 1-QATOR: Raqamli tugmalar (1, 2, 3...)
+
         for (int i = 0; i < usersOnPage.size(); i++) {
             User user = usersOnPage.get(i);
             String buttonText = String.valueOf(i + 1);
@@ -114,7 +114,7 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
         }
         if (!numberButtonsRow.isEmpty()) keyboardRows.add(numberButtonsRow);
 
-        // 2-QATOR: Navigatsiya tugmalari (Oldingi/Keyingi)
+
         List<InlineKeyboardButton> navigationButtonsRow = new ArrayList<>();
         String baseCallback = (searchTerm == null || searchTerm.isBlank())
                 ? "admin:users:page:"
@@ -128,7 +128,7 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
         }
         if (!navigationButtonsRow.isEmpty()) keyboardRows.add(navigationButtonsRow);
 
-        // 3-QATOR: Orqaga qaytish tugmasi
+
         keyboardRows.add(List.of(createButton("⬅️ Orqaga", "admin:users:main_menu")));
         return new InlineKeyboardMarkup(keyboardRows);
     }
@@ -136,14 +136,14 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
 
     @Override
     public InlineKeyboardMarkup userDetailMenu(Long userId, String backCallbackData) {
-        // ... "Bloklash", "Rolni o'zgartirish" kabi tugmalarni kelajakda qo'shasiz ...
+
         InlineKeyboardButton backButton = createButton("⬅️ Orqaga", backCallbackData);
-        // Hozircha faqat bitta "Orqaga" tugmasi bor
+
         return new InlineKeyboardMarkup(List.of(List.of(backButton)));
     }
 
 
-    // --- KURSLARNI BOSHQARISH UCHUN KLAAVIATURALAR ---
+
 
     @Override
     public InlineKeyboardMarkup coursesMainMenu() {
@@ -166,14 +166,14 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
             Course course = coursesOnPage.get(i);
             String buttonText = String.valueOf(i + 1);
 
-            // --- KONTEKSTNI ANIQLASH ---
+
             String fromContext;
             if (searchTerm != null) {
                 fromContext = "search:" + searchTerm;
             } else if (mentorId != null) {
                 fromContext = "mentor:" + mentorId;
             } else if (categoryId != null) {
-                fromContext = "category:" + categoryId; // <-- YANGI KONTEKST
+                fromContext = "category:" + categoryId;
             } else {
                 fromContext = "all";
             }
@@ -183,14 +183,14 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
         }
         if (!numberButtonsRow.isEmpty()) keyboardRows.add(numberButtonsRow);
 
-        // ... Navigatsiya va Orqaga tugmalari (ularni ham 'categoryId' bilan boyitish kerak) ...
+
         String backCallback;
         if (categoryId != null) {
-            backCallback = "admin:courses:by_category:page:0"; // Kategoriyalar ro'yxatiga
+            backCallback = "admin:courses:by_category:page:0";
         } else if (mentorId != null) {
-            backCallback = "admin:courses:list_by_mentor:page:0"; // Mentorlar ro'yxatiga
+            backCallback = "admin:courses:list_by_mentor:page:0";
         } else {
-            backCallback = "admin:courses:browse:init"; // Tanlash menyusiga
+            backCallback = "admin:courses:browse:init";
         }
         keyboardRows.add(List.of(createButton("⬅️ Orqaga", backCallback)));
 
@@ -205,12 +205,12 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
 //        List<InlineKeyboardButton> numberButtonsRow = new ArrayList<>();
 //        List<Course> coursesOnPage = coursePage.getContent();
 //
-//        // --- 1-QADAM: Raqamli Tugmalarni To'g'ri Kontekst Bilan Yasash ---
+//
 //        for (int i = 0; i < coursesOnPage.size(); i++) {
 //            Course course = coursesOnPage.get(i);
 //            String buttonText = String.valueOf(i + 1);
 //
-//            // Kontekstni aniqlaymiz. Bu "Orqaga" tugmasi to'g'ri ishlashi uchun kerak.
+//
 //            String fromContext;
 //            if (searchTerm != null && !searchTerm.isBlank()) {
 //                fromContext = "search:" + searchTerm;
@@ -220,8 +220,7 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
 //                fromContext = "all";
 //            }
 //
-//            // YANGI, BOYITILGAN CALLBACK_DATA:
-//            // Format: admin:courses:view:COURSE_ID:fromContext:PAGE_NUMBER
+//
 //            String callbackData = "admin:courses:view:" + course.getId() + ":" + fromContext + ":" + coursePage.getNumber();
 //            numberButtonsRow.add(createButton(buttonText, callbackData));
 //        }
@@ -229,7 +228,7 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
 //            keyboardRows.add(numberButtonsRow);
 //        }
 //
-//        // --- 2-QADAM: Navigatsiya Tugmalarini To'g'ri Kontekst Bilan Yasash ---
+//
 //        List<InlineKeyboardButton> navigationButtonsRow = new ArrayList<>();
 //        String baseCallback;
 //        if (searchTerm != null && !searchTerm.isBlank()) {
@@ -250,13 +249,13 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
 //            keyboardRows.add(navigationButtonsRow);
 //        }
 //
-//        // --- 3-QADAM: Orqaga Qaytish Tugmasini To'g'ri Kontekst Bilan Yasash ---
+//
 //        String backCallback;
 //        if (mentorId != null) {
-//            // Agar mentor kurslari bo'lsa, mentorlar ro'yxatiga qaytamiz
+//
 //            backCallback = "admin:courses:list_by_mentor:page:0";
 //        } else {
-//            // Agar umumiy ro'yxat yoki qidiruv bo'lsa, kurslarning asosiy menyusiga qaytamiz
+//
 //            backCallback = "admin:courses:main_menu";
 //        }
 //        keyboardRows.add(List.of(createButton("⬅️ Orqaga", backCallback)));
@@ -281,7 +280,7 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
     }
 
 
-    // InlineKeyboardServiceImpl.java
+
 
     @Override
     public InlineKeyboardMarkup mentorsPageMenu(Page<User> mentorPage, String backCallback) {
@@ -312,14 +311,14 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
     public InlineKeyboardMarkup categoriesPageMenu(Page<Category> categoryPage, String backCallback) {
         List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>();
 
-        // Har bir kategoriya uchun tugma
+
         categoryPage.getContent().forEach(category -> {
-            // Callback: admin:courses:by_category_courses:CATEGORY_ID:page:0
+
             String callback = "admin:courses:by_category_courses:" + category.getId() + ":page:0";
             keyboardRows.add(List.of(createButton(category.getName(), callback)));
         });
 
-        // Pagination
+
         List<InlineKeyboardButton> navRow = new ArrayList<>();
         if (categoryPage.hasPrevious()) {
             navRow.add(createButton("⬅️", "admin:courses:by_category:page:" + (categoryPage.getNumber() - 1)));
@@ -329,7 +328,6 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
         }
         if (!navRow.isEmpty()) keyboardRows.add(navRow);
 
-        // Orqaga qaytish
         keyboardRows.add(List.of(createButton("⬅️ Orqaga", backCallback)));
 
         return new InlineKeyboardMarkup(keyboardRows);
@@ -346,7 +344,7 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
 
         for (int i = 0; i < coursePage.getContent().size(); i++) {
             Course course = coursePage.getContent().get(i);
-            // Callback'ga faqat kerakli ma'lumotlarni qo'shamiz: 'view', ID va qaysi sahifadan kelgani
+
             String viewCallback = "admin:courses:view:" + course.getId() + ":" + coursePage.getNumber();
             numberButtonsRow.add(createButton(String.valueOf(i + 1), viewCallback));
         }
@@ -393,7 +391,7 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
 
 
 
-    // --- BROADCAST UCHUN YANGI METODLAR ---
+
 
     @Override
     public InlineKeyboardMarkup broadcastTypeMenu() {

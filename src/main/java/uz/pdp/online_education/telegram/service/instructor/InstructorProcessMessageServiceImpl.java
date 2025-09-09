@@ -646,19 +646,19 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
                     String skippedText = messageService.getMessage(BotMessage.INSTRUCTOR_COURSE_CREATE_DESCRIPTION_SKIPPED);
                     bot.myExecute(sendMsg.sendMessage(chatId, skippedText));
                 } else {
-                    // Validatsiya
+
                     if (text == null || text.length() > 1000) {
                         String errorText = messageService.getMessage(BotMessage.INSTRUCTOR_COURSE_CREATE_VALIDATION_DESC_ERROR);
                         bot.myExecute(sendMsg.sendMessage(chatId, errorText));
                         return;
                     }
-                    // Ma'lumotni Redis'ga saqlaymiz
+
                     redisTemporaryDataService.addField(processKey, DESCRIPTION, text);
                     String acceptedText = messageService.getMessage(BotMessage.INSTRUCTOR_COURSE_CREATE_DESCRIPTION_ACCEPTED);
                     bot.myExecute(sendMsg.sendMessage(chatId, acceptedText));
                 }
 
-                // Keyingi bosqichga o'tkazamiz
+
                 telegramUserService.updateUserState(chatId, UserState.AWAITING_COURSE_THUMBNAIL);
                 String nextPrompt = messageService.getMessage(BotMessage.INSTRUCTOR_COURSE_CREATE_THUMBNAIL_PROMPT);
                 InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.isFree();
@@ -681,16 +681,16 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
 
         String processKey = String.join(":", ACTION_ADD, ACTION_COURSE, chatId.toString());
 
-        // 2. Joriy bosqichga qarab kerakli amalni bajaramiz.
+
         switch (userState) {
             case AWAITING_COURSE_TITLE -> {
                 String title = message.getText();
 
-                // Validatsiya
+
                 if (title == null || title.length() < 3 || title.length() > 150) {
                     String errorText = messageService.getMessage(BotMessage.INSTRUCTOR_COURSE_CREATE_VALIDATION_TITLE_ERROR);
                     bot.myExecute(sendMsg.sendMessage(chatId, errorText));
-                    return; // Holatni o'zgartirmaymiz, foydalanuvchi qayta urinadi.
+                    return;
                 }
 
                 if (courseRepository.existsByTitle(title)) {
@@ -698,10 +698,10 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
                     return;
                 }
 
-                // Ma'lumotni Redis'ga saqlaymiz
+
                 redisTemporaryDataService.addField(processKey, TITLE, title);
 
-                // Keyingi bosqichga o'tkazamiz
+
                 telegramUserService.updateUserState(chatId, UserState.AWAITING_COURSE_DESCRIPTION);
                 String nextPrompt = messageService.getMessage(BotMessage.INSTRUCTOR_COURSE_CREATE_DESCRIPTION_PROMPT);
                 bot.myExecute(sendMsg.sendMessage(chatId, nextPrompt));
@@ -710,45 +710,45 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
             case AWAITING_COURSE_DESCRIPTION -> {
                 String description = message.getText();
 
-                // Foydalanuvchi bu qadamni o'tkazib yuborishi mumkin
+
                 if (description != null && description.equals("/skip")) {
                     redisTemporaryDataService.addField(processKey, DESCRIPTION, "");
                     String skippedText = messageService.getMessage(BotMessage.INSTRUCTOR_COURSE_CREATE_DESCRIPTION_SKIPPED);
                     bot.myExecute(sendMsg.sendMessage(chatId, skippedText));
                 } else {
-                    // Validatsiya
+
                     if (description == null || description.length() > 1000) {
                         String errorText = messageService.getMessage(BotMessage.INSTRUCTOR_COURSE_CREATE_VALIDATION_DESC_ERROR);
                         bot.myExecute(sendMsg.sendMessage(chatId, errorText));
                         return;
                     }
-                    // Ma'lumotni Redis'ga saqlaymiz
+
                     redisTemporaryDataService.addField(processKey, DESCRIPTION, description);
                     String acceptedText = messageService.getMessage(BotMessage.INSTRUCTOR_COURSE_CREATE_DESCRIPTION_ACCEPTED);
                     bot.myExecute(sendMsg.sendMessage(chatId, acceptedText));
                 }
 
-                // Keyingi bosqichga o'tkazamiz
+
                 telegramUserService.updateUserState(chatId, UserState.AWAITING_COURSE_THUMBNAIL);
                 String nextPrompt = messageService.getMessage(BotMessage.INSTRUCTOR_COURSE_CREATE_THUMBNAIL_PROMPT);
                 bot.myExecute(sendMsg.sendMessage(chatId, nextPrompt));
             }
 
             case AWAITING_COURSE_THUMBNAIL -> {
-                // Rasm yuborilganini tekshiramiz
+
                 if (!message.hasPhoto()) {
                     String errorText = messageService.getMessage(BotMessage.INSTRUCTOR_COURSE_CREATE_VALIDATION_PHOTO_ERROR);
                     bot.myExecute(sendMsg.sendMessage(chatId, errorText));
-                    return; // Holat o'zgarmaydi.
+                    return;
                 }
 
-                // Eng katta o'lchamdagi rasmni olamiz (eng yaxshi sifat)
+
                 PhotoSize photo = message.getPhoto().stream()
                         .max(Comparator.comparing(PhotoSize::getFileSize))
                         .orElse(null);
 
                 if (photo == null) {
-                    // Bu holat deyarli yuz bermaydi, lekin himoya uchun kerak
+
                     return;
                 }
 
@@ -759,13 +759,13 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
                 AttachmentDTO attachmentDTO = attachmentService.saveTg(message.getPhoto());
 
 
-                // Ma'lumotni Redis'ga saqlaymiz
+
                 redisTemporaryDataService.addField(processKey, THUMBNAIL_ID, attachmentDTO.getId());
 
-                // Keyingi bosqichga o'tamiz
+
                 telegramUserService.updateUserState(chatId, UserState.AWAITING_COURSE_CONFIRMATION);
 
-                // Barcha ma'lumotlarni yig'ib, tasdiqlash xabarini yuboramiz
+
                 sendCourseConfirmationMessage(chatId, processKey);
             }
         }
@@ -781,7 +781,7 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
             Map<String, Object> courseData = allFieldsOpt.get();
 
             String categoryId = String.valueOf(courseData.get(CATEGORY_ID));
-            // Bu yerda categoryRepository.findById(categoryId) orqali kategoriya nomini olish kerak.
+
             String categoryName = categoryService.read(Long.valueOf(categoryId)).getName();
             String title = String.valueOf(courseData.get(TITLE));
             String description = String.valueOf(courseData.get(DESCRIPTION));
@@ -940,7 +940,7 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
     }
 
     private static String buildStudentsDashboardText(long totalUniqueStudents, Page<CourseStudentStatsProjection> courseStatsPage) {
-        // --- Kurslar ro'yxatini formatlaymiz ---
+
         List<CourseStudentStatsProjection> courseStats = courseStatsPage.getContent();
         StringBuilder coursesFormattedText = new StringBuilder();
         if (courseStats.isEmpty()) {
@@ -957,7 +957,7 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
             }
         }
 
-        // --- Asosiy shablonni to'ldiramiz ---
+
         String dashboardTemplate = """
                 🎓 <b>O'quvchilarim Sahifasi</b>
                 
@@ -1048,7 +1048,7 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
 
         int purchasedStudentsCount = paymentRepository.countDistinctPurchasedUsersByInstructorId(user.getId());
 
-        // 3. Daromad statistikasini olish
+
         Long totalIncome = paymentRepository.calculateTotalIncomeByInstructorId(user.getId());
 
 
@@ -1083,23 +1083,23 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
 
         sb.append("<b>📊 Mentor daromadlari haqida hisobot</b>\n\n");
 
-        // Bugungi statistikalar
+
         sb.append("📅 <u>Bugungi natijalar</u>\n");
         sb.append("💰 Daromad: ").append(formatAmount(p.getTodayIncome())).append("\n");
         sb.append("🛒 Sotuvlar soni: ").append(p.getTodaySales() != null ? p.getTodaySales() : 0).append(" ta\n\n");
 
-        // Oylik va umumiy
+
         sb.append("📅 <u>Oylik va umumiy</u>\n");
         sb.append("📆 Joriy oydagi daromad: ").append(formatAmount(p.getMonthlyIncome())).append("\n");
         sb.append("💳 Umumiy daromad: ").append(formatAmount(p.getTotalIncome())).append("\n\n");
 
-        // Talabalar va kurslar
+
         sb.append("👨‍🎓 Umumiy talabalar soni: ").append(p.getTotalStudents() != null ? p.getTotalStudents() : 0).append(" ta\n");
         sb.append("⭐️ Kurslar bo‘yicha o‘rtacha reyting: ").append(
                 p.getAverageRating() != null ? String.format("%.1f", p.getAverageRating()) : "Noma'lum"
         ).append("\n\n");
 
-        // Eng ko‘p sotilgan kurs
+
         sb.append("🏆 <u>Eng ko‘p sotilgan kurs</u>\n");
         if (p.getTopCourseName() != null) {
             sb.append("📚 Kurs: ").append(p.getTopCourseName()).append("\n");
@@ -1145,8 +1145,8 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
         if (rating <= 0) return "☆☆☆☆☆";
         if (rating > 5) rating = 5;
 
-        int filled = (int) rating; // to‘liq yulduzlar
-        boolean half = (rating - filled) >= 0.5; // yarim yulduz bormi?
+        int filled = (int) rating;
+        boolean half = (rating - filled) >= 0.5;
         int empty = 5 - filled - (half ? 1 : 0);
 
         String filledStar = "⭐";

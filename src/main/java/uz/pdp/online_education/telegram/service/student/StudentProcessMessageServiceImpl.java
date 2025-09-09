@@ -42,9 +42,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class StudentProcessMessageServiceImpl implements StudentProcessMessageService {
 
-    private static final int PAGE_SIZE = 5; // Sahifadagi elementlar soni
+    private static final int PAGE_SIZE = 5;
 
-    // --- DEPENDENCIES ---
+
     private final SendMsg sendMsg;
     private final MessageService messageService;
     private final TelegramUserRepository telegramUserRepository;
@@ -55,7 +55,7 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
     private final ModuleEnrollmentRepository moduleEnrollmentRepository;
     private final PaymentRepository paymentRepository;
 
-    // --- PUBLIC METHODS (from Interface) ---
+
 
     @Override
     public void handleMessage(Message message) {
@@ -106,7 +106,7 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
         onlineEducationBot.myExecute(sendMsg.editMessage(chatId, messageId, dashboardText, inlineKeyboardMarkup));
     }
 
-    // --- MESSAGE HANDLERS (Private methods for `handleMessage`) ---
+
 
     /**
      * Handles the /start command, sends a welcome message and main menu.
@@ -189,13 +189,13 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
 
     @Override
     public void sendBalanceMenu(Long chatId, User user) {
-        // --- 1. MA'LUMOTLARNI BAZADAN OLISH ---
+
         List<Module> unpaidModules = moduleEnrollmentRepository.findUnpaidModulesByUserId(user.getId());
         Long totalAmount = paymentRepository.findTotalSuccessfulPaymentsByUserId(user.getId(), TransactionStatus.SUCCESS);
         Payment lastPayment = paymentRepository.findTopByUser_IdAndStatusOrderByCreatedAtDesc(user.getId(), TransactionStatus.SUCCESS).orElse(null);
         long purchasedCoursesCount = paymentRepository.countByUser_IdAndStatus(user.getId(), TransactionStatus.SUCCESS);
 
-        // --- 2. XABAR MATNINI TAYYORLASH ---
+
         String messageText;
 
         /**
@@ -204,31 +204,31 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
          */
 
         if (!unpaidModules.isEmpty()) {
-            // Agar to'lovni kutayotgan modullar bo'lsa
+
             Module firstUnpaidModule = unpaidModules.get(0);
 
             messageText = messageService.getMessage(
                     BotMessage.BALANCE_INFO_WITH_PENDING_PAYMENT,
-                    // %s o'rniga qo'yiladigan ma'lumotlar (TARTIB MUHIM!):
-                    formatAmount(totalAmount),                                 // 1. Umumiy xaridlar
-                    purchasedCoursesCount,                                     // 2. Sotib olingan kurslar soni
-                    lastPayment != null ? lastPayment.getModule().getTitle() : "Mavjud emas", // 3. O'ZGARDI: .getName() -> .getTitle()
-                    lastPayment != null ? formatAmount(lastPayment.getAmount()) : "0 so'm",  // 4. Oxirgi to'lov summasi
-                    lastPayment != null ? formatDate(lastPayment.getCreatedAt()) : "-",    // 5. Oxirgi to'lov sanasi
-                    unpaidModules.size(),                                      // 6. To'lanmagan kurslar soni
-                    firstUnpaidModule.getTitle(),                              // 7. O'ZGARDI: .getName() -> .getTitle()
-                    formatAmount(firstUnpaidModule.getPrice())                 // 8. To'lanmagan kurs narxi
+
+                    formatAmount(totalAmount),
+                    purchasedCoursesCount,
+                    lastPayment != null ? lastPayment.getModule().getTitle() : "Mavjud emas",
+                    lastPayment != null ? formatAmount(lastPayment.getAmount()) : "0 so'm",
+                    lastPayment != null ? formatDate(lastPayment.getCreatedAt()) : "-",
+                    unpaidModules.size(),
+                    firstUnpaidModule.getTitle(),
+                    formatAmount(firstUnpaidModule.getPrice())
             );
         } else {
-            // Agar qarzdorlik bo'lmasa
+
             messageText = messageService.getMessage(
                     BotMessage.BALANCE_INFO_NO_PENDING_PAYMENT,
-                    // %s o'rniga qo'yiladigan ma'lumotlar (TARTIB MUHIM!):
-                    formatAmount(totalAmount),                                 // 1. Umumiy xaridlar
-                    purchasedCoursesCount,                                     // 2. Sotib olingan kurslar soni
-                    lastPayment != null ? lastPayment.getModule().getTitle() : "Mavjud emas", // 3. O'ZGARDI: .getName() -> .getTitle()
-                    lastPayment != null ? formatAmount(lastPayment.getAmount()) : "0 so'm",  // 4. Oxirgi to'lov summasi
-                    lastPayment != null ? formatDate(lastPayment.getCreatedAt()) : "-"     // 5. Oxirgi to'lov sanasi
+
+                    formatAmount(totalAmount),
+                    purchasedCoursesCount,
+                    lastPayment != null ? lastPayment.getModule().getTitle() : "Mavjud emas",
+                    lastPayment != null ? formatAmount(lastPayment.getAmount()) : "0 so'm",
+                    lastPayment != null ? formatDate(lastPayment.getCreatedAt()) : "-"
             );
         }
         boolean hasPending = !unpaidModules.isEmpty();
@@ -246,7 +246,7 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
         return formatter.format(amount / 100) + " so'm";
     }
 
-    // FAQAT SHU METOD QOLISHI KERAK
+
     private String formatDate(Timestamp timestamp) {
         if (timestamp == null) {
             return "-";
@@ -262,7 +262,7 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
     }
 
 
-    // --- HELPER METHODS ---
+
 
     /**
      * Prepares the formatted text for the student's dashboard.

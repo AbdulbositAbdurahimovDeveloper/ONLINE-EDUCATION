@@ -124,20 +124,18 @@ public class PaymentServiceImpl implements PaymentService {
             throw new DataConflictException("Payment already exist");
         }
 
-        // 1. Bazadagi narxni TIYINda olamiz.
+
         BigDecimal modulePriceInTiyin = BigDecimal.valueOf(module.getPrice()); // Masalan, 1500000
 
-        // 2. Bazadagi narxni solishtirish uchun SO'Mga o'giramiz.
-        // 1500000 (tiyin) -> 15000.00 (so'm)
+
         BigDecimal modulePriceInSom = modulePriceInTiyin.divide(new BigDecimal(100));
 
-        // 3. Frontend'dan kelgan narxni SO'Mda olamiz.
+
         BigDecimal amountInSomFromDto = BigDecimal.valueOf(paymentCreateDTO.getAmount()); // Masalan, 15000.00
 
-        // 4. Endi ikkita SO'M qiymatini solishtiramiz.
-        // .compareTo() metodi teng bo'lsa 0 qaytaradi.
+
         if (amountInSomFromDto.compareTo(modulePriceInSom) != 0) {
-            // Xatolik xabarida ham SO'Mdagi qiymatni ko'rsatamiz.
+
             throw new DataConflictException("The payment amount is incorrect. Expected: " + modulePriceInSom.toPlainString());
         }
 
@@ -182,12 +180,12 @@ public class PaymentServiceImpl implements PaymentService {
         User user = payment.getUser();
         UserProfile profile = user.getProfile();
 
-        // Summani tiyindan so'mga o'tkazib, formatlaymiz
+
         BigDecimal amountInSom = BigDecimal.valueOf(payment.getAmount()).divide(new BigDecimal(100));
         NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(new Locale("uz", "UZ")); // "so'm" formatida
         String formattedAmount = currencyFormatter.format(amountInSom);
 
-        // Sanani chiroyli formatga o'tkazamiz
+
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
         String formattedDate = payment.getCreatedAt().toLocalDateTime().format(dateFormatter);
 

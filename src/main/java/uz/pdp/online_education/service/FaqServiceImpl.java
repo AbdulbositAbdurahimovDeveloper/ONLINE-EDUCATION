@@ -50,19 +50,19 @@ public class FaqServiceImpl implements FaqService {
         Faq faq = faqRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Faq not found with id: " + id));
 
-        // 1. Avval Faq ni o'chiramiz
+
         faqRepository.delete(faq);
 
-        // 2. Qolgan faqlarni displayOrder bo'yicha sortlab olamiz
+
         List<Faq> remainingFaqs = faqRepository.findAll(Sort.by(Sort.Direction.ASC, Faq.Fields.displayOrder));
 
-        // 3. Har birining displayOrder ni yangilaymiz: 0 dan boshlanadi
+
         for (int i = 0; i < remainingFaqs.size(); i++) {
             Faq f = remainingFaqs.get(i);
             f.setDisplayOrder(i);
         }
 
-        // 4. Hammasini saqlaymiz
+
         faqRepository.saveAll(remainingFaqs);
     }
 

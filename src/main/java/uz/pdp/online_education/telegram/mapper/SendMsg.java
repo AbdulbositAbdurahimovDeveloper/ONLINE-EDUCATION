@@ -50,7 +50,7 @@ public interface SendMsg {
      */
     SendPhoto sendPhoto(Long chatId, String file, String caption, InlineKeyboardMarkup keyboard);
 
-    // metod botga jonatilgan rasmni kanalga tashlash uchun kerak
+
     SendPhoto sendPhoto(String channelId, InputFile file);
 
     SendPhoto sendPhoto(Long chatId, String file);

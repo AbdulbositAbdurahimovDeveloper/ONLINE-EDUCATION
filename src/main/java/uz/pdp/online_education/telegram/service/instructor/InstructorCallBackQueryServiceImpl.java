@@ -66,7 +66,7 @@ import static uz.pdp.online_education.telegram.Utils.Numbering.randomBookEmoji;
 @RequiredArgsConstructor
 public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQueryService {
 
-    private static final int PAGE_SIZE = 5; // Sahifadagi elementlar soni
+    private static final int PAGE_SIZE = 5;
 
     private final TelegramUserRepository telegramUserRepository;
     private final OnlineEducationBot bot;
@@ -138,8 +138,8 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
 
 
     private void handleAuthCallback(User user, Long chatId, Integer messageId, String[] data) {
-        String action = data[1]; // "logout"
-        String step = data[2];  // "init", "confirm", "cancel"
+        String action = data[1];
+        String step = data[2];
 
         if (!action.equals("logout")) {
             log.warn("Noma'lum autentifikatsiya amali: {}", action);
@@ -248,7 +248,7 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
         }
 
 
-        // ... Logika
+
     }
 
     private void handleContentCreationConfirmation(Long chatId, Integer messageId, String[] data) {
@@ -257,7 +257,7 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
 
     private void startContentCreationProcess(Long chatId, Integer messageId, String[] data, UserState userState, User user) {
 
-        long lessonId = Long.parseLong(data[2]); // courseId'ni olamiz
+        long lessonId = Long.parseLong(data[2]);
         if (userState.equals(UserState.AWAITING_CHOOSE_CONTENT)) {
 
             String contentType = data[3];
@@ -288,23 +288,21 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
 
         } else {
 
-            // 1. Unikal jarayon kalitini generatsiya qilamiz.
-            // Bu metodni shu klassning o'ziga yozib qo'yamiz.
+
             String processKey = String.join(":", ACTION_ADD, LESSON_PREFIX, chatId.toString());
 
-            // 2. Boshlang'ich ma'lumotlarni tayyorlaymiz.
+
             Map<String, Object> initialData = new HashMap<>();
             initialData.put(LESSON_ID, String.valueOf(lessonId));
             initialData.put(CURRENT_STEP, UserState.AWAITING_CHOOSE_CONTENT.name());
 
-            // 3. Jarayonni Redis'da boshlaymiz.
+
             redisTemporaryDataService.startProcess(processKey, initialData);
 
-            // 4. Foydalanuvchining umumiy holatini o'zgartiramiz.
-            // Eslatma: Bu yondashuv bir vaqtda faqat bitta jarayon uchun ishlaydi.
+
             telegramUserService.updateUserState(chatId, UserState.AWAITING_CHOOSE_CONTENT);
 
-            // 5. Foydalanuvchiga birinchi savolni yuboramiz.
+
             bot.myExecute(sendMsg.editMessage(chatId, messageId,
                     messageService.getMessage(BotMessage.INSTRUCTOR_CREATE_REMINDER)
             ));
@@ -427,55 +425,45 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
         }
     }
 
-    /**
-     * Yangi modul yaratish jarayonini boshlaydi.
-     */
-    private void startModuleCreationProcess(Long chatId, Integer messageId, String[] data) {
-        long courseId = Long.parseLong(data[2]); // courseId'ni olamiz
 
-        // 1. Unikal jarayon kalitini generatsiya qilamiz.
-        // Bu metodni shu klassning o'ziga yozib qo'yamiz.
+    private void startModuleCreationProcess(Long chatId, Integer messageId, String[] data) {
+        long courseId = Long.parseLong(data[2]);
+
+
         String processKey = String.join(":", ACTION_ADD, ACTION_MODULE, chatId.toString());
 
-        // 2. Boshlang'ich ma'lumotlarni tayyorlaymiz.
+
         Map<String, Object> initialData = new HashMap<>();
         initialData.put(COURSE_ID, String.valueOf(courseId));
         initialData.put(CURRENT_STEP, UserState.AWAITING_MODULE_TITLE.name());
 
-        // 3. Jarayonni Redis'da boshlaymiz.
+
         redisTemporaryDataService.startProcess(processKey, initialData);
 
-        // 4. Foydalanuvchining umumiy holatini o'zgartiramiz.
-        // Eslatma: Bu yondashuv bir vaqtda faqat bitta jarayon uchun ishlaydi.
+
         telegramUserService.updateUserState(chatId, UserState.AWAITING_MODULE_TITLE);
 
-        // 5. Foydalanuvchiga birinchi savolni yuboramiz.
+
         bot.myExecute(sendMsg.editMessage(chatId, messageId,
                 messageService.getMessage(BotMessage.INSTRUCTOR_CREATE_REMINDER)
         ));
         bot.myExecute(sendMsg.sendMessage(chatId, messageService.getMessage(BotMessage.INSTRUCTOR_MODULE_CREATE_TITLE)));
     }
 
-    /**
-     * Foydalanuvchi tasdiqlash/bekor qilish tugmasini bosganda ishlaydi.
-     */
-    private void handleModuleCreationConfirmation(Long chatId, Integer messageId, String[] data) {
-        String choice = data[3]; // "confirm" yoki "draft"/"cancel"
 
-        // XATO 1 ni to'g'rilaymiz: Kalit callback'dan to'g'ri uzatilishi kerak.
-        // Tasdiqlash tugmasining callback'iga butun processKey'ni yuborish kerak.
-        // Masalan: "...:module:choice:confirm:module_create_12345_99"
-        // Bu yerda data[4] da to'liq kalit bor deb faraz qilamiz.
+    private void handleModuleCreationConfirmation(Long chatId, Integer messageId, String[] data) {
+        String choice = data[3];
+
+
         String processKey = String.join(":", data[4], data[5], data[6]);
 
         if (choice.equals(ACTION_CONFIRM)) {
-            // "Tasdiqlash" bosildi
+
             Optional<Map<String, Object>> allFields = redisTemporaryDataService.getAllFields(processKey);
 
             if (allFields.isPresent()) {
                 Map<String, Object> moduleFields = allFields.get();
 
-                // XATO 2 ni to'g'rilaymiz: ClassCastException
                 Long courseId = Long.parseLong(String.valueOf(moduleFields.get(COURSE_ID)));
                 String title = String.valueOf(moduleFields.get(TITLE));
                 String description = String.valueOf(moduleFields.get(DESCRIPTION));
@@ -484,13 +472,13 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
                 ModuleCreateDTO moduleCreateDTO = new ModuleCreateDTO(
                         title,
                         description,
-                        price * 100, // Pulni tiyinda saqlash
+                        price * 100,
                         courseId
                 );
 
                 ModuleDetailDTO moduleDetailDTO = moduleService.create(moduleCreateDTO);
 
-                // Jarayon tugadi, tozalaymiz.
+
                 redisTemporaryDataService.endProcess(processKey);
                 telegramUserService.updateUserState(chatId, UserState.NONE);
 
@@ -502,8 +490,7 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
             } else {
                 bot.myExecute(sendMsg.editMessage(chatId, messageId, "❌ Xatolik: Jarayon topilmadi yoki muddati o'tgan."));
             }
-        } else { // ACTION_DRAFT yoki ACTION_CANCEL
-            // "Bekor qilish" bosildi
+        } else {
             redisTemporaryDataService.endProcess(processKey);
             telegramUserService.updateUserState(chatId, UserState.NONE);
             bot.myExecute(sendMsg.editMessage(chatId, messageId, "🚫 Jarayon bekor qilindi."));
@@ -511,19 +498,19 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
     }
 
     private void handleLessonCreationConfirmation(Long chatId, Integer messageId, String[] data) {
-        String choice = data[3]; // "confirm" yoki "draft"/"cancel"
+        String choice = data[3];
 
 
         if (choice.equals(ACTION_CONFIRM)) {
             String processKey = String.join(":", data[4], data[5], data[6]);
 
-            // "Tasdiqlash" bosildi
+
             Optional<Map<String, Object>> allFields = redisTemporaryDataService.getAllFields(processKey);
 
             if (allFields.isPresent()) {
                 Map<String, Object> moduleFields = allFields.get();
 
-                // XATO 2 ni to'g'rilaymiz: ClassCastException
+
                 Long moduleId = Long.parseLong(String.valueOf(moduleFields.get(MODULE_ID)));
                 String title = String.valueOf(moduleFields.get(TITLE));
                 String description = String.valueOf(moduleFields.get(DESCRIPTION));
@@ -538,7 +525,7 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
 
                 LessonResponseDTO lessonResponseDTO = lessonService.create(lessonCreatDTO);
 
-                // Jarayon tugadi, tozalaymiz.
+
                 redisTemporaryDataService.endProcess(processKey);
                 telegramUserService.updateUserState(chatId, UserState.NONE);
 
@@ -580,8 +567,7 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
             }
 
 
-        } else { // ACTION_DRAFT yoki ACTION_CANCEL
-            // "Bekor qilish" bosildi
+        } else {
 
             String processKey = String.join(":", data[4], data[5], data[6]);
             redisTemporaryDataService.endProcess(processKey);
@@ -625,7 +611,6 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
 
         String processKey = String.join(":", ACTION_ADD, LESSON_PREFIX, chatId.toString());
 
-        // 2. Boshlang'ich ma'lumotlarni tayyorlaymiz.
         Map<String, Object> initialData = new HashMap<>();
         initialData.put(MODULE_ID, String.valueOf(moduleId));
         initialData.put(CURRENT_STEP, UserState.AWAITING_LESSON_TITLE.name());
@@ -1229,8 +1214,8 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
                     int pageNumber = Integer.parseInt(data[4]);
 
                     Sort sortByRatingDesc = Sort.by(
-                            Sort.Order.desc("rating"),      // Asosiy saralash
-                            Sort.Order.desc("createdAt")    // Ikkilamchi saralash
+                            Sort.Order.desc("rating"),
+                            Sort.Order.desc("createdAt")
                     );
                     Pageable pageable = PageRequest.of(pageNumber, 5, sortByRatingDesc);
                     Page<CourseReviewProjection> reviews = reviewRepository.findReviewsByCourseId(id, pageable);
@@ -1394,7 +1379,7 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
     public String buildReviewDetailHtml(CourseReviewDetailProjection p) {
         StringBuilder sb = new StringBuilder();
 
-        // Sotib olish va sharh sanalari
+
         sb.append("📌 <b>Kurs sotib olingan:</b> ")
                 .append(p.getPurchasedAt() != null ? p.getPurchasedAt().toLocalDateTime().toLocalDate() : "❌ Ma'lumot yo‘q")
                 .append("\n");
@@ -1402,7 +1387,6 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
                 .append(p.getReviewDate() != null ? p.getReviewDate().toLocalDateTime().toLocalDate() : "❌ Ma'lumot yo‘q")
                 .append("\n\n");
 
-        // Foydalanuvchi ma'lumotlari
         sb.append("👤 <b>Talaba:</b> ")
                 .append(p.getStudentName() != null && !p.getStudentName().isBlank() ? escapeHtml(p.getStudentName()) : "Anonim foydalanuvchi")
                 .append("\n");
@@ -1413,7 +1397,7 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
                 .append(p.getJoinedAt() != null ? p.getJoinedAt().toLocalDateTime().toLocalDate() : "❌ Ma'lumot yo‘q")
                 .append("\n\n");
 
-        // Statistika
+
         sb.append("📚 <b>Umumiy kurslar:</b> ").append(p.getTotalCourses() != null ? p.getTotalCourses() : 0).append("\n");
         sb.append("⭐️ <b>O‘rtacha baho:</b> ")
                 .append(p.getAverageRating() != null ? String.format("%.1f", p.getAverageRating()) : "❌ Ma'lumot yo‘q")
@@ -1422,7 +1406,7 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
                 .append(p.getRating() != null ? p.getRating() + " ⭐️" : "❌ Ma'lumot yo‘q")
                 .append("\n\n");
 
-        // Sharh matni
+
         if (p.getComment() != null && !p.getComment().isBlank()) {
             sb.append("💬 <b>Fikr:</b> ").append(escapeHtml(p.getComment())).append("\n");
         } else {
@@ -1535,7 +1519,7 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
             index++;
             sb.append(index).append(". ");
 
-            // Agar FirstName + LastName bo‘lsa
+
             if (user.getFirstName() != null || user.getLastName() != null) {
                 sb.append("👤 <b>")
                         .append(user.getFirstName() != null ? user.getFirstName() : "")
@@ -1546,22 +1530,22 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
                 sb.append("👤 <b>").append(user.getUsername()).append("</b>\n");
             }
 
-            // Email
+
             if (user.getEmail() != null) {
                 sb.append("📧 ").append(user.getEmail()).append("\n");
             }
 
-            // Telefon
+
             if (user.getPhoneNumber() != null) {
                 sb.append("📱 ").append(user.getPhoneNumber()).append("\n");
             }
 
-            // Bio
+
             if (user.getBio() != null) {
                 sb.append("📝 ").append(user.getBio()).append("\n");
             }
 
-            // Reyting
+
             if (user.getRating() != null) {
                 sb.append("⭐ Reyting: ").append(generateStars(user.getRating())).append("\n");
             }
@@ -1577,7 +1561,7 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
                                     CourseStudentStatsProjection stats) {
         StringBuilder sb = new StringBuilder();
 
-        // 📘 Kitob emoji — random qilmoqchi bo‘lsangiz, o‘sha oldingi Utils.getRandomBookEmoji() dan foydalaning
+
         sb.append("📘 <b>").append(detail.getTitle()).append("</b>\n\n");
 
         if (detail.getDescription() != null) {
@@ -1591,27 +1575,27 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
         sb.append("📂 <b>Kategoriya ID:</b> ").append(categoryDTO.getName()).append("\n");
         sb.append("📚 <b>Modullar soni:</b> ").append(detail.getModulesCount()).append("\n\n");
 
-        // Statistikalar
+
         if (stats != null) {
             sb.append("📊 <b>Statistika:</b>\n");
             sb.append("👥 Unikal o‘quvchilar: <b>").append(stats.getUnique_student_count()).append("</b>\n");
             sb.append("💳 Jami sotuvlar: <b>").append(stats.getTotal_sales_count()).append("</b>\n\n");
         }
 
-        // Review summary
+
         if (detail.getReviewSummary() != null) {
             sb.append("⭐️ Reyting: ").append(generateStars(detail.getReviewSummary().getAverageRating()))
                     .append(" (").append(detail.getReviewSummary().getCount()).append(" ta sharh)\n\n");
         }
 
-        // Vaqt (agar kerak bo‘lsa human-readable formatga aylantirishingiz mumkin)
+
         sb.append("📅 Yaratilgan: ").append(formatDate(detail.getCreatedAt())).append("\n");
 
         return sb.toString();
     }
 
     private String buildStudentsDashboardText(long totalUniqueStudents, Page<CourseStudentStatsProjection> courseStatsPage) {
-        // --- Kurslar ro'yxatini formatlaymiz ---
+
         List<CourseStudentStatsProjection> courseStats = courseStatsPage.getContent();
         StringBuilder coursesFormattedText = new StringBuilder();
         if (courseStats.isEmpty()) {
@@ -1628,7 +1612,7 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
             }
         }
 
-        // --- Asosiy shablonni to'ldiramiz ---
+
         String dashboardTemplate = """
                 🎓 <b>O'quvchilarim Sahifasi</b>
                 
@@ -1672,7 +1656,7 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
     }
 
 
-    // --- Matn qurish ---
+
     private String buildModuleDetailText(ModuleDetailDTO m) {
         String title = safe(m.getTitle());
         String desc = safe(m.getDescription());
@@ -1902,8 +1886,8 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
     }
 
     private String generateStars(int count) {
-        if (count < 1) return "☆☆☆☆☆"; // Reyting yo'q bo'lsa
-        if (count > 5) count = 5; // 5 dan oshmasligi kerak
+        if (count < 1) return "☆☆☆☆☆";
+        if (count > 5) count = 5;
 
         String filledStar = "⭐";
         String emptyStar = "☆";
@@ -1915,8 +1899,8 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
         if (rating <= 0) return "☆☆☆☆☆";
         if (rating > 5) rating = 5;
 
-        int filled = (int) rating; // to‘liq yulduzlar
-        boolean half = (rating - filled) >= 0.5; // yarim yulduz bormi?
+        int filled = (int) rating;
+        boolean half = (rating - filled) >= 0.5;
         int empty = 5 - filled - (half ? 1 : 0);
 
         String filledStar = "⭐";

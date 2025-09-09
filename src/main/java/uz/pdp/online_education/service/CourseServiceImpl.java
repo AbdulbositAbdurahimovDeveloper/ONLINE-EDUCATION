@@ -43,27 +43,25 @@ public class CourseServiceImpl implements CourseService {
     private final ModuleRepository moduleRepository;
     private final AttachmentService attachmentService;
 
-    // CourseServiceImpl.java
 
-    // CourseServiceImpl.java
 
     @Override
-    @Transactional(readOnly = true) // LOB muammosini hal qilish uchun shart!
+    @Transactional(readOnly = true)
     public PageDTO<CourseDetailDTO> filter(FilterDTO filterDTO, Integer page, Integer size) {
 
-        // Saralashni Pageable orqali dinamik boshqaramiz
+
         Sort sort = Sort.by(Sort.Direction.DESC, "averageRating");
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        // To'g'ridan-to'g'ri Criteria API bilan ishlaydigan metodimizni chaqiramiz
+
         Page<CourseWithRatingDTO> resultPage = courseRepository.filterWithCriteria(filterDTO, pageable);
 
-        // Natijani bizga kerakli DTO ga o'giramiz
+
         Page<CourseDetailDTO> courseDetailDTOPage = resultPage.map(dto ->
                 courseMapper.courseToCourseDetailDTO(dto.getCourse())
         );
 
-        // Yakuniy PageDTO ni qaytaramiz
+
         return new PageDTO<>(
                 courseDetailDTOPage.getContent(),
                 courseDetailDTOPage.getNumber(),
@@ -76,31 +74,7 @@ public class CourseServiceImpl implements CourseService {
                 courseDetailDTOPage.isEmpty()
         );
     }
-//    @Override
-//    public PageDTO<CourseDetailDTO> filter(FilterDTO filterDTO, Integer page, Integer size) {
-//
-//        // 1. Bizning yangi, aqlli Specification'imizni yaratamiz
-//        Specification<Course> spec = CourseSpecification.filterAndPotentiallySort(filterDTO);
-//
-//        // 2. PageRequest'ni yaratamiz (saralash spec ichida bo'lgani uchun bu yerda shart emas)
-//        PageRequest pageRequest = PageRequest.of(page, size);
-//
-//        // 3. Bazadan ma'lumotlarni olamiz
-//        Page<Course> courses = courseRepository.findAll(spec, pageRequest);
-//
-//        // 4. Natijani DTO'ga o'girib, qaytaramiz
-//        return new PageDTO<>(
-//                courses.getContent().stream().map(courseMapper::courseToCourseDetailDTO).toList(),
-//                courses.getNumber(),
-//                courses.getSize(),
-//                courses.getTotalElements(),
-//                courses.getTotalPages(),
-//                courses.isLast(),
-//                courses.isFirst(),
-//                courses.getNumberOfElements(),
-//                courses.isEmpty()
-//        );
-//    }
+
 
 
     /**
@@ -227,26 +201,26 @@ public class CourseServiceImpl implements CourseService {
     @Transactional
     public void updateSuccess(Long id) {
 
-        // 1. Kursni bazadan topamiz.
+
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Course not found with id: " + id));
 
-        // 2. Agar kurs allaqachon "muvaffaqiyatli" bo'lsa, uni shunchaki "muvaffaqiyatsiz" qilamiz.
+
         if (course.isSuccess()) {
             course.setSuccess(false);
             courseRepository.save(course);
-            return; // Metod ishini shu yerda yakunlaymiz.
+            return;
         }
 
-        // 3. Agar "muvaffaqiyatli" qilmoqchi bo'lsak, chuqur tekshiruvni boshlaymiz.
+
         List<Module> modules = course.getModules();
 
-        // 3a. Birinchi darajali tekshiruv: Kursda modullar bormi?
+
         if (modules == null || modules.isEmpty()) {
             throw new DataConflictException("Cannot publish: The course has no modules.");
         }
 
-        // 3b. Ikkinchi darajali tekshiruv: Barcha modullarda darslar bormi?
+
         boolean allModulesHaveLessons = modules.stream()
                 .allMatch(module -> module.getLessons() != null && !module.getLessons().isEmpty());
 
@@ -254,25 +228,24 @@ public class CourseServiceImpl implements CourseService {
             throw new DataConflictException("Cannot publish: All modules must contain at least one lesson.");
         }
 
-        // 3c. UCHINCHI VA ENG CHUQUR DARAJALI TEKSHIRUV:
-        // Barcha modullardagi barcha darslarda kontent bormi?
-        boolean allLessonsHaveContent = modules.stream() // Barcha modullar bo'yicha...
-                .allMatch(module -> // Har bir modulning...
-                        module.getLessons().stream() // Barcha darslari bo'yicha...
-                                .allMatch(lesson -> // Har bir darsning...
-                                        lesson.getContents() != null && !lesson.getContents().isEmpty() // Kontenti borligini tekshiramiz.
+
+        boolean allLessonsHaveContent = modules.stream()
+                .allMatch(module ->
+                        module.getLessons().stream()
+                                .allMatch(lesson ->
+                                        lesson.getContents() != null && !lesson.getContents().isEmpty()
                                 )
                 );
 
-        // 4. Yakuniy qaror
+
         if (allLessonsHaveContent) {
             course.setSuccess(true);
         } else {
-            // Agar birorta darsda kontent bo'lmasa, xatolik beramiz.
+
             throw new DataConflictException("Cannot publish: All lessons in all modules must contain at least one piece of content.");
         }
 
-        // 5. O'zgarishlarni saqlaymiz.
+
         courseRepository.save(course);
     }
 

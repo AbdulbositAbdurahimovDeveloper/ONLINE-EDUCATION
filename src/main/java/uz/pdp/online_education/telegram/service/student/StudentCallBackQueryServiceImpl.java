@@ -58,11 +58,11 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
     private final PaymentService paymentService;
     private final LessonService lessonService;
     private final ModuleEnrollmentService moduleEnrollmentService;
-    // --- DEPENDENCIES ---
+
     @Value("${telegram.bot.webhook-path}")
     private String SITE_URL;
 
-    // Services
+
     private final TelegramUserService telegramUserService;
     private final StudentProcessMessageService studentProcessMessageService;
     private final OnlineEducationBot bot;
@@ -71,7 +71,7 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
     private final MessageService messageService;
     private final UrlBuilderService urlBuilderService;
 
-    // Repositories
+
     private final TelegramUserRepository telegramUserRepository;
     private final CourseRepository courseRepository;
     private final ModuleRepository moduleRepository;
@@ -92,17 +92,17 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
         String queryData = callbackQuery.getData();
         String callbackQueryId = callbackQuery.getId();
 
-        // Foydalanuvchini topish, topilmasa xatolik berish
+
         User user = telegramUserRepository.findByChatId(chatId).orElseThrow(() -> new RuntimeException("User not found for callback. ChatID: " + chatId)).getUser();
 
-        // Callback so'roviga javob berish (loading animatsiyasini to'xtatish)
+
         bot.myExecute(new AnswerCallbackQuery(callbackQuery.getId()));
 
         try {
             String[] data = queryData.split(":");
             String prefix = data[0];
 
-            // Callback prefixiga qarab tegishli handler'ga yo'naltirish
+
             switch (prefix) {
                 case Utils.CallbackData.DELETED -> bot.myExecute(sendMsg.deleteMessage(chatId, messageId));
                 case Utils.CallbackData.AUTH_PREFIX -> handleAuthCallback(user, chatId, messageId, data);
@@ -176,7 +176,7 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
         PageRequest pageRequest = PageRequest.of(pageNumber, PAGE_SIZE);
         Page<Module> modules = moduleEnrollmentRepository.findUnpaidModulesByUserId(user.getId(), pageRequest);
 
-        // --- Text UI ---
+
         StringBuilder sb = new StringBuilder();
         sb.append("💳 <b>To‘lanmagan modullar ro‘yxati</b>\n\n");
 
@@ -198,7 +198,7 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
 
         sb.append("⬇️ Quyidagi ro‘yxatdan modulni tanlang yoki sahifani almashtiring.");
 
-        // --- Inline Keyboard (pagination + back) ---
+
         InlineKeyboardMarkup markup = studentInlineKeyboardService.userPendingPaymentsKeyboard(modules);
 
         bot.myExecute(sendMsg.editMessage(chatId, messageId, sb.toString(), markup));
@@ -252,16 +252,16 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
         bot.myExecute(sendMsg.editMessage(chatId, messageId, paymentHistoryText, inlineKeyboardMarkup));
     }
 
-    // --- CALLBACK HANDLERS (Private methods for routing callbacks) ---
+
 
     public void sendBalanceMenu(Long chatId, User user, Integer messageId) {
-        // --- 1. MA'LUMOTLARNI BAZADAN OLISH ---
+
         List<Module> unpaidModules = moduleEnrollmentRepository.findUnpaidModulesByUserId(user.getId());
         Long totalAmount = paymentRepository.findTotalSuccessfulPaymentsByUserId(user.getId(), TransactionStatus.SUCCESS);
         Payment lastPayment = paymentRepository.findTopByUser_IdAndStatusOrderByCreatedAtDesc(user.getId(), TransactionStatus.SUCCESS).orElse(null);
         long purchasedCoursesCount = paymentRepository.countByUser_IdAndStatus(user.getId(), TransactionStatus.SUCCESS);
 
-        // --- 2. XABAR MATNINI TAYYORLASH ---
+
         String messageText;
 
         /**
@@ -270,31 +270,31 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
          */
 
         if (!unpaidModules.isEmpty()) {
-            // Agar to'lovni kutayotgan modullar bo'lsa
+
             Module firstUnpaidModule = unpaidModules.get(0);
 
             messageText = messageService.getMessage(
                     BotMessage.BALANCE_INFO_WITH_PENDING_PAYMENT,
-                    // %s o'rniga qo'yiladigan ma'lumotlar (TARTIB MUHIM!):
-                    formatAmount(totalAmount),                                 // 1. Umumiy xaridlar
-                    purchasedCoursesCount,                                     // 2. Sotib olingan kurslar soni
-                    lastPayment != null ? lastPayment.getModule().getTitle() : "Mavjud emas", // 3. O'ZGARDI: .getName() -> .getTitle()
-                    lastPayment != null ? formatAmount(lastPayment.getAmount()) : "0 so'm",  // 4. Oxirgi to'lov summasi
-                    lastPayment != null ? formatDate(lastPayment.getCreatedAt()) : "-",    // 5. Oxirgi to'lov sanasi
-                    unpaidModules.size(),                                      // 6. To'lanmagan kurslar soni
-                    firstUnpaidModule.getTitle(),                              // 7. O'ZGARDI: .getName() -> .getTitle()
-                    formatAmount(firstUnpaidModule.getPrice())                 // 8. To'lanmagan kurs narxi
+
+                    formatAmount(totalAmount),
+                    purchasedCoursesCount,
+                    lastPayment != null ? lastPayment.getModule().getTitle() : "Mavjud emas",
+                    lastPayment != null ? formatAmount(lastPayment.getAmount()) : "0 so'm",
+                    lastPayment != null ? formatDate(lastPayment.getCreatedAt()) : "-",
+                    unpaidModules.size(),
+                    firstUnpaidModule.getTitle(),
+                    formatAmount(firstUnpaidModule.getPrice())
             );
         } else {
-            // Agar qarzdorlik bo'lmasa
+
             messageText = messageService.getMessage(
                     BotMessage.BALANCE_INFO_NO_PENDING_PAYMENT,
-                    // %s o'rniga qo'yiladigan ma'lumotlar (TARTIB MUHIM!):
-                    formatAmount(totalAmount),                                 // 1. Umumiy xaridlar
-                    purchasedCoursesCount,                                     // 2. Sotib olingan kurslar soni
-                    lastPayment != null ? lastPayment.getModule().getTitle() : "Mavjud emas", // 3. O'ZGARDI: .getName() -> .getTitle()
-                    lastPayment != null ? formatAmount(lastPayment.getAmount()) : "0 so'm",  // 4. Oxirgi to'lov summasi
-                    lastPayment != null ? formatDate(lastPayment.getCreatedAt()) : "-"     // 5. Oxirgi to'lov sanasi
+
+                    formatAmount(totalAmount),
+                    purchasedCoursesCount,
+                    lastPayment != null ? lastPayment.getModule().getTitle() : "Mavjud emas",
+                    lastPayment != null ? formatAmount(lastPayment.getAmount()) : "0 so'm",
+                    lastPayment != null ? formatDate(lastPayment.getCreatedAt()) : "-"
             );
         }
         boolean hasPending = !unpaidModules.isEmpty();
@@ -312,7 +312,7 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
         return formatter.format(amount / 100) + " so'm";
     }
 
-    // FAQAT SHU METOD QOLISHI KERAK
+
     private String formatDate(Timestamp timestamp) {
         if (timestamp == null) {
             return "-";
@@ -326,8 +326,8 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
      * Autentifikatsiya (masalan, tizimdan chiqish) bilan bog'liq callback'larni boshqaradi.
      */
     private void handleAuthCallback(User user, Long chatId, Integer messageId, String[] data) {
-        String action = data[1]; // "logout"
-        String step = data[2];  // "init", "confirm", "cancel"
+        String action = data[1];
+        String step = data[2];
 
         if (!action.equals("logout")) {
             log.warn("Noma'lum autentifikatsiya amali: {}", action);
@@ -356,10 +356,10 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
      */
     private void handleMyCourseCallback(User user, Long chatId, Integer messageId, String[] data) {
         String action = data[1];
-        if (action.equals(Utils.CallbackData.ACTION_VIEW)) { // myc:v:{courseId}
+        if (action.equals(Utils.CallbackData.ACTION_VIEW)) {
             Long courseId = Long.parseLong(data[2]);
             showModulesForCourse(user, chatId, messageId, courseId, 0);
-        } else if (action.equals(Utils.CallbackData.ACTION_LIST)) { // myc:l:p:{pageNum}
+        } else if (action.equals(Utils.CallbackData.ACTION_LIST)) {
             int pageNum = Integer.parseInt(data[3]);
             showMyCourses(user, chatId, messageId, pageNum);
         }
@@ -371,16 +371,16 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
     private void handleModuleCallback(User user, Long chatId, Integer messageId, String[] data, CallbackQuery callbackQuery) {
         String action = data[1];
         switch (action) {
-            case Utils.CallbackData.ACTION_VIEW -> { // mod:v:{moduleId}
+            case Utils.CallbackData.ACTION_VIEW -> {
                 Long moduleId = Long.parseLong(data[2]);
                 showLessonsForModule(user, chatId, messageId, moduleId, 0);
             }
-            case Utils.CallbackData.ACTION_LIST -> { // mod:l:{courseId}:p:{pageNum}
+            case Utils.CallbackData.ACTION_LIST -> {
                 Long courseId = Long.parseLong(data[2]);
                 int pageNum = Integer.parseInt(data[4]);
                 showModulesForCourse(user, chatId, messageId, courseId, pageNum);
             }
-            case Utils.CallbackData.ACTION_BUY -> { // mod:buy:{moduleId}
+            case Utils.CallbackData.ACTION_BUY -> {
                 long moduleId = Long.parseLong(data[2]);
 //                String url = SITE_URL + "/checkout/module/" + moduleId;
                 String url = urlBuilderService.generateModuleCheckoutUrl(moduleId);
@@ -396,16 +396,16 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
     private void handleLessonCallback(User user, Long chatId, Integer messageId, String[] data, CallbackQuery callbackQuery) {
         String action = data[1];
         switch (action) {
-            case Utils.CallbackData.ACTION_VIEW -> { // les:v:{lessonId}
+            case Utils.CallbackData.ACTION_VIEW -> {
                 Long lessonId = Long.parseLong(data[2]);
                 showLessonContents(chatId, messageId, lessonId);
             }
-            case Utils.CallbackData.ACTION_LIST -> { // les:{moduleId}:l:p:{pageNum}
+            case Utils.CallbackData.ACTION_LIST -> {
                 Long moduleId = Long.parseLong(data[2]);
                 int pageNum = Integer.parseInt(data[4]);
                 showLessonsForModule(user, chatId, messageId, moduleId, pageNum);
             }
-            case Utils.CallbackData.ACTION_BUY -> { // les:buy:{moduleId}
+            case Utils.CallbackData.ACTION_BUY -> {
                 Long moduleId = Long.parseLong(data[2]);
                 Module moduleToBuy = moduleRepository.findById(moduleId).orElse(null);
                 if (moduleToBuy == null) {
@@ -428,7 +428,7 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
      * Kontent (matn, video, test) bilan bog'liq callback'larni boshqaradi.
      */
     private void handleContentCallback(User user, Long chatId, String[] data, CallbackQuery callbackQuery) {
-        if (data[1].equals(Utils.CallbackData.ACTION_VIEW)) { // con:v:{contentId}
+        if (data[1].equals(Utils.CallbackData.ACTION_VIEW)) {
             Long contentId = Long.parseLong(data[2]);
             Content content = contentRepository.findById(contentId).orElse(null);
             if (content == null) return;
@@ -721,15 +721,15 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
             String statusText;
 
             if (hasSubscription && purchased) {
-                // 1 - Obuna va sotib olgan
+
                 statusIcon = "✅";
                 statusText = messageService.getMessage(BotMessage.MODULE_STATUS_SUB_AND_PURCHASED); // "Obuna + Sotib olingan"
             } else if (hasSubscription) {
-                // 2 - Obuna, lekin sotib olinmagan
+
                 statusIcon = "📖";
                 statusText = messageService.getMessage(BotMessage.MODULE_STATUS_SUB_ONLY); // "Faqat obuna"
             } else {
-                // 3 - Obunasi yo'q, sotib olinmagan
+
                 statusIcon = "🔒";
                 statusText = messageService.getMessage(BotMessage.MODULE_STATUS_LOCKED); // "Yopiq"
             }
@@ -847,8 +847,8 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
      * @return A string of star emojis (e.g., "⭐⭐⭐⭐").
      */
     private String generateStars(int count) {
-        if (count < 1) return "☆☆☆☆☆"; // Reyting yo'q bo'lsa
-        if (count > 5) count = 5; // 5 dan oshmasligi kerak
+        if (count < 1) return "☆☆☆☆☆";
+        if (count > 5) count = 5;
 
         String filledStar = "⭐";
         String emptyStar = "☆";
@@ -861,29 +861,28 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
      */
     private void showAllCourses_Categories(Long chatId, Integer messageId, int pageNum) {
         Pageable pageable = PageRequest.of(pageNum, 10);
-        // Bizga kurslari bor kategoriyalar va ularning soni kerak.
+
         Page<CategoryInfo> categoryPage = categoryRepository.findCategoriesWithCourseCount(pageable);
 
-        // 1. Ro'yxatni yasash uchun StringBuilder
+
         StringBuilder listBuilder = new StringBuilder();
         List<CategoryInfo> categories = categoryPage.getContent();
         for (int i = 0; i < categories.size(); i++) {
             CategoryInfo category = categories.get(i);
-            // "list-item" shablonini ishlatamiz: "▫️ <b>%s</b> — <i>%d ta kurs</i>"
+
             String listItem = messageService.getMessage(BotMessage.ALL_COURSES_LIST_ITEM, category.getName(), category.getCourseCount());
-            // Ro'yxatga raqam qo'shamiz
+
             listBuilder.append(Utils.Numbering.toCircled(i + 1)).append(". ").append(listItem).append("\n\n");
         }
 
-        // 2. Yakuniy matnni asosiy shablon bilan birlashtiramiz
-        // "categories-list" shabloni: "🗂 <b>Kategoriyalar ro'yxati</b> ... Sahifa: %d / %d\n\n%s\n\n..."
+
         String finalText = messageService.getMessage(BotMessage.ALL_COURSES_CATEGORIES_LIST, categoryPage.getNumber() + 1, categoryPage.getTotalPages(), listBuilder.toString() // Yasagan ro'yxatimizni %s o'rniga qo'yamiz
         );
 
-        // 3. Klaviatura yasaymiz
+
         InlineKeyboardMarkup keyboard = studentInlineKeyboardService.allCourses_categoriesMenu(categoryPage);
 
-        // 4. Xabarni tahrirlaymiz
+
         bot.myExecute(sendMsg.editMessage(chatId, messageId, finalText, keyboard)); // ParseMode'ni HTML ga o'zgartiramiz
     }
 
@@ -893,10 +892,10 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
      */
     private void showAllCourses_Instructors(Long chatId, Integer messageId, int pageNum) {
         Pageable pageable = PageRequest.of(pageNum, 10);
-        // Kamida bitta tasdiqlangan kursi bor mentorlarni olamiz
+
         Page<UserInfo> instructorPage = userRepository.findInstructorsWithSuccessfulCourses(pageable);
 
-        // 1. Ro'yxatni yasash
+
         StringBuilder listBuilder = new StringBuilder();
         List<UserInfo> instructors = instructorPage.getContent();
         for (int i = 0; i < instructors.size(); i++) {
@@ -907,17 +906,17 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
             listBuilder.append(Utils.Numbering.toCircled(i + 1)).append(". ").append(listItem).append("\n\n");
         }
 
-        // 2. Yakuniy matnni birlashtiramiz
+
         String finalText = messageService.getMessage(BotMessage.ALL_COURSES_MENTORS_LIST, instructorPage.getNumber() + 1, instructorPage.getTotalPages(), listBuilder.toString());
 
-        // 3. Klaviatura yasaymiz
+
         InlineKeyboardMarkup keyboard = studentInlineKeyboardService.allCourses_instructorsMenu(instructorPage);
 
-        // 4. Xabarni tahrirlaymiz
-        bot.myExecute(sendMsg.editMessage(chatId, messageId, finalText, keyboard)); // ParseMode'ni HTML ga o'zgartiramiz
+
+        bot.myExecute(sendMsg.editMessage(chatId, messageId, finalText, keyboard));
     }
 
-    // --- UI/SCREEN METHODS (Private methods for displaying information) ---
+
 
     /**
      * Foydalanuvchi a'zo bo'lgan kurslarni sahifalangan holda ko'rsatadi.
@@ -983,7 +982,7 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
         bot.myExecute(sendMsg.editMessage(chatId, messageId, text, keyboard));
     }
 
-    // --- HELPER METHODS ---
+
 
     /**
      * Foydalanuvchi kursga to'liq a'zo bo'lganligini tekshiradi.

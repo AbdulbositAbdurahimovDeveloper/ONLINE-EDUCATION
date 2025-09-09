@@ -23,26 +23,24 @@ public class UserCleanupService {
      * U 24 soatdan ko'p vaqt oldin yaratilgan va hali tasdiqlanmagan
      * foydalanuvchilarni o'chirib yuboradi.
      */
-    @Scheduled(cron = "0 0 0 * * *") // Har kuni 00:00:00 da
+    @Scheduled(cron = "0 0 0 * * *")
     @Transactional
     public void cleanupUnverifiedUsers() {
         System.out.println("Running unverified user cleanup task...");
         
-        // Amal qilish muddati tugagan tokenlarni topamiz
+
         var expiredTokens = tokenRepository.findAllByExpiryDateBefore(LocalDateTime.now());
 
         for (VerificationToken token : expiredTokens) {
             User user = token.getUser();
-            // Foydalanuvchi hali ham faollashtirilmaganini tekshiramiz
+
             if (user != null && !user.isEnabled()) {
-                // Tokenni va unga bog'liq foydalanuvchini o'chiramiz
-                // Cascade sozlamalaringizga qarab, faqat tokenni o'chirish yetarli bo'lishi mumkin.
-                // Ishonchli bo'lishi uchun ikkalasini ham o'chiramiz.
+
                 tokenRepository.delete(token);
                 userRepository.delete(user);
                 System.out.println("Deleted unverified user: " + user.getUsername());
             } else if (user != null){
-                // Agar user aktivlashgan bo'lsa, ortiqcha token kerak emas
+
                 tokenRepository.delete(token);
             }
         }

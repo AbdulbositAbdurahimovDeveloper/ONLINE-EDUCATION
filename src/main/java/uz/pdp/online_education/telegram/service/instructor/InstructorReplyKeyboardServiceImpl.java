@@ -20,25 +20,24 @@ public class InstructorReplyKeyboardServiceImpl implements InstructorReplyKeyboa
         KeyboardButton btn3 = new KeyboardButton(Utils.ReplyButtons.INSTRUCTOR_REVIEWS);
         KeyboardButton btn4 = new KeyboardButton(Utils.ReplyButtons.INSTRUCTOR_MY_REVENUE);
 
-        // 1-qator
+
         KeyboardRow row1 = new KeyboardRow();
         row1.add(btn1);
         row1.add(btn2);
 
-        // 2-qator
+
         KeyboardRow row2 = new KeyboardRow();
         row2.add(btn3);
         row2.add(btn4);
 
-        // barcha qatorlarni qo‘shamiz
+
         List<KeyboardRow> rows = new ArrayList<>();
         rows.add(row1);
         rows.add(row2);
 
         ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup(rows);
-        keyboard.setResizeKeyboard(true);     // telefon ekraniga moslashadi
-        keyboard.setOneTimeKeyboard(false);   // doimiy turadi
-
+        keyboard.setResizeKeyboard(true);
+        keyboard.setOneTimeKeyboard(false);
         return keyboard;
     }
 

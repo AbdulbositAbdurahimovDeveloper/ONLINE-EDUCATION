@@ -12,7 +12,7 @@ import java.util.Random;
  */
 public interface Utils {
 
-    //region BOT COMMANDS
+
     /**
      * Defines the primary commands that users can type to interact with the bot.
      */
@@ -23,36 +23,36 @@ public interface Utils {
     String START = "/start";
     String DASHBOARD = "/dashboard";
     String CANCEL = "/cancel";
-    //endregion
 
-    //region UI TEXT: REPLY KEYBOARDS
+
+
 
     /**
      * Contains user-facing text for Reply Keyboard Buttons (the persistent menu at the bottom).
      */
     interface ReplyButtons {
-        // --- Admin Menu ---
+
         String ADMIN_USERS = "👤 Foydalanuvchilar";
         String ADMIN_COURSES = "📚 Kurslar";
         String ADMIN_SEND_MESSAGE = "📤 Xabar Yuborish";
         String ADMIN_STATISTICS = "📊 Statistika";
         String ADMIN_SUPPORT_REQUESTS = "🆘 Yordam So'rovlari";
 
-        // --- Instructor Menu ---
+
         String INSTRUCTOR_MY_COURSES = "📚 Mening Kurslarim";
         String INSTRUCTOR_MY_STUDENTS = "🎓 O'quvchilarim";
         String INSTRUCTOR_REVIEWS = "💬 Sharhlar va Fikrlar";
         String INSTRUCTOR_MY_REVENUE = "💰 Daromadlarim";
 
-        // --- Student Menu ---
+
         String STUDENT_MY_COURSES = "📚 Mening Kurslarim";
         String STUDENT_ALL_COURSES = "🎓 Barcha Kurslar";
         String STUDENT_BALANCE = "💰 Balans va To'lovlar";
         String STUDENT_HELP = "🆘 Yordam";
     }
-    //endregion
 
-    //region UI TEXT: INLINE KEYBOARDS
+
+
 
     /**
      * Contains user-facing text for Inline Keyboard Buttons (buttons attached directly to messages).
@@ -67,7 +67,7 @@ public interface Utils {
         String LOGOUT_CONFIRM_YES_TEXT = "✅ Ha, uzish";
         String LOGOUT_CONFIRM_NO_TEXT = "❌ Yo'q, qolish";
 
-        // --- NEW: Course menu texts ---
+
         String COURSE_LIST_TEXT = "📋 Barcha kurslar ro'yxati";
         String COURSE_ADD_TEXT = "➕ Yangi kurs qo'shish";
         String COURSE_SEARCH_TEXT = "🔎 Kurs qidirish";
@@ -76,9 +76,9 @@ public interface Utils {
         String PAGINATION_PREVIOUS_TEXT = "⬅️ Oldingi";
         String PAGINATION_NEXT_TEXT = "Keyingi ➡️";
     }
-    //endregion
 
-    //region CALLBACK DATA
+
+
 
     /**
      * Defines the structure and components for building and parsing callback query data.
@@ -93,39 +93,39 @@ public interface Utils {
      */
     interface CallbackData {
 
-        // --- CONTEXT PREFIXES ---
+
         /**
          * Defines the main functional area the callback belongs to. Used for routing.
          */
         String AUTH_PREFIX = "auth";
-        String MY_COURSE_PREFIX = "myc";    // User's own courses (student or instructor)
-        String ALL_COURSES_PREFIX = "allc"; // Browsing all available courses
-        String MODULE_PREFIX = "mod";       // Course modules
-        String LESSON_PREFIX = "les";       // Module lessons
-        String CONTENT_PREFIX = "con";      // Lesson content
-        String STUDENT_PREFIX = "std";      // Student-related actions
-        String CATEGORY = "cat";            // Category context
-        String INSTRUCTOR = "ins";          // Instructor context
-        String BALANCED = "balanced";       // Balance and payments context
+        String MY_COURSE_PREFIX = "myc";
+        String ALL_COURSES_PREFIX = "allc";
+        String MODULE_PREFIX = "mod";
+        String LESSON_PREFIX = "les";
+        String CONTENT_PREFIX = "con";
+        String STUDENT_PREFIX = "std";
+        String CATEGORY = "cat";
+        String INSTRUCTOR = "ins";
+        String BALANCED = "balanced";
 
         // --- GENERAL ACTIONS ---
         /**
          * Defines the operation to be performed within a context.
          */
-        String ACTION_VIEW = "v";           // View details
-        String ACTION_LIST = "l";           // Show a list
-        String ACTION_PAGE = "p";           // Paginate
-        String ACTION_BACK = "b";           // Go back
-        String ACTION_BUY = "buy";          // Initiate purchase
-        String ACTION_SUBSCRIPTION = "subs";// Subscribe
-        String DELETED = "deleted";         // Action to delete the message
+        String ACTION_VIEW = "v";
+        String ACTION_LIST = "l";
+        String ACTION_PAGE = "p";
+        String ACTION_BACK = "b";
+        String ACTION_BUY = "buy";
+        String ACTION_SUBSCRIPTION = "subs";
+        String DELETED = "deleted";
         String ACTION_ADD = "add";
         String ACTION_EDIT = "edit";
         String ACTION_DELETE = "del";
         String ACTION_STUDENT = "std";
         String ACTION_STUDENT_ID = "std_id";
 
-        // --- SPECIFIC ACTIONS & KEYS ---
+
         /**
          * Defines more specific actions or states, often used as parameters.
          */
@@ -137,7 +137,7 @@ public interface Utils {
         String ACTION_DRAFT = "draft";
         String ACTION_REVIEWS = "review";
         String ACTION_REVENUE = "revenue";
-        String ACTION_COURSE = "course";    // Parameter to specify the context is a course
+        String ACTION_COURSE = "course";
         String ACTION_MODULE = "mod";
 
         String ACTION_CHOICE = "choice";
@@ -171,7 +171,7 @@ public interface Utils {
         String ATTACHMENT_CONTENT = "video";
         String QUIZ_CONTENT = "quiz";
 
-        // --- DEPRECATED: Hardcoded Callbacks ---
+
         /**
          * @deprecated This hardcoded value is brittle. Prefer dynamic construction: {@code String.join(":", AUTH_PREFIX, ACTION_LOGOUT, ACTION_INIT)}.
          */
@@ -188,14 +188,12 @@ public interface Utils {
         @Deprecated
         String AUTH_LOGOUT_CANCEL_CALLBACK = "auth:logout:cancel";
 
-        // --- MISC ---
+
         String BACK_TO_MAIN_MENU = "main";
         String BALANCE_PENDING_PAYMENTS = "balance_pending";
         String BALANCE_PAYMENT_HISTORY = "balance_history";
     }
-    //endregion
 
-    //region DECORATIVE UTILITIES
 
     /**
      * Contains static final String constants for number-related emojis.

@@ -14,7 +14,7 @@ import java.util.Optional;
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     Optional<Review> findByCourseIdAndUserId(Long courseId, Long userId);
 
-    // ReviewRepository.java
+
 
     @Query(
             value = """

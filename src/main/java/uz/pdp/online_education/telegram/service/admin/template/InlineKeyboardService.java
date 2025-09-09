@@ -10,7 +10,7 @@ import uz.pdp.online_education.model.User;
 import java.util.Set;
 
 public interface InlineKeyboardService {
-    // --- UMUMIY ---
+
     InlineKeyboardMarkup dashboardMenu();
 
     InlineKeyboardMarkup logoutConfirmation();
@@ -18,12 +18,12 @@ public interface InlineKeyboardService {
     InlineKeyboardMarkup createSingleButtonKeyboard(String text, String callbackData);
     InlineKeyboardMarkup welcomeFirstTime(Long chatId);
 
-    // --- FOYDALANUVCHILAR UCHUN ---
+
     InlineKeyboardMarkup usersMainMenu();
     InlineKeyboardMarkup usersPageMenu(Page<User> userPage, String searchTerm);
     InlineKeyboardMarkup userDetailMenu(Long userId, String backCallbackData);
 
-    // --- KURSLAR UCHUN ---
+
     InlineKeyboardMarkup coursesMainMenu();
     InlineKeyboardMarkup courseBrowseMethodMenu(String backCallback);
     InlineKeyboardMarkup mentorsPageMenu(Page<User> mentorPage, String backCallback);

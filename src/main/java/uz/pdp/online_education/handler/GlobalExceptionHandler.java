@@ -35,10 +35,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ExpiredJwtException.class)
     public ResponseEntity<ResponseDTO<Object>> handleExpiredJwtException(ExpiredJwtException e) {
-        // ErrorDTO'ni yaratamiz
+
         ErrorDTO error = new ErrorDTO(401, "Tokenning yashash muddati tugagan. Iltimos, qayta tizimga kiring.");
 
-        // ResponseDTO.error() static metodi orqali javobni yaratamiz
+
         ResponseDTO<Object> response = ResponseDTO.error(error);
 
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
@@ -202,7 +202,7 @@ public class GlobalExceptionHandler {
         log.warn("File upload failed: Maximum upload size was exceeded. Configured limit is {} bytes.", ex.getMaxUploadSize());
 
         ErrorDTO error = new ErrorDTO(
-                HttpStatus.PAYLOAD_TOO_LARGE.value(), // Status code 413
+                HttpStatus.PAYLOAD_TOO_LARGE.value(),
                 "File size cannot exceed"
         );
 

@@ -25,10 +25,7 @@ import uz.pdp.online_education.service.interfaces.ModuleService;
 
 import java.util.List;
 
-/**
- * CourseController barcha kurslar bilan bog‘liq API endpointlarini boshqaradi.
- * Kurs yaratish, yangilash, o‘chirish, filterlash va kurs modullarini olish mumkin.
- */
+
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
@@ -37,7 +34,6 @@ public class CourseController {
     private final CourseService courseService;
     private final ModuleService moduleService;
 
-    // ------------------ PUBLIC ENDPOINTLAR --------------------
 
     @Operation(
             summary = "Filter courses",
@@ -87,7 +83,6 @@ public class CourseController {
         return ResponseEntity.ok(ResponseDTO.success(modulePage));
     }
 
-    // ------------------ ADMIN & INSTRUCTOR ENDPOINTLAR --------------------
 
     @Operation(
             summary = "Create a course",

@@ -10,19 +10,14 @@ import java.util.List;
 public interface CommentService {
 
 
-    // Kommentni tahrirlash
     CommentResponseDto update(Long commentId, CommentUpdateDto updateDto, Long currentUserId);
 
-    // Kommentni o'chirish
     void delete(Long commentId, Long currentUserId);
 
-    // Barcha asosiy kommentlarni olish
     List<CommentResponseDto> getAll();
 
-    // Kurs bo'yicha barcha kommentlarni olish
     List<CommentResponseDto> getAllByCourseId(Long courseId);
 
-    // Dars bo'yicha barcha kommentlarni olish
     List<CommentResponseDto> getAllByLessonId(Long lessonId);
 
     Comment createComment(CommentCreateDto dto);

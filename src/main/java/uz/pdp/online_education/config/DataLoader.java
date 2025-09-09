@@ -56,40 +56,36 @@ public class DataLoader implements CommandLineRunner {
     }
 
     private void createBaseUser() {
-        // Agar bazada foydalanuvchilar yo'q bo'lsa, boshlang'ich ma'lumotlarni yaratamiz
+
         if (userRepository.count() == 0) {
             log.info("❗️❗️❗️");
             log.info("Bazada foydalanuvchilar yo'q. Boshlang'ich ma'lumotlar yaratilmoqda...");
 
-            // ===============================================
-            //          3 XIL ROLDA FOYDALANUVCHI YARATISH
-            // ===============================================
 
-            // --- 1-ROL: ADMIN YARATILMOQDA ---
             createUser(
-                    "admin",                 // username
-                    Role.ADMIN,              // role
-                    "Admin", "Boshqaruvchi",  // firstName, lastName
-                    "admin@pdp.uz",          // email
+                    "admin",
+                    Role.ADMIN,
+                    "Admin", "Boshqaruvchi",
+                    "admin@pdp.uz",
                     "+998991231212"
             );
 
-            // --- 2-ROL: INSTRUCTOR (O'QITUVCHI) YARATILMOQDA ---
+
             createUser(
-                    "instructor",            // username
-                    Role.INSTRUCTOR,         // role
-                    "John", "Doe",           // firstName, lastName
-                    "instructor@pdp.uz",      // email
+                    "instructor",
+                    Role.INSTRUCTOR,
+                    "John", "Doe",
+                    "instructor@pdp.uz",
                     "+998991231111"
             );
 
-            // --- 3-ROL: STUDENT (TALABA) YARATILMOQDA ---
+
             createUser(
-                    "student",               // username
-                    Role.STUDENT,            // role
+                    "student",
+                    Role.STUDENT,
                     "Alice",
-                    "Smith",        // firstName, lastName
-                    "student@pdp.uz",         // email
+                    "Smith",
+                    "student@pdp.uz",
                     "+998991231234"
             );
 
@@ -102,13 +98,13 @@ public class DataLoader implements CommandLineRunner {
      * Yangi foydalanuvchi va uning profilini yaratib, bazaga saqlovchi yordamchi metod.
      */
     private void createUser(String username, Role role, String firstName, String lastName, String email, String phoneNumber) {
-        // Yangi User obyektini yaratamiz
+
         User user = new User();
         user.setUsername(username);
-        user.setPassword(passwordEncoder.encode("123")); // Parolni xavfsiz holatda saqlash SHART!
+        user.setPassword(passwordEncoder.encode("123"));
         user.setRole(role);
 
-        // Yangi UserProfile obyektini yaratamiz
+
         UserProfile userProfile = new UserProfile();
         userProfile.setFirstName(firstName);
         userProfile.setLastName(lastName);
@@ -119,11 +115,11 @@ public class DataLoader implements CommandLineRunner {
             userProfile.setBio("Tajribali Java va Spring Framework o'qituvchisi.");
         }
 
-        // User va UserProfile'ni bir-biriga bog'laymiz
+
         user.setProfile(userProfile);
         userProfile.setUser(user);
 
-        // User'ni saqlaymiz (Cascade tufayli UserProfile ham avtomatik saqlanadi)
+
         userRepository.save(user);
     }
 }

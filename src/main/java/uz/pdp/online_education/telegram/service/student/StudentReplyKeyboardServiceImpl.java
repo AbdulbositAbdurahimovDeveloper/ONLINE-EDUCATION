@@ -19,30 +19,30 @@ public class StudentReplyKeyboardServiceImpl implements StudentReplyKeyboardServ
      */
     @Override
     public ReplyKeyboardMarkup studentMainMenu() {
-        // 1. Standart sozlamalarga ega bo'lgan asosiy klaviatura yaratib olamiz.
+
         ReplyKeyboardMarkup replyKeyboardMarkup = createBaseReplyKeyboard();
 
-        // 2. Tugmalar qatorlarini saqlash uchun ro'yxat (list) ochamiz.
+
         List<KeyboardRow> keyboardRows = new ArrayList<>();
 
-        // 3. Birinchi qator tugmalarini yaratamiz.
+
         KeyboardRow row1 = new KeyboardRow();
         row1.add(new KeyboardButton(Utils.ReplyButtons.STUDENT_MY_COURSES));
         row1.add(new KeyboardButton(Utils.ReplyButtons.STUDENT_ALL_COURSES));
 
-        // 4. Ikkinchi qator tugmalarini yaratamiz.
+
         KeyboardRow row2 = new KeyboardRow();
         row2.add(new KeyboardButton(Utils.ReplyButtons.STUDENT_BALANCE));
         row2.add(new KeyboardButton(Utils.ReplyButtons.STUDENT_HELP));
 
-        // 5. Yaratilgan qatorlarni umumiy ro'yxatga qo'shamiz.
+
         keyboardRows.add(row1);
         keyboardRows.add(row2);
 
-        // 6. Tugmalar ro'yxatini klaviaturaga o'rnatamiz.
+
         replyKeyboardMarkup.setKeyboard(keyboardRows);
 
-        // 7. Tayyor klaviaturani qaytaramiz.
+
         return replyKeyboardMarkup;
     }
 
@@ -55,11 +55,11 @@ public class StudentReplyKeyboardServiceImpl implements StudentReplyKeyboardServ
      */
     private ReplyKeyboardMarkup createBaseReplyKeyboard() {
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
-        // Klaviaturani ekran o'lchamiga moslashtirish
+
         replyKeyboardMarkup.setResizeKeyboard(true);
-        // Faqat shu foydalanuvchiga ko'rsatish
+
         replyKeyboardMarkup.setSelective(true);
-        // Tugma bosilgandan so'ng klaviaturani yashirish
+
         replyKeyboardMarkup.setOneTimeKeyboard(true);
         return replyKeyboardMarkup;
     }

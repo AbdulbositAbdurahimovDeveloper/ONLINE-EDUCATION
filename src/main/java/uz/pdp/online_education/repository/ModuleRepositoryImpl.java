@@ -15,13 +15,12 @@ public class ModuleRepositoryImpl implements ModuleRepositoryCustom {
 
     @Override
     public List<UserModuleStatusDTO> findUserModuleStatusesInCourse(Long userId, Long courseId) {
-        // JPQLda Entity nomlari ishlatiladi, jadval nomlari emas.
-        // Payment -> @Entity(name="payment")
-        // ModuleEnrollment -> @Entity(name="module_enrollments")
+
+
         String jpql = "SELECT new uz.pdp.online_education.payload.UserModuleStatusDTO(" +
                 "m.id, " +
                 "(SELECT COUNT(me.id) > 0 FROM module_enrollments me WHERE me.user.id = :userId AND me.module.id = m.id), " +
-                // "Payment" - bu klass nomi. "payments" emas.
+
                 "(SELECT COUNT(p.id) > 0 FROM payment p WHERE p.user.id = :userId AND p.module.id = m.id AND p.status = 'SUCCESS')" +
                 ") " +
                 "FROM modules m WHERE m.course.id = :courseId";

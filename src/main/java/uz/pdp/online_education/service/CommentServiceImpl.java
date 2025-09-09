@@ -48,7 +48,7 @@ public class CommentServiceImpl implements CommentService {
             throw new ForbiddenException("Siz faqat o'zingizning kommentlaringizni tahrirlay olasiz.");
         }
 
-        // Mavjud entity'ni DTO bilan yangilash
+
         commentMapper.updateEntityFromDto(updateDto, comment);
 
         Comment updatedComment = commentRepository.save(comment);
@@ -119,23 +119,23 @@ public class CommentServiceImpl implements CommentService {
         Course targetCourse = null;
         Lesson targetLesson = null;
 
-        // 2. Kommentning maqsadini aniqlash (Course, Lesson yoki Parent)
+
         if (dto.getParentId() != null) {
-            // Agar parentId mavjud bo'lsa, bu javob (reply) hisoblanadi
+
             Comment parentComment = commentRepository.findById(dto.getParentId())
                     .orElseThrow(() -> new IllegalArgumentException("Javob berilayotgan komment topilmadi: " + dto.getParentId()));
 
-            // Javob kommentining maqsadini asosiy kommentdan meros qilib olish
+
             targetCourse = parentComment.getCourse();
             targetLesson = parentComment.getLesson();
 
-            // Javob kommentini asosiy kommentga bog'lash
+
             newComment.setParent(parentComment);
-            newComment.setCourse(targetCourse); // Parentning kursini bog'laymiz
-            newComment.setLesson(targetLesson); // Parentning darsini bog'laymiz
+            newComment.setCourse(targetCourse);
+            newComment.setLesson(targetLesson);
 
         } else {
-            // Yangi komment bo'lsa, courseId yoki lessonId orqali maqsadni aniqlash
+
             if (dto.getCourseId() != null && dto.getLessonId() != null) {
                 throw new InvalidCommentTargetException("Komment bir vaqtning o'zida ham kursga, ham darsga tegishli bo'la olmaydi. Faqat bittasini tanlang.");
             }
@@ -154,14 +154,14 @@ public class CommentServiceImpl implements CommentService {
             }
         }
 
-        // 3. Foydalanuvchining kirish huquqini tekshirish
+
         if (targetCourse != null) {
-            // Kursga komment qoldirish uchun kamida 20% modul sotib olingan bo'lishi kerak
+
             if (!hasUserPurchasedAtLeast20PercentOfCourse(currentUser, targetCourse)) {
                 throw new UserAccessDeniedException("Kursga komment qoldirish uchun kursning kamida 20% modulini sotib olgan bo'lishingiz kerak.");
             }
         } else if (targetLesson != null) {
-            // Darsga komment qoldirish uchun shu dars joylashgan modul sotib olingan bo'lishi kerak
+
             if (!hasUserPurchasedModuleForLesson(currentUser, targetLesson)) {
                 throw new UserAccessDeniedException("Ushbu darsga komment qoldirish uchun uning modulini sotib olgan bo'lishingiz kerak.");
             }
@@ -169,7 +169,7 @@ public class CommentServiceImpl implements CommentService {
             throw new IllegalStateException("Komment maqsadini aniqlashda kutilmagan xato yuz berdi.");
         }
 
-        // 4. Kommentni saqlash
+
         return commentRepository.save(newComment);
     }
 
@@ -182,15 +182,13 @@ public class CommentServiceImpl implements CommentService {
      * @return Agar 20% yoki undan ko'p modul sotib olingan bo'lsa true, aks holda false
      */
     private boolean hasUserPurchasedAtLeast20PercentOfCourse(User user, Course course) {
-        // Kursdagi jami modullar sonini olish
+
         if (course.getModules() == null || course.getModules().isEmpty()) {
-            // Agar kursda modullar bo'lmasa, komment qoldirishga ruxsat berish
-            // Yoki bu yerda false qaytarish mumkin, agar modullarsiz kursga komment qoldirish mumkin bo'lmasa.
-            // Hozirgi holatda ruxsat beriladi.
+
             return true;
         }
 
-        // Kursdagi barcha modullarning ID'larini to'plash
+
         Set<Long> courseModuleIds = course.getModules().stream()
                 .map(Module::getId)
                 .collect(Collectors.toSet());
@@ -198,19 +196,18 @@ public class CommentServiceImpl implements CommentService {
         long totalModulesInCourse = courseModuleIds.size();
 
         if (totalModulesInCourse == 0) {
-            return true; // Modullar yo'q bo'lsa, avtomatik ruxsat berish
+            return true;
         }
 
-        // Foydalanuvchi sotib olgan modullar ID'larini olish
-        // Bu yerda getUserPurchasedModuleIds() yordamchi metodidan foydalaniladi.
+
         Set<Long> userPurchasedModuleIds = getUserPurchasedModuleIds(user);
-        if (userPurchasedModuleIds.isEmpty()) { // isEmpty() tekshiruvi null tekshiruvidan yaxshiroq
-            return false; // Foydalanuvchi hech qanday modul sotib olmagan
+        if (userPurchasedModuleIds.isEmpty()) {
+            return false;
         }
 
-        // Foydalanuvchi sotib olgan va joriy kursga tegishli bo'lgan modullar sonini hisoblash
+
         long purchasedModulesInThisCourse = userPurchasedModuleIds.stream()
-                .filter(courseModuleIds::contains) // Faqat kursga tegishli sotib olingan modullarni hisoblaymiz
+                .filter(courseModuleIds::contains)
                 .count();
 
         double purchasedPercentage = (double) purchasedModulesInThisCourse / totalModulesInCourse * 100;
@@ -227,14 +224,13 @@ public class CommentServiceImpl implements CommentService {
      * @return Agar modul sotib olingan bo'lsa true, aks holda false
      */
     private boolean hasUserPurchasedModuleForLesson(User user, Lesson lesson) {
-        // Darsning qaysi modulga tegishli ekanligini aniqlash
+
         if (lesson.getModule() == null || lesson.getModule().getId() == null) {
-            return false; // Modul IDsi aniqlanmagan darsga komment qoldirishga ruxsat bermaslik
+            return false;
         }
         Long lessonModuleId = lesson.getModule().getId();
 
-        // Foydalanuvchi sotib olgan modullar ro'yxatida shu modul borligini tekshirish
-        // Bu yerda getUserPurchasedModuleIds() yordamchi metodidan foydalaniladi.
+
         Set<Long> userPurchasedModuleIds = getUserPurchasedModuleIds(user);
         return !userPurchasedModuleIds.isEmpty() && userPurchasedModuleIds.contains(lessonModuleId);
     }

@@ -19,7 +19,7 @@ public class LoggingInterceptor implements HandlerInterceptor {
      */
 //    @Override
     public boolean preHandler(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        // Muvaffaqiyatli log - Yashil rangda
+
         System.out.println("\n\033[0;32m🔔  📥  NEW REQUEST RECEIVED\033[0m");
         System.out.println("➡️  Method : " + request.getMethod());
         System.out.println("🌐  URI    : " + request.getRequestURI());
@@ -45,7 +45,7 @@ public class LoggingInterceptor implements HandlerInterceptor {
      */
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
-        // Agar exception bo‘lsa - Qizil rangda
+
         if (ex != null) {
             System.out.println("\n\033[0;31m⚠️  EXCEPTION ENCOUNTERED:\033[0m");
             System.out.println("➡️  Exception: " + ex.getMessage());
@@ -54,7 +54,7 @@ public class LoggingInterceptor implements HandlerInterceptor {
             System.out.println("❗  Status: " + response.getStatus());
             System.out.println("💥  Error occurred during request handling\n");
         }
-        // Agar xatolik statusi bo‘lsa (4xx yoki 5xx) - Qizil rangda
+
         else if (response.getStatus() >= 400) {
             System.out.println("\n\033[0;31m⚠️  ERROR RESPONSE RECEIVED:\033[0m");
             System.out.println("\033[0;31m➡️  Status Code: " + response.getStatus() + "\033[0m");
@@ -62,7 +62,7 @@ public class LoggingInterceptor implements HandlerInterceptor {
             System.out.println("\033[0;31m⏱️  Time: " + new java.util.Date() + "\033[0m");
             System.out.println("\033[0;31m💥  Error occurred during request handling \033[0m");
         }
-        // Agar barcha narsa to‘g‘ri bo‘lsa - Yashil rangda
+
         else {
             System.out.println("\n\033[0;32m✅  SUCCESSFUL REQUEST:\033[0m");
             System.out.println("\033[0;32m➡️  Status Code: " + response.getStatus() + "\033[0m");

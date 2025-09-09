@@ -50,7 +50,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class AdminMessageServiceImpl implements AdminMessageService {
 
-    // Dependencies
+
     private final MessageService messageService;
     private final TelegramUserRepository telegramUserRepository;
     private final UserRepository userRepository;
@@ -65,9 +65,7 @@ public class AdminMessageServiceImpl implements AdminMessageService {
     private final Map<Long, String> broadcastTextCache = new HashMap<>();
     private final Map<Long, String> broadcastPhotoCache = new HashMap<>();
 
-    /**
-     * {@inheritDoc}
-     */
+
 
     @Override
     public void handleMessage(Message message) {
@@ -80,7 +78,6 @@ public class AdminMessageServiceImpl implements AdminMessageService {
 
         UserState currentState = telegramUser.getUserState();
 
-        // 1. Maxsus holatlarni birinchi bo'lib tekshiramiz
         switch (currentState) {
             case ADMIN_AWAITING_USER_SEARCH_QUERY:
                 if (message.hasText()) processUserSearch(chatId, message.getText());
@@ -92,23 +89,23 @@ public class AdminMessageServiceImpl implements AdminMessageService {
                 if (message.hasText() && !message.getText().isBlank()) {
                     processBroadcastText(chatId, message.getText());
                 } else {
-                    // Agar matn o'rniga boshqa narsa kelsa
+
                     onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, "Noto'g'ri format. Iltimos, faqat matn kiriting."));
                     cancelBroadcastAndReturnToMainMenu(chatId, "Matn kiritishda xatolik.");
                 }
                 return;
             case ADMIN_BROADCAST_AWAITING_PHOTO:
-                if (message.hasPhoto()) { // <-- FAQAT .hasPhoto() TEKSHIRILADI
+                if (message.hasPhoto()) {
                     processBroadcastPhoto(chatId, message);
                 } else {
-                    // Agar rasm o'rniga boshqa narsa kelsa
+
                     onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, "Noto'g'ri format. Iltimos, faqat rasm yuboring (fayl sifatida emas)."));
                     cancelBroadcastAndReturnToMainMenu(chatId, "Rasm kiritishda xatolik.");
                 }
                 return;
         }
 
-        // 2. Agar maxsus holat bo'lmasa, demak bu yangi buyruq.
+
         if (message.hasText()) {
             String text = message.getText();
             switch (text) {
@@ -123,12 +120,7 @@ public class AdminMessageServiceImpl implements AdminMessageService {
         }
     }
 
-    /**
-     * Sends the main welcome message for the admin panel along with the main ReplyKeyboard.
-     * This is the entry point for an admin session.
-     *
-     * @param chatId The admin's chat ID.
-     */
+
     @Override
     public void sendAdminWelcomeMessage(Long chatId, UserProfile profile) {
         telegramUserRepository.updateStateByChatId(chatId, UserState.ADMIN_MAIN_MENU);
@@ -190,7 +182,7 @@ public class AdminMessageServiceImpl implements AdminMessageService {
         );
         InlineKeyboardMarkup keyboard = inlineKeyboardService.dashboardMenu();
         SendMessage messageToSend = sendMsg.sendMessage(chatId, dashboardText, keyboard);
-        messageToSend.setParseMode("Markdown"); // Formatlashni yoqish
+        messageToSend.setParseMode("Markdown");
         onlineEducationBot.myExecute(messageToSend);
     }
 
@@ -219,13 +211,13 @@ public class AdminMessageServiceImpl implements AdminMessageService {
                                          int delayInSeconds) {
         new Thread(() -> {
             try {
-                // Soniyalarni millisekundlarga o'girish
+
                 Thread.sleep(delayInSeconds * 1000L);
 
-                // O'chirish uchun DeleteMessage obyektini yaratish
+
                 DeleteMessage deleteMessage = new DeleteMessage(chatId.toString(), messageId);
 
-                // O'chirish
+
                 onlineEducationBot.myExecute(deleteMessage);
 
             } catch (InterruptedException e) {
@@ -269,10 +261,7 @@ public class AdminMessageServiceImpl implements AdminMessageService {
         });
     }
 
-    //
-//    Foydalanuvchi tomonidan kiritilgan qidiruv matnini qayta ishlaydi va
-// topilgan natijalarni sahifalangan ro'yxat ko'rinishida yuboradi.
-//
+
     private void processUserSearch(Long chatId, String searchTerm) {
         telegramUserRepository.updateStateByChatId(chatId, UserState.ADMIN_MANAGING_USERS);
         Pageable pageable = PageRequest.of(0, 10);
@@ -310,11 +299,11 @@ public class AdminMessageServiceImpl implements AdminMessageService {
 
 
     private void processCourseSearch(Long chatId, String searchTerm) {
-        // Foydalanuvchi holatini yana asosiy menyuga qaytaramiz
+
         telegramUserRepository.updateStateByChatId(chatId, UserState.ADMIN_MANAGING_COURSES);
 
         Pageable pageable = PageRequest.of(0, 10, Sort.by("id"));
-        // Bizga endi CourseRepository'da search metodi kerak bo'ladi
+
         Page<Course> coursePage = courseRepository.searchByTitle(searchTerm, pageable);
 
         StringBuilder text = new StringBuilder();
@@ -334,17 +323,16 @@ public class AdminMessageServiceImpl implements AdminMessageService {
             }
             text.append("\n🔽 Tanlash uchun tegishli tugmani bosing.");
 
-            // Klaviatura yasashda 'searchTerm'ni berib yuboramiz
+
             keyboard = inlineKeyboardService.coursesPageMenu(coursePage, searchTerm, null, null);
         }
 
         SendMessage message = sendMsg.sendMessage(chatId, text.toString(), keyboard);
-        message.setParseMode("Markdown"); // Yoki MarkdownV2
+        message.setParseMode("Markdown");
         onlineEducationBot.myExecute(message);
     }
 
 
-//    habar yuborish
 
 
     private void processBroadcastText(Long chatId, String text) {
@@ -380,8 +368,7 @@ public class AdminMessageServiceImpl implements AdminMessageService {
         broadcastTextCache.remove(chatId);
         broadcastPhotoCache.remove(chatId);
 
-        // Asosiy menyuni yuborish uchun AdminMessageService'dagi metodni chaqiramiz
-        // Buning uchun bizga UserProfile kerak bo'ladi
+
         telegramUserRepository.findByChatId(chatId)
                 .map(TelegramUser::getUser)
                 .map(User::getProfile).ifPresent(profile -> initiateBroadcast(chatId));
@@ -391,17 +378,16 @@ public class AdminMessageServiceImpl implements AdminMessageService {
 
     @Transactional(readOnly = true)
     protected void showFullStatistics(Long chatId) {
-        // 1. Ma'lumotlarni yig'ish (bu qism o'zgarmaydi)
+
         AdminDashboardStats stats = userRepository.getFullDashboardStatistics();
 
-        // --- NULL TEKSHIRUVLARI VA TIPLARNI O'GIRISH ---
-        // Bu kodni ancha barqaror qiladi.
+
         BigDecimal totalRevenue = stats.getTotalRevenue() != null ? stats.getTotalRevenue() : BigDecimal.ZERO;
         BigDecimal revenueThisMonth = stats.getRevenueThisMonth() != null ? stats.getRevenueThisMonth() : BigDecimal.ZERO;
         BigDecimal revenueToday = stats.getRevenueToday() != null ? stats.getRevenueToday() : BigDecimal.ZERO;
         Double avgPercentage = stats.getAverageQuizPercentage() != null ? stats.getAverageQuizPercentage() : 0.0;
 
-        // 2. Xabar matnini formatlash (YANGILANDI)
+
         String reportText = String.format(
                 """
                 📊 *Umumiy Statistika (%s):*
@@ -430,7 +416,7 @@ public class AdminMessageServiceImpl implements AdminMessageService {
                 stats.getTotalStudents(),
                 stats.getTotalInstructors(),
                 stats.getNewUsersToday(),
-                totalRevenue, // <-- ENDI BU YERDA 'BigDecimal' EMAS, 'double' BERILADI
+                totalRevenue,
                 revenueThisMonth,
                 revenueToday,
                 stats.getTotalCourses(),
@@ -440,7 +426,7 @@ public class AdminMessageServiceImpl implements AdminMessageService {
                 avgPercentage
         );
 
-        // 3. Xabarni yuborish
+
         SendMessage sendMessage = sendMsg.sendMessage(chatId, reportText);
 
         sendMessage.setParseMode("Markdown");

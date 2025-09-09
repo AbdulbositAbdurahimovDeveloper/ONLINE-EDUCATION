@@ -68,7 +68,7 @@ public class TelegramUploadTaskServiceImpl implements TelegramUploadTaskService 
 //        }
     }
 
-    // getFileIdFromMessage metodini shu yerga ham ko'chirish
+
     private String getFileIdFromMessage(Message message) {
         if (message.hasPhoto()) {
             return message.getPhoto().stream().max(Comparator.comparing(PhotoSize::getFileSize)).get().getFileId();

@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface ModuleEnrollmentService {
 
-    // So'rov uchun alohida, javob uchun alohida DTO
+
     ModuleEnrollmentResponseDTO enrollUser(ModuleEnrollmentRequestDTO requestDTO);
 
     List<ModuleEnrollmentResponseDTO> getEnrollmentsByUser(Long userId);

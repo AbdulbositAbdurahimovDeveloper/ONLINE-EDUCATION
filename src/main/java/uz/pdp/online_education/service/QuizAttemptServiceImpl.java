@@ -70,7 +70,7 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
     }
 
     @Override
-    @Transactional // <--- BU ANNOTATSIYA MAJBURIY!
+    @Transactional
     public AnswerResultDTO submitAnswer(Long attemptId, AnswerSubmissionDTO submissionDTO, User user) {
         QuizAttempt attempt = quizAttemptRepository.findById(attemptId)
                 .orElseThrow(() -> new EntityNotFoundException("QuizAttempt not found with id: " + attemptId));
@@ -94,7 +94,7 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
         if (isCorrect) {
             attempt.setScore(attempt.getScore() + 1);
         }
-        // @Transactional tufayli bu o'zgarish tranzaksiya oxirida avtomatik saqlanadi.
+
 
         Question nextQuestion = questionRepository.findFirstByQuizIdAndIdGreaterThanOrderByIdAsc(attempt.getQuiz().getId(), question.getId())
                 .orElse(null);
@@ -119,9 +119,7 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
             return getAttemptResult(attemptId, user); // Agar allaqachon tugagan bo'lsa, shunchaki natijani qaytaramiz
         }
 
-        // BU YERDA ENDI HISOBLASH SHART EMAS, CHUNKI 'submitAnswer' BUNI QILIB BORDI.
-        // AGAR 'score'ni OXIRIDA HISOBLAMOQCHI BO'LSAK, FAQAT SHU YERDA HISOBLAYMIZ.
-        // HOZIRGI LOGIKAMIZ BO'YICHA, 'score' ALLAQACHON TO'G'RI.
+
 
         int score = attempt.getScore();
         int totalQuestions = attempt.getTotalQuestions();
@@ -131,7 +129,7 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
         attempt.setEndTime(LocalDateTime.now());
         attempt.setPercentage(percentage);
 
-        // @Transactional tufayli 'attempt' obyekti avtomatik yangilanadi.
+
 
         return getAttemptResult(attemptId, user);
     }
@@ -166,18 +164,16 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
 
     private void validateSelectedOptions(Question question, Set<Long> selectedOptionIds) {
         if (selectedOptionIds == null || selectedOptionIds.isEmpty()) {
-            // Agar foydalanuvchi hech qanday javob tanlamagan bo'lsa,
-            // bu ham xato bo'lishi mumkin. Hozircha o'tkazib yuboramiz.
+
             return;
         }
 
-        // Savolning o'ziga tegishli bo'lgan barcha javob variantlarining ID'larini yig'ib olamiz
+
         Set<Long> actualOptionIds = question.getOptions().stream()
                 .map(AnswerOption::getId)
                 .collect(Collectors.toSet());
 
-        // Foydalanuvchi yuborgan ID'lar to'plami, haqiqiy ID'lar to'plamining
-        // ichida to'liq yotishini tekshiramiz.
+
         if (!actualOptionIds.containsAll(selectedOptionIds)) {
             throw new DataConflictException("One or more selected options do not belong to the specified question.");
         }
@@ -191,14 +187,13 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
             throw new DataConflictException("This quiz attempt has already been completed.");
         }
 
-        // 2. Natijalarni hisoblaymiz (score allaqachon 'submitAnswer'da hisoblangan)
-        // Agar 'score'ni oxirida hisoblamoqchi bo'lsak, bu yerda logikani yozamiz
+
         int score = attempt.getScore();
         int totalQuestions = attempt.getTotalQuestions();
         return (totalQuestions > 0) ? ((double) score / totalQuestions) * 100.0 : 0.0;
     }
 
-    // Yordamchi mapper metod
+
     private UserAnswerResultDTO toUserAnswerResultDto(UserAnswer userAnswer) {
         Question question = userAnswer.getQuestion();
 
