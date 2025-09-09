@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import uz.pdp.online_education.model.Course;
+import uz.pdp.online_education.model.Faq;
 import uz.pdp.online_education.model.Module;
 import uz.pdp.online_education.model.Payment;
 import uz.pdp.online_education.model.lesson.*;
@@ -41,7 +42,8 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
      */
     @Override
     public InlineKeyboardMarkup dashboardMenu() {
-
+        // Static import tufayli kod qisqaroq va o'qish uchun osonroq
+        // Tizimdan chiqish tugmasini yasash uchun yordamchi metodni chaqiramiz.
         return createSingleButtonKeyboard(
                 Utils.InlineButtons.LOGOUT_TEXT,
                 String.join(":", AUTH_PREFIX, ACTION_LOGOUT, ACTION_INIT)
@@ -53,7 +55,6 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
      */
     @Override
     public InlineKeyboardMarkup logoutConfirmation() {
-
         InlineKeyboardButton yesButton = createButton(
                 Utils.InlineButtons.LOGOUT_CONFIRM_YES_TEXT,
                 String.join(":", AUTH_PREFIX, ACTION_LOGOUT, ACTION_CONFIRM)
@@ -63,7 +64,6 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
                 Utils.InlineButtons.LOGOUT_CONFIRM_NO_TEXT,
                 String.join(":", AUTH_PREFIX, ACTION_LOGOUT, ACTION_CANCEL)
         );
-
 
         return new InlineKeyboardMarkup(List.of(List.of(yesButton, noButton)));
     }
@@ -76,20 +76,18 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
     public InlineKeyboardMarkup myCoursesMenu(Page<Course> coursePage) {
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-
         coursePage.getContent().forEach(course -> {
             String buttonText = "🎓 " + course.getTitle();
             String callbackData = String.join(":",
-                    Utils.CallbackData.MY_COURSE_PREFIX, Utils.CallbackData.ACTION_VIEW, course.getId().toString());
+                    MY_COURSE_PREFIX, ACTION_VIEW, course.getId().toString());
             keyboard.add(List.of(createButton(buttonText, callbackData)));
         });
 
+        addPaginationButtons(keyboard, coursePage, MY_COURSE_PREFIX);
 
-        addPaginationButtons(keyboard, coursePage, Utils.CallbackData.MY_COURSE_PREFIX);
-
-
+        // 3. "Bosh menyuga qaytish" tugmasini qo'shamiz.
         String backCallback = String.join(":",
-                Utils.CallbackData.STUDENT_PREFIX, Utils.CallbackData.ACTION_BACK, Utils.CallbackData.BACK_TO_MAIN_MENU);
+                STUDENT_PREFIX, ACTION_BACK, BACK_TO_MAIN_MENU);
         keyboard.add(List.of(createButton("⬅️ " + Utils.InlineButtons.BACK_TO_MAIN_MENU_TEXT, backCallback)));
 
         return new InlineKeyboardMarkup(keyboard);
@@ -103,28 +101,25 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
     public InlineKeyboardMarkup modulesMenu(Page<Module> modulePage, Long courseId, List<Long> enrolledModuleIds, boolean isEnrolledToFullCourse) {
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-
         modulePage.getContent().forEach(module -> {
             String buttonText;
             String callbackData;
 
-
             if (isEnrolledToFullCourse || enrolledModuleIds.contains(module.getId())) {
-                buttonText = "✅ " + module.getTitle();
-                callbackData = String.join(":", Utils.CallbackData.MODULE_PREFIX, Utils.CallbackData.ACTION_VIEW, module.getId().toString());
+                buttonText = "✅ " + module.getTitle(); // To'liq kursga yoki shu modulga a'zo
+                callbackData = String.join(":", MODULE_PREFIX, ACTION_VIEW, module.getId().toString());
             } else if (lessonRepository.existsByModuleAndIsFreeTrue(module)) {
-                buttonText = "🆓 " + module.getTitle();
-                callbackData = String.join(":", Utils.CallbackData.MODULE_PREFIX, Utils.CallbackData.ACTION_VIEW, module.getId().toString());
+                buttonText = "🆓 " + module.getTitle(); // Modulda bepul dars bor
+                callbackData = String.join(":", MODULE_PREFIX, ACTION_VIEW, module.getId().toString());
             } else {
-                buttonText = "🔒 " + module.getTitle();
-                callbackData = String.join(":", Utils.CallbackData.MODULE_PREFIX, Utils.CallbackData.ACTION_BUY, module.getId().toString());
+                buttonText = "🔒 " + module.getTitle(); // Yopiq modul
+                callbackData = String.join(":", MODULE_PREFIX, ACTION_BUY, module.getId().toString());
             }
             keyboard.add(List.of(createButton(buttonText, callbackData)));
         });
 
-
-        addPaginationButtons(keyboard, modulePage, Utils.CallbackData.MODULE_PREFIX + ":" + courseId);
-        String backCallback = String.join(":", Utils.CallbackData.MY_COURSE_PREFIX, Utils.CallbackData.ACTION_LIST, Utils.CallbackData.ACTION_PAGE, "0");
+        addPaginationButtons(keyboard, modulePage, MODULE_PREFIX + ":" + courseId);
+        String backCallback = String.join(":", MY_COURSE_PREFIX, ACTION_LIST, ACTION_PAGE, "0");
         keyboard.add(List.of(createButton("⬅️ Kurslar ro'yxatiga", backCallback)));
 
         return new InlineKeyboardMarkup(keyboard);
@@ -138,7 +133,6 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
     public InlineKeyboardMarkup lessonsMenu(Page<Lesson> lessonPage, Long moduleId, Long courseId, boolean isModuleEnrolled) {
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-
         lessonPage.getContent().forEach(lesson -> {
             String buttonText;
             String callbackData;
@@ -146,19 +140,18 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
             if (isModuleEnrolled || lesson.isFree()) {
                 buttonText = "📖 " + lesson.getTitle();
                 callbackData = String.join(":",
-                        Utils.CallbackData.LESSON_PREFIX, Utils.CallbackData.ACTION_VIEW, lesson.getId().toString());
+                        LESSON_PREFIX, ACTION_VIEW, lesson.getId().toString());
             } else {
                 buttonText = "🔒 " + lesson.getTitle();
                 callbackData = String.join(":",
-                        Utils.CallbackData.LESSON_PREFIX, Utils.CallbackData.ACTION_BUY, moduleId.toString());
+                        LESSON_PREFIX, ACTION_BUY, moduleId.toString());
             }
             keyboard.add(List.of(createButton(buttonText, callbackData)));
         });
 
-
-        String paginationBaseCallback = String.join(":", Utils.CallbackData.LESSON_PREFIX, moduleId.toString());
+        String paginationBaseCallback = String.join(":", LESSON_PREFIX, moduleId.toString());
         addPaginationButtons(keyboard, lessonPage, paginationBaseCallback);
-        String backCallback = String.join(":", Utils.CallbackData.MY_COURSE_PREFIX, Utils.CallbackData.ACTION_VIEW, courseId.toString());
+        String backCallback = String.join(":", MY_COURSE_PREFIX, ACTION_VIEW, courseId.toString());
         keyboard.add(List.of(createButton("⬅️ Modullar ro'yxatiga", backCallback)));
 
         return new InlineKeyboardMarkup(keyboard);
@@ -171,7 +164,6 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
     @Transactional(readOnly = true)
     public InlineKeyboardMarkup lessonContentsMenu(Lesson lesson, Long moduleId, String backCallback) {
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-
 
         lesson.getContents().forEach(content -> {
             String icon = switch (content.getClass().getSimpleName()) {
@@ -188,11 +180,9 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
             };
 
             String buttonText = messageService.getMessage(BotMessage.LESSON_CONTENT_BUTTON_TEXT, icon, content.getBlockOrder(), typeText);
-            String callbackData = String.join(":", Utils.CallbackData.CONTENT_PREFIX, Utils.CallbackData.ACTION_VIEW, content.getId().toString());
+            String callbackData = String.join(":", CONTENT_PREFIX, ACTION_VIEW, content.getId().toString());
             keyboard.add(List.of(createButton(buttonText, callbackData)));
         });
-
-
 
         keyboard.add(List.of(createButton("⬅️ Darslar ro'yxatiga", backCallback)));
 
@@ -204,7 +194,7 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
      */
     @Override
     public InlineKeyboardMarkup createSingleButtonKeyboard(String text, String callbackData) {
-
+        // Yangi klaviatura obyekti yaratib, unga bitta tugma joylaymiz.
         InlineKeyboardButton button = createButton(text, callbackData);
         return new InlineKeyboardMarkup(List.of(List.of(button)));
     }
@@ -214,7 +204,6 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
      */
     @Override
     public InlineKeyboardMarkup createUrlButton(String text, String url) {
-
         InlineKeyboardButton button = new InlineKeyboardButton(text);
         button.setUrl(url);
         return new InlineKeyboardMarkup(List.of(List.of(button)));
@@ -230,19 +219,19 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
         List<InlineKeyboardButton> buttons = new ArrayList<>();
 
         InlineKeyboardButton buttonInstructor = new InlineKeyboardButton();
-        buttonInstructor.setCallbackData(String.join(":", Utils.CallbackData.ALL_COURSES_PREFIX, Utils.CallbackData.INSTRUCTOR, Utils.CallbackData.ACTION_PAGE, "0"));
+        buttonInstructor.setCallbackData(String.join(":", ALL_COURSES_PREFIX, INSTRUCTOR, ACTION_PAGE, "0"));
         buttonInstructor.setText(Utils.NumberEmojis.ONE);
         buttons.add(buttonInstructor);
 
         InlineKeyboardButton buttonCategory = new InlineKeyboardButton();
-        buttonCategory.setCallbackData(String.join(":", Utils.CallbackData.ALL_COURSES_PREFIX, Utils.CallbackData.CATEGORY, Utils.CallbackData.ACTION_PAGE, "0"));
+        buttonCategory.setCallbackData(String.join(":", ALL_COURSES_PREFIX, CATEGORY, ACTION_PAGE, "0"));
         buttonCategory.setText(Utils.NumberEmojis.TWO);
         buttons.add(buttonCategory);
 
         keyboard.add(buttons);
 
         List<InlineKeyboardButton> backButtons = new ArrayList<>();
-        InlineKeyboardButton inlineKeyboardButton = createButton(Utils.InlineButtons.BACK_TO_MAIN_MENU_TEXT, String.join(":", Utils.CallbackData.STUDENT_PREFIX, Utils.CallbackData.ACTION_BACK, Utils.CallbackData.BACK_TO_MAIN_MENU));
+        InlineKeyboardButton inlineKeyboardButton = createButton(Utils.InlineButtons.BACK_TO_MAIN_MENU_TEXT, String.join(":", STUDENT_PREFIX, ACTION_BACK, BACK_TO_MAIN_MENU));
         backButtons.add(inlineKeyboardButton);
         keyboard.add(backButtons);
 
@@ -251,76 +240,64 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
     }
 
 
-
     /**
      * Creates a menu for browsing categories using buttons that contain ONLY numbers.
      * The layout is a wide grid (5 buttons per row).
      */
     @Override
     public InlineKeyboardMarkup allCourses_categoriesMenu(Page<CategoryInfo> categoryPage) {
-
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-
 
         int pageSize = categoryPage.getSize();
         int currentPageNumber = categoryPage.getNumber();
         int startingNumber = currentPageNumber * pageSize + 1;
 
-
         final int buttonsPerRow = 5;
         List<InlineKeyboardButton> currentRow = new ArrayList<>();
         int itemIndex = 0;
-
 
         for (CategoryInfo categoryInfo : categoryPage.getContent()) {
             int currentItemNumber = startingNumber + itemIndex;
             String buttonText = Utils.Numbering.toEmoji(currentItemNumber);
 
             String callbackData = String.join(":",
-                    Utils.CallbackData.ALL_COURSES_PREFIX,
-                    Utils.CallbackData.ACTION_LIST,
-                    Utils.CallbackData.CATEGORY,
+                    ALL_COURSES_PREFIX,
+                    ACTION_LIST,
+                    CATEGORY,
                     categoryInfo.getId().toString(),
-                    Utils.CallbackData.ACTION_PAGE,
+                    ACTION_PAGE,
                     "0"
             );
-
 
             currentRow.add(createButton(buttonText, callbackData));
             itemIndex++;
 
-
             if (currentRow.size() == buttonsPerRow) {
                 keyboard.add(currentRow);
-                currentRow = new ArrayList<>();
+                currentRow = new ArrayList<>(); // va yangi qator ochamiz
             }
         }
-
 
         if (!currentRow.isEmpty()) {
             keyboard.add(currentRow);
         }
         String paginationBaseCallback = String.join(":",
-                Utils.CallbackData.ALL_COURSES_PREFIX,
-                Utils.CallbackData.ACTION_LIST,
-                Utils.CallbackData.CATEGORY
+                ALL_COURSES_PREFIX,
+                ACTION_LIST,
+                CATEGORY
         );
-
         List<InlineKeyboardButton> paginationRow = createPaginationRow(categoryPage, paginationBaseCallback);
         if (!paginationRow.isEmpty()) {
             keyboard.add(paginationRow);
         }
 
-        String backCallback = String.join(":", Utils.CallbackData.ALL_COURSES_PREFIX, Utils.CallbackData.ACTION_BACK, Utils.CallbackData.BACK_TO_MAIN_MENU);
+        String backCallback = String.join(":", ALL_COURSES_PREFIX, ACTION_BACK, BACK_TO_MAIN_MENU);
         keyboard.add(List.of(createButton("⬅️ Orqaga", backCallback)));
-
 
         inlineKeyboardMarkup.setKeyboard(keyboard);
         return inlineKeyboardMarkup;
     }
-
-
 
     /**
      * Creates a universal pagination row for any paginated data.
@@ -335,40 +312,32 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
     private List<InlineKeyboardButton> createPaginationRow(Page<?> page, String baseCallback) {
         List<InlineKeyboardButton> paginationRow = new ArrayList<>();
 
-
         if (page.getTotalPages() <= 1) {
             return paginationRow;
         }
 
-        int currentPage = page.getNumber();
-
+        int currentPage = page.getNumber(); // Joriy sahifa raqami (0 dan boshlanadi)
 
         if (page.hasPrevious()) {
-
             String prevCallback = String.join(":",
                     baseCallback,
-                    Utils.CallbackData.ACTION_PAGE,
+                    ACTION_PAGE,
                     String.valueOf(currentPage - 1)
             );
             paginationRow.add(createButton(Utils.InlineButtons.PAGINATION_PREVIOUS_TEXT, prevCallback));
         }
 
-
         String pageIndicator = String.format("%d / %d", currentPage + 1, page.getTotalPages());
-        paginationRow.add(createButton(pageIndicator, "do_nothing"));
-
+        paginationRow.add(createButton(pageIndicator, "do_nothing")); // Bosilganda hech nima qilmaydi
 
         if (page.hasNext()) {
-
             String nextCallback = String.join(":",
                     baseCallback,
-                    Utils.CallbackData.ACTION_PAGE,
+                    ACTION_PAGE,
                     String.valueOf(currentPage + 1)
             );
             paginationRow.add(createButton(Utils.InlineButtons.PAGINATION_NEXT_TEXT, nextCallback));
         }
-
-
         return paginationRow;
     }
 
@@ -378,38 +347,32 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
      */
     @Override
     public InlineKeyboardMarkup allCourses_instructorsMenu(Page<UserInfo> instructorPage) {
-
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-
 
         int pageSize = instructorPage.getSize();
         int currentPageNumber = instructorPage.getNumber();
         int startingNumber = currentPageNumber * pageSize + 1;
 
-
         final int buttonsPerRow = 5;
         List<InlineKeyboardButton> currentRow = new ArrayList<>();
         int itemIndex = 0;
-
 
         for (UserInfo userInfo : instructorPage.getContent()) {
             int currentItemNumber = startingNumber + itemIndex;
             String buttonText = Utils.Numbering.toEmoji(currentItemNumber);
 
             String callbackData = String.join(":",
-                    Utils.CallbackData.ALL_COURSES_PREFIX,
-                    Utils.CallbackData.ACTION_LIST,
-                    Utils.CallbackData.INSTRUCTOR,
+                    ALL_COURSES_PREFIX,
+                    ACTION_LIST,
+                    INSTRUCTOR,
                     userInfo.getId().toString(),
-                    Utils.CallbackData.ACTION_PAGE,
+                    ACTION_PAGE,
                     "0"
             );
 
-
             currentRow.add(createButton(buttonText, callbackData));
             itemIndex++;
-
 
             if (currentRow.size() == buttonsPerRow) {
                 keyboard.add(currentRow);
@@ -417,24 +380,21 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
             }
         }
 
-
         if (!currentRow.isEmpty()) {
             keyboard.add(currentRow);
         }
         String paginationBaseCallback = String.join(":",
-                Utils.CallbackData.ALL_COURSES_PREFIX,
-                Utils.CallbackData.ACTION_LIST,
-                Utils.CallbackData.INSTRUCTOR
+                ALL_COURSES_PREFIX,
+                ACTION_LIST,
+                INSTRUCTOR
         );
-
         List<InlineKeyboardButton> paginationRow = createPaginationRow(instructorPage, paginationBaseCallback);
         if (!paginationRow.isEmpty()) {
             keyboard.add(paginationRow);
         }
 
-        String backCallback = String.join(":", Utils.CallbackData.ALL_COURSES_PREFIX, Utils.CallbackData.ACTION_BACK, Utils.CallbackData.BACK_TO_MAIN_MENU);
+        String backCallback = String.join(":", ALL_COURSES_PREFIX, ACTION_BACK, BACK_TO_MAIN_MENU);
         keyboard.add(List.of(createButton("⬅️ Orqaga", backCallback)));
-
 
         inlineKeyboardMarkup.setKeyboard(keyboard);
         return inlineKeyboardMarkup;
@@ -449,38 +409,27 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
      */
     @Override
     public InlineKeyboardMarkup allCoursesMenu(PageDTO<CourseDetailDTO> categoryPageDTO, String backButton, String type, Long id) {
-
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-
-
-        int pageSize = categoryPageDTO.getPageSize();
-        int currentPageNumber = categoryPageDTO.getPageNumber();
-        int startingNumber = currentPageNumber * pageSize + 1;
-
 
         final int buttonsPerRow = 5;
         List<InlineKeyboardButton> currentRow = new ArrayList<>();
         int itemIndex = 1;
 
-
         for (CourseDetailDTO courseDetailDTO : categoryPageDTO.getContent()) {
-            int currentItemNumber = startingNumber + itemIndex;
             String buttonText = Utils.Numbering.toEmoji(itemIndex);
 
             String callbackData = String.join(":",
-                    Utils.CallbackData.ALL_COURSES_PREFIX,
-                    Utils.CallbackData.MODULE_PREFIX,
+                    ALL_COURSES_PREFIX,
+                    MODULE_PREFIX,
                     type + "." + id.toString(),
                     courseDetailDTO.getId().toString(),
-                    Utils.CallbackData.ACTION_PAGE,
+                    ACTION_PAGE,
                     "0"
             );
 
-
             currentRow.add(createButton(buttonText, callbackData));
             itemIndex++;
-
 
             if (currentRow.size() == buttonsPerRow) {
                 keyboard.add(currentRow);
@@ -488,29 +437,23 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
             }
         }
 
-
         if (!currentRow.isEmpty()) {
             keyboard.add(currentRow);
         }
         String paginationBaseCallback = String.join(":",
-                Utils.CallbackData.ALL_COURSES_PREFIX,
-                Utils.CallbackData.ACTION_LIST,
+                ALL_COURSES_PREFIX,
+                ACTION_LIST,
                 type,
                 id.toString()
         );
-
         List<InlineKeyboardButton> paginationRow = createPaginationRow(categoryPageDTO, paginationBaseCallback);
         if (!paginationRow.isEmpty()) {
             keyboard.add(paginationRow);
         }
 
         keyboard.add(List.of(createButton("⬅️ Orqaga", backButton)));
-
-
         inlineKeyboardMarkup.setKeyboard(keyboard);
         return inlineKeyboardMarkup;
-
-
     }
 
     /**
@@ -522,38 +465,32 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
      */
     @Override
     public InlineKeyboardMarkup allCourseModules(PageDTO<ModuleDetailDTO> modulePageDTO, String backButton, Long id, String datum) {
-
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-
 
         int pageSize = modulePageDTO.getPageSize();
         int currentPageNumber = modulePageDTO.getPageNumber();
         int startingNumber = currentPageNumber * pageSize + 1;
 
-
         final int buttonsPerRow = 5;
         List<InlineKeyboardButton> currentRow = new ArrayList<>();
         int itemIndex = 1;
-
 
         for (ModuleDetailDTO courseDetailDTO : modulePageDTO.getContent()) {
             int currentItemNumber = startingNumber + itemIndex;
             String buttonText = Utils.Numbering.toEmoji(itemIndex);
 
             String callbackData = String.join(":",
-                    Utils.CallbackData.ALL_COURSES_PREFIX,
-                    Utils.CallbackData.LESSON_PREFIX,
+                    ALL_COURSES_PREFIX,
+                    LESSON_PREFIX,
                     datum,
                     courseDetailDTO.getId().toString(),
-                    Utils.CallbackData.ACTION_PAGE,
+                    ACTION_PAGE,
                     "0"
             );
 
-
             currentRow.add(createButton(buttonText, callbackData));
             itemIndex++;
-
 
             if (currentRow.size() == buttonsPerRow) {
                 keyboard.add(currentRow);
@@ -561,18 +498,16 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
             }
         }
 
-
         if (!currentRow.isEmpty()) {
             keyboard.add(currentRow);
         }
         String paginationBaseCallback = String.join(":",
-                Utils.CallbackData.ALL_COURSES_PREFIX,
-                Utils.CallbackData.MODULE_PREFIX,
-                Utils.CallbackData.ACTION_VIEW,
+                ALL_COURSES_PREFIX,
+                MODULE_PREFIX,
+                ACTION_VIEW,
                 id.toString()
 
         );
-
         List<InlineKeyboardButton> paginationRow = createPaginationRow(modulePageDTO, paginationBaseCallback);
         if (!paginationRow.isEmpty()) {
             keyboard.add(paginationRow);
@@ -580,11 +515,8 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
 
         keyboard.add(List.of(createButton("⬅️ Orqaga", backButton)));
 
-
         inlineKeyboardMarkup.setKeyboard(keyboard);
         return inlineKeyboardMarkup;
-
-
     }
 
     /**
@@ -604,16 +536,15 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
     ) {
 
 
-
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
         List<InlineKeyboardButton> button = new ArrayList<>();
         if (!hasSubscription) {
             InlineKeyboardButton subscription = createButton("Obuna bo`lish", String.join(":",
-                    Utils.CallbackData.ALL_COURSES_PREFIX,
-                    Utils.CallbackData.ACTION_SUBSCRIPTION,
-                    Utils.CallbackData.ACTION_VIEW,
+                    ALL_COURSES_PREFIX,
+                    ACTION_SUBSCRIPTION,
+                    ACTION_VIEW,
                     datum,
                     id.toString()
             ));
@@ -622,9 +553,9 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
         if (!purchased) {
             InlineKeyboardButton buy = createButton("Sotib olish",
                     String.join(":",
-                            Utils.CallbackData.ALL_COURSES_PREFIX,
-                            Utils.CallbackData.ACTION_BUY,
-                            Utils.CallbackData.ACTION_VIEW,
+                            ALL_COURSES_PREFIX,
+                            ACTION_BUY,
+                            ACTION_VIEW,
                             datum,
                             id.toString()
                     ));
@@ -633,28 +564,24 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
         keyboard.add(button);
 
 
-
         final int buttonsPerRow = 5;
         List<InlineKeyboardButton> currentRow = new ArrayList<>();
         int itemIndex = 1;
-
 
         for (LessonResponseDTO lessonResponseDTO : lessonResponseDTOPageDTO.getContent()) {
             String buttonText = Utils.Numbering.toEmoji(itemIndex);
 
             String callbackData = String.join(":",
-                    Utils.CallbackData.ALL_COURSES_PREFIX,
-                    Utils.CallbackData.CONTENT_PREFIX,
+                    ALL_COURSES_PREFIX,
+                    CONTENT_PREFIX,
                     datum,
                     lessonResponseDTO.getId().toString(),
-                    Utils.CallbackData.ACTION_PAGE,
+                    ACTION_PAGE,
                     "0"
             );
 
-
             currentRow.add(createButton(buttonText, callbackData));
             itemIndex++;
-
 
             if (currentRow.size() == buttonsPerRow) {
                 keyboard.add(currentRow);
@@ -662,18 +589,16 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
             }
         }
 
-
         if (!currentRow.isEmpty()) {
             keyboard.add(currentRow);
         }
         String paginationBaseCallback = String.join(":",
-                Utils.CallbackData.ALL_COURSES_PREFIX,
-                Utils.CallbackData.MODULE_PREFIX,
-                Utils.CallbackData.ACTION_VIEW,
+                ALL_COURSES_PREFIX,
+                MODULE_PREFIX,
+                ACTION_VIEW,
                 id.toString()
 
         );
-
         List<InlineKeyboardButton> paginationRow = createPaginationRow(lessonResponseDTOPageDTO, paginationBaseCallback);
         if (!paginationRow.isEmpty()) {
             keyboard.add(paginationRow);
@@ -681,10 +606,8 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
 
         keyboard.add(List.of(createButton("⬅️ Orqaga", backButton)));
 
-
         inlineKeyboardMarkup.setKeyboard(keyboard);
         return inlineKeyboardMarkup;
-
     }
 
     /**
@@ -696,11 +619,10 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
     public InlineKeyboardMarkup buildYesNoKeyboard(Long moduleId, String datum) {
         InlineKeyboardButton yesBtn = InlineKeyboardButton.builder()
                 .text("✅ Ha")
-//                .callbackData("SUBSCRIBE_MODULE_" + moduleId)
                 .callbackData(String.join(":",
-                        Utils.CallbackData.ALL_COURSES_PREFIX,
-                        Utils.CallbackData.ACTION_SUBSCRIPTION,
-                        Utils.CallbackData.ACTION_CONFIRM,
+                        ALL_COURSES_PREFIX,
+                        ACTION_SUBSCRIPTION,
+                        ACTION_CONFIRM,
                         datum,
                         moduleId.toString()
                 ))
@@ -709,9 +631,9 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
         InlineKeyboardButton noBtn = InlineKeyboardButton.builder()
                 .text("❌ Yo‘q")
                 .callbackData(String.join(":",
-                        Utils.CallbackData.ALL_COURSES_PREFIX,
-                        Utils.CallbackData.ACTION_SUBSCRIPTION,
-                        Utils.CallbackData.ACTION_CANCEL,
+                        ALL_COURSES_PREFIX,
+                        ACTION_SUBSCRIPTION,
+                        ACTION_CANCEL,
                         datum,
                         moduleId.toString()
                 ))
@@ -732,16 +654,16 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
 
         InlineKeyboardButton buyBtn = InlineKeyboardButton.builder()
                 .text("💳 Sotib olish")
-                .url(urlBuilderService.generateModuleCheckoutUrl(moduleId)) // Sizning saytingizdagi purchase link
+                .url(urlBuilderService.generateModuleCheckoutUrl(moduleId))
                 .build();
 
         InlineKeyboardButton cancelBtn = InlineKeyboardButton.builder()
                 .text("❌ Bekor qilish")
                 .callbackData(
                         String.join(":",
-                                Utils.CallbackData.ALL_COURSES_PREFIX,
-                                Utils.CallbackData.ACTION_BUY,
-                                Utils.CallbackData.ACTION_CANCEL,
+                                ALL_COURSES_PREFIX,
+                                ACTION_BUY,
+                                ACTION_CANCEL,
                                 datum,
                                 moduleId.toString()
                         )
@@ -772,7 +694,7 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
 
         InlineKeyboardButton deletedBtn = new InlineKeyboardButton();
         deletedBtn.setText("❌ o`chirish");
-        deletedBtn.setCallbackData(Utils.CallbackData.DELETED);
+        deletedBtn.setCallbackData(DELETED);
         inlineKeyboardButtons.add(deletedBtn);
 
         buttons.add(inlineKeyboardButtons);
@@ -794,23 +716,22 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
         List<InlineKeyboardButton> firstRow = new ArrayList<>();
 
-
+        // 1-qatorni yig'amiz
         if (hasPendingPayments) {
-
             String buttonText = messageService.getMessage(BotMessage.BALANCE_BUTTON_PENDING, pendingCount);
-            firstRow.add(createButton(buttonText, String.join(":", Utils.CallbackData.BALANCED, Utils.CallbackData.BALANCE_PENDING_PAYMENTS, Utils.CallbackData.ACTION_PAGE, "0")));
+            firstRow.add(createButton(buttonText, String.join(":", BALANCED, BALANCE_PENDING_PAYMENTS, ACTION_PAGE, "0")));
         }
 
-
+        // "To'lovlar tarixi" tugmasini har doim qo'shamiz
         String historyButtonText = messageService.getMessage(BotMessage.BALANCE_BUTTON_HISTORY);
-        firstRow.add(createButton(historyButtonText, String.join(":", Utils.CallbackData.BALANCED, Utils.CallbackData.BALANCE_PAYMENT_HISTORY, Utils.CallbackData.ACTION_PAGE, "0")));
+        firstRow.add(createButton(historyButtonText, String.join(":", BALANCED, BALANCE_PAYMENT_HISTORY, ACTION_PAGE, "0")));
 
         rows.add(firstRow);
 
-
+        // 2-qator (Orqaga tugmasi)
         List<InlineKeyboardButton> secondRow = new ArrayList<>();
         String backButtonText = messageService.getMessage(BotMessage.BALANCE_BUTTON_BACK);
-        secondRow.add(createButton(backButtonText, String.join(":", Utils.CallbackData.STUDENT_PREFIX, Utils.CallbackData.ACTION_BACK, Utils.CallbackData.BACK_TO_MAIN_MENU)));
+        secondRow.add(createButton(backButtonText, String.join(":", STUDENT_PREFIX, ACTION_BACK, BACK_TO_MAIN_MENU)));
 
         rows.add(secondRow);
 
@@ -827,10 +748,9 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-
         String paginationBaseCallback = String.join(":",
-                Utils.CallbackData.BALANCED,
-                Utils.CallbackData.BALANCE_PAYMENT_HISTORY
+                BALANCED,
+                BALANCE_PAYMENT_HISTORY
         );
 
         List<InlineKeyboardButton> paginationRow = createPaginationRow(payments, paginationBaseCallback);
@@ -838,9 +758,9 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
             keyboard.add(paginationRow);
         }
 
-
+        // Orqaga tugmasi
         keyboard.add(List.of(
-                createButton("⬅️ Orqaga", String.join(":", Utils.CallbackData.BALANCED, Utils.CallbackData.ACTION_BACK))
+                createButton("⬅️ Orqaga", String.join(":", BALANCED, ACTION_BACK))
         ));
 
         inlineKeyboardMarkup.setKeyboard(keyboard);
@@ -858,22 +778,21 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
             String buttonText = String.valueOf(index++);
 
             String callbackData = String.join(":",
-                    Utils.CallbackData.BALANCED,
-                    Utils.CallbackData.ACTION_VIEW,
+                    BALANCED,
+                    ACTION_VIEW,
                     module.getId().toString());
 
             row.add(createButton(buttonText, callbackData));
         }
 
-
+        // Barcha tugmalar bitta qatorda
         if (!row.isEmpty()) {
             keyboard.add(row);
         }
 
-
         String paginationBaseCallback = String.join(":",
-                Utils.CallbackData.BALANCED,
-                Utils.CallbackData.BALANCE_PENDING_PAYMENTS
+                BALANCED,
+                BALANCE_PENDING_PAYMENTS
         );
 
         List<InlineKeyboardButton> paginationRow = createPaginationRow(modules, paginationBaseCallback);
@@ -882,7 +801,7 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
         }
 
         keyboard.add(List.of(
-                createButton("⬅️ Orqaga", String.join(":", Utils.CallbackData.BALANCED, Utils.CallbackData.ACTION_BACK))
+                createButton("⬅️ Orqaga", String.join(":", BALANCED, ACTION_BACK))
         ));
 
         inlineKeyboardMarkup.setKeyboard(keyboard);
@@ -893,17 +812,17 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
     public InlineKeyboardMarkup buildModuleButtons(Module module) {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
 
-
+        // ✅ Sotib olish tugmasi (URL tugma)
         InlineKeyboardButton buyButton = new InlineKeyboardButton("✅ Sotib olish");
         buyButton.setUrl(urlBuilderService.generateModuleCheckoutUrl(module.getId()));
         rows.add(List.of(buyButton));
 
-
+        // ⬅️ Orqaga tugmasi
         rows.add(List.of(
                 createButton("⬅️ Orqaga", String.join(":",
-                        Utils.CallbackData.BALANCED,
-                        Utils.CallbackData.BALANCE_PENDING_PAYMENTS,
-                        Utils.CallbackData.ACTION_PAGE,
+                        BALANCED,
+                        BALANCE_PENDING_PAYMENTS,
+                        ACTION_PAGE,
                         "0"
                 ))
         ));
@@ -911,12 +830,56 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
         return new InlineKeyboardMarkup(rows);
     }
 
+    /**
+     * @param faqs
+     * @param backButton
+     * @return
+     */
+    @Override
+    public InlineKeyboardMarkup studentSupportMessage(Page<Faq> faqs, String backButton, int pageNumber) {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        int index = 1;
 
+        for (Faq faq : faqs.getContent()) {
+            String buttonText = String.valueOf(index++);
+
+            String callbackData = String.join(":",
+                    ACTION_SUPPORT,
+                    ACTION_VIEW,
+                    faq.getId().toString(),
+                    String.valueOf(pageNumber));
+
+            row.add(createButton(buttonText, callbackData));
+        }
+        if (!row.isEmpty()) {
+            keyboard.add(row);
+        }
+
+        String paginationBaseCallback = String.join(":",
+                ACTION_SUPPORT
+        );
+
+        List<InlineKeyboardButton> paginationRow = createPaginationRow(faqs, paginationBaseCallback);
+        if (!paginationRow.isEmpty()) {
+            keyboard.add(paginationRow);
+        }
+
+        keyboard.add(List.of(
+                createButton("⬅️ Orqaga", backButton)
+        ));
+
+        inlineKeyboardMarkup.setKeyboard(keyboard);
+        return inlineKeyboardMarkup;
+
+    }
+
+    // --- PRIVATE HELPER METHODS ---
 
     private List<InlineKeyboardButton> createPaginationRow(PageDTO<?> page, String baseCallback) {
         List<InlineKeyboardButton> paginationRow = new ArrayList<>();
-
 
         if (page.getTotalPages() <= 1) {
             return paginationRow;
@@ -924,32 +887,26 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
 
         int currentPage = page.getPageNumber();
 
-
         if (!page.isFirst()) {
-
             String prevCallback = String.join(":",
                     baseCallback,
-                    Utils.CallbackData.ACTION_PAGE,
+                    ACTION_PAGE,
                     String.valueOf(currentPage - 1)
             );
             paginationRow.add(createButton(Utils.InlineButtons.PAGINATION_PREVIOUS_TEXT, prevCallback));
         }
 
-
         String pageIndicator = String.format("%d / %d", currentPage + 1, page.getTotalPages());
-        paginationRow.add(createButton(pageIndicator, "do_nothing"));
-
+        paginationRow.add(createButton(pageIndicator, "do_nothing")); // Bosilganda hech nima qilmaydi
 
         if (!page.isLast()) {
-
             String nextCallback = String.join(":",
                     baseCallback,
-                    Utils.CallbackData.ACTION_PAGE,
+                    ACTION_PAGE,
                     String.valueOf(currentPage + 1)
             );
             paginationRow.add(createButton(Utils.InlineButtons.PAGINATION_NEXT_TEXT, nextCallback));
         }
-
 
         return paginationRow;
     }
@@ -958,25 +915,21 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
      * A private helper method to add pagination buttons (Next, Previous) to a keyboard.
      */
     private void addPaginationButtons(List<List<InlineKeyboardButton>> keyboard, Page<?> page, String baseCallback) {
-
         if (page.getTotalPages() > 1) {
             List<InlineKeyboardButton> row = new ArrayList<>();
             int currentPage = page.getNumber();
 
-
             if (page.hasPrevious()) {
                 String prevCallback = String.join(":",
-                        baseCallback, Utils.CallbackData.ACTION_LIST, Utils.CallbackData.ACTION_PAGE, String.valueOf(currentPage - 1));
+                        baseCallback, ACTION_LIST, ACTION_PAGE, String.valueOf(currentPage - 1));
                 row.add(createButton("⬅️ Oldingi", prevCallback));
             }
 
-
             row.add(createButton(String.format("%d / %d", currentPage + 1, page.getTotalPages()), "do_nothing"));
-
 
             if (page.hasNext()) {
                 String nextCallback = String.join(":",
-                        baseCallback, Utils.CallbackData.ACTION_LIST, Utils.CallbackData.ACTION_PAGE, String.valueOf(currentPage + 1));
+                        baseCallback, ACTION_LIST, ACTION_PAGE, String.valueOf(currentPage + 1));
                 row.add(createButton("Keyingi ➡️", nextCallback));
             }
             keyboard.add(row);
@@ -987,7 +940,6 @@ public class StudentInlineKeyboardServiceImpl implements StudentInlineKeyboardSe
      * A private helper method to create a single InlineKeyboardButton.
      */
     private InlineKeyboardButton createButton(String text, String callbackData) {
-
         InlineKeyboardButton button = new InlineKeyboardButton(text);
         button.setCallbackData(callbackData);
         return button;

@@ -24,6 +24,7 @@ import uz.pdp.online_education.payload.UserInfo;
 import uz.pdp.online_education.payload.course.CourseDetailDTO;
 import uz.pdp.online_education.payload.enrollment.ModuleEnrollmentRequestDTO;
 import uz.pdp.online_education.payload.enrollment.ModuleEnrollmentResponseDTO;
+import uz.pdp.online_education.payload.faq.FaqDTO;
 import uz.pdp.online_education.payload.lesson.LessonResponseDTO;
 import uz.pdp.online_education.payload.module.ModuleDetailDTO;
 import uz.pdp.online_education.repository.*;
@@ -31,19 +32,25 @@ import uz.pdp.online_education.service.interfaces.*;
 import uz.pdp.online_education.telegram.Utils;
 import uz.pdp.online_education.telegram.config.controller.OnlineEducationBot;
 import uz.pdp.online_education.telegram.enums.BotMessage;
+import uz.pdp.online_education.telegram.enums.UserState;
 import uz.pdp.online_education.telegram.mapper.SendMsg;
+import uz.pdp.online_education.telegram.service.RedisTemporaryDataService;
 import uz.pdp.online_education.telegram.service.TelegramUserService;
 import uz.pdp.online_education.telegram.service.UrlBuilderService;
 import uz.pdp.online_education.telegram.service.message.MessageService;
 import uz.pdp.online_education.telegram.service.student.template.StudentCallBackQueryService;
 import uz.pdp.online_education.telegram.service.student.template.StudentInlineKeyboardService;
 import uz.pdp.online_education.telegram.service.student.template.StudentProcessMessageService;
+import uz.pdp.online_education.telegram.service.student.template.StudentReplyKeyboardService;
 
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+
+import static uz.pdp.online_education.telegram.Utils.CallbackData.*;
 
 @Slf4j
 @Service
@@ -58,6 +65,12 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
     private final PaymentService paymentService;
     private final LessonService lessonService;
     private final ModuleEnrollmentService moduleEnrollmentService;
+    private final StudentReplyKeyboardService studentReplyKeyboardService;
+    private final ReviewService reviewService;
+    private final FaqService faqService;
+    private final FaqRepository faqRepository;
+    private final RedisTemporaryDataService redisTemporaryDataService;
+    // --- DEPENDENCIES ---
 
     @Value("${telegram.bot.webhook-path}")
     private String SITE_URL;
@@ -104,19 +117,16 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
 
 
             switch (prefix) {
-                case Utils.CallbackData.DELETED -> bot.myExecute(sendMsg.deleteMessage(chatId, messageId));
-                case Utils.CallbackData.AUTH_PREFIX -> handleAuthCallback(user, chatId, messageId, data);
-                case Utils.CallbackData.MY_COURSE_PREFIX -> handleMyCourseCallback(user, chatId, messageId, data);
-                case Utils.CallbackData.MODULE_PREFIX ->
-                        handleModuleCallback(user, chatId, messageId, data, callbackQuery);
-                case Utils.CallbackData.LESSON_PREFIX ->
-                        handleLessonCallback(user, chatId, messageId, data, callbackQuery);
-                case Utils.CallbackData.CONTENT_PREFIX -> handleContentCallback(user, chatId, data, callbackQuery);
-                case Utils.CallbackData.STUDENT_PREFIX -> handleStudentGeneralCallback(user, chatId, messageId, data);
-                case Utils.CallbackData.ALL_COURSES_PREFIX ->
-                        handleAllCoursesCallback(user, chatId, messageId, data, queryData, callbackQueryId);
-                case Utils.CallbackData.BALANCED ->
-                        handleBalanced(user, chatId, messageId, data, queryData, callbackQueryId);
+                case DELETED -> bot.myExecute(sendMsg.deleteMessage(chatId, messageId));
+                case AUTH_PREFIX -> handleAuthCallback(user, chatId, messageId, data);
+                case MY_COURSE_PREFIX -> handleMyCourseCallback(user, chatId, messageId, data);
+                case MODULE_PREFIX -> handleModuleCallback(user, chatId, messageId, data, callbackQuery);
+                case LESSON_PREFIX -> handleLessonCallback(user, chatId, messageId, data, callbackQuery);
+                case CONTENT_PREFIX -> handleContentCallback(user, chatId, data, callbackQuery);
+                case STUDENT_PREFIX -> handleStudentGeneralCallback(user, chatId, messageId, data);
+                case ALL_COURSES_PREFIX -> handleAllCoursesCallback(user, chatId, messageId, data, callbackQueryId);
+                case BALANCED -> handleBalanced(user, chatId, messageId, data);
+                case ACTION_SUPPORT -> handleSupport(user, chatId, messageId, data, queryData, callbackQueryId);
             }
         } catch (Exception e) {
             log.error("Callbackni qayta ishlashda xatolik yuz berdi: Query='{}'", queryData, e);
@@ -124,7 +134,32 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
         }
     }
 
-    private void handleBalanced(User user, Long chatId, Integer messageId, String[] data, String queryData, String callbackQueryId) {
+    private void handleSupport(User user, Long chatId, Integer messageId, String[] data, String queryData, String callbackQueryId) {
+        String type = data[1];
+
+        switch (type) {
+            case BACK_TO_MAIN_MENU -> {
+                bot.myExecute(sendMsg.deleteMessage(chatId, messageId));
+                bot.myExecute(sendMsg.sendMessage(chatId, "🏠 Bosh menyu!", studentReplyKeyboardService.studentMainMenu()));
+            }
+            case ACTION_VIEW -> {
+                Long id = Long.valueOf(data[2]);
+                FaqDTO faqDTO = faqService.getById(id);
+                String built = buildFaqAnswerText(faqDTO);
+                InlineKeyboardMarkup keyboard = studentInlineKeyboardService.createSingleButtonKeyboard("orqaga", String.join(":", ACTION_SUPPORT, ACTION_PAGE, data[3]));
+                bot.myExecute(sendMsg.editMessage(chatId, messageId, built, keyboard));
+            }
+            case ACTION_PAGE -> {
+                int pageNumber = Integer.parseInt(data[2]);
+                Page<Faq> faqs = faqRepository.findAll(PageRequest.of(pageNumber, 5));
+                String built = buildFaqListText(faqs);
+                InlineKeyboardMarkup inlineKeyboardMarkup = studentInlineKeyboardService.studentSupportMessage(faqs, String.join("", ACTION_SUPPORT, BACK_TO_MAIN_MENU), pageNumber);
+                bot.myExecute(sendMsg.editMessage(chatId, messageId, built, inlineKeyboardMarkup));
+            }
+        }
+    }
+
+    private void handleBalanced(User user, Long chatId, Integer messageId, String[] data) {
         String type = data[1];
 
         switch (type) {
@@ -167,7 +202,6 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
             }
 
         }
-
     }
 
     private void userPendingPayments(User user, Long chatId, Integer messageId, String[] data) {
@@ -465,29 +499,23 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
     /**
      * "Barcha kurslar" bo'limi bilan bog'liq callback'larni boshqaradi.
      */
-    private void handleAllCoursesCallback(User user, Long chatId, Integer messageId, String[] data, String queryData, String callbackQueryId) {
+    private void handleAllCoursesCallback(User user, Long chatId, Integer messageId, String[] data, String callbackQueryId) {
         String type = data[1];
-//        int pageNumber = Integer.parseInt(data[3]);
 
         switch (type) {
-            case Utils.CallbackData.CATEGORY -> showAllCourses_Categories(chatId, messageId, Integer.parseInt(data[3]));
-            case Utils.CallbackData.INSTRUCTOR ->
-                    showAllCourses_Instructors(chatId, messageId, Integer.parseInt(data[3]));
-            case Utils.CallbackData.ACTION_LIST -> showAllCourse(chatId, messageId, data, queryData);
-            case Utils.CallbackData.MODULE_PREFIX -> showAllCourseModules(user, chatId, messageId, data, queryData);
-            case Utils.CallbackData.LESSON_PREFIX ->
-                    showAllCourseModuleLessons(user, chatId, messageId, data, queryData);
-            case Utils.CallbackData.CONTENT_PREFIX ->
-                    sendAllCoursesLessonContent(user, chatId, messageId, data, queryData, callbackQueryId);
-            case Utils.CallbackData.ACTION_SUBSCRIPTION ->
-                    userModuleSubscription(user, chatId, messageId, data, queryData, callbackQueryId);
-            case Utils.CallbackData.ACTION_BUY -> userModuleBuy(user, chatId, messageId, data, queryData);
-            case Utils.CallbackData.ACTION_BACK -> sendAllCoursesPage(chatId, messageId);
+            case CATEGORY -> showAllCourses_Categories(chatId, messageId, Integer.parseInt(data[3]));
+            case INSTRUCTOR -> showAllCourses_Instructors(chatId, messageId, Integer.parseInt(data[3]));
+            case ACTION_LIST -> showAllCourse(chatId, messageId, data);
+            case MODULE_PREFIX -> showAllCourseModules(user, chatId, messageId, data);
+            case LESSON_PREFIX -> showAllCourseModuleLessons(user, chatId, messageId, data);
+            case CONTENT_PREFIX -> sendAllCoursesLessonContent(user, chatId, messageId, data, callbackQueryId);
+            case ACTION_SUBSCRIPTION -> userModuleSubscription(user, chatId, messageId, data, callbackQueryId);
+            case ACTION_BUY -> userModuleBuy(user, chatId, messageId, data);
+            case ACTION_BACK -> sendAllCoursesPage(chatId, messageId);
         }
     }
 
-    private void userModuleBuy(User user, Long chatId, Integer messageId, String[] data, String queryData) {
-        System.out.println(queryData);
+    private void userModuleBuy(User user, Long chatId, Integer messageId, String[] data) {
 
         String type = data[2];
         Long id = Long.valueOf(data[4]);
@@ -526,16 +554,13 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
                     "0"
             );
             String[] split = join.split(":");
-            showAllCourseModuleLessons(user, chatId, messageId, split, queryData);
+            showAllCourseModuleLessons(user, chatId, messageId, split);
 
         }
 
     }
 
-    private void userModuleSubscription(User user, Long chatId, Integer messageId, String[] data, String queryData, String callbackQueryId) {
-
-        System.out.println(queryData);
-
+    private void userModuleSubscription(User user, Long chatId, Integer messageId, String[] data, String callbackQueryId) {
         String type = data[2];
         Long id = Long.valueOf(data[4]);
         String datum = data[3];
@@ -585,12 +610,12 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
                 "0"
         );
         String[] split = join.split(":");
-        showAllCourseModuleLessons(user, chatId, messageId, split, queryData);
+        showAllCourseModuleLessons(user, chatId, messageId, split);
 
 
     }
 
-    private void sendAllCoursesLessonContent(User user, Long chatId, Integer messageId, String[] data, String queryData, String callbackQueryId) {
+    private void sendAllCoursesLessonContent(User user, Long chatId, Integer messageId, String[] data, String callbackQueryId) {
 
 
         String datum = data[2];
@@ -642,8 +667,7 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
 
     }
 
-    private void showAllCourseModuleLessons(User user, Long chatId, Integer messageId, String[] data, String queryData) {
-        System.out.println(queryData);
+    private void showAllCourseModuleLessons(User user, Long chatId, Integer messageId, String[] data) {
 
         String datum = data[2];
         Long id = Long.parseLong(data[3]);
@@ -695,7 +719,7 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
 
     }
 
-    private void showAllCourseModules(User user, Long chatId, Integer messageId, String[] data, String queryData) {
+    private void showAllCourseModules(User user, Long chatId, Integer messageId, String[] data) {
 
         Long id = Long.valueOf(data[3]);
 
@@ -777,7 +801,7 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
         bot.myExecute(sendMsg.editMessage(chatId, messageId, message, inlineKeyboardMarkup));
     }
 
-    private void showAllCourse(Long chatId, Integer messageId, String[] data, String queryData) {
+    private void showAllCourse(Long chatId, Integer messageId, String[] data) {
 
         String type = data[2];
         Long id = Long.valueOf(data[3]);
@@ -992,5 +1016,66 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
         if (totalModulesInCourse == 0) return true; // Modulsiz kursga a'zo hisoblanadi
         long enrolledModulesCount = moduleEnrollmentRepository.countByUserAndCourse(user.getId(), course.getId());
         return totalModulesInCourse == enrolledModulesCount;
+    }
+
+    public static String buildSupportInstructionHtml() {
+        return """
+                <b>📩 Hurmatli foydalanuvchi!</b>
+                
+                Savollaringiz biz uchun juda muhim. Siz murojaatingizni quyidagi formatlarda yuborishingiz mumkin:
+                📝 <b>Matnli savol</b>
+                🖼 <b>Rasmli xabar</b>
+                
+                <b>❗️ Yuborganingizdan so‘ng</b> savolingizni ko‘rib chiqishingiz uchun <b>tasdiqlash oynasi</b> chiqadi.
+                ✅ <b>Tasdiqlaganingizdan keyin</b> savolingiz jamoamizga yuboriladi va siz bilan aloqaga chiqish uchun
+                profilingizdagi ism, telefon raqamingiz va emailingiz ham qo‘shib yuboriladi.
+                
+                Iltimos, savolingizni imkon qadar aniq va batafsil yozing. 🔎
+                """;
+    }
+
+
+    public String buildFaqListText(Page<Faq> faqPage) {
+        if (faqPage.isEmpty()) {
+            return "<b>📖 Yordam markazi (FAQ)</b>\n\n" +
+                    "❌ Hozircha savollar mavjud emas.";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("<b>📖 Yordam markazi (FAQ)</b>\n\n");
+        sb.append("Sizni qiziqtirgan savolni tanlang 👇\n\n");
+
+        int startNumber = faqPage.getNumber() * faqPage.getSize() + 1;
+        for (int i = 0; i < faqPage.getContent().size(); i++) {
+            Faq faq = faqPage.getContent().get(i);
+            sb.append("👉 <b>").append(startNumber + i).append(")</b> ")
+                    .append(faq.getQuestion()).append("\n");
+        }
+
+        sb.append("\n");
+
+        // Pagination bo‘yicha eslatma
+        if (faqPage.hasNext()) {
+            sb.append("▶️ Keyingi savollar uchun pastdagi tugmadan foydalaning.\n");
+        }
+        if (faqPage.hasPrevious()) {
+            sb.append("◀️ Oldingi savollarni ham ko‘rishingiz mumkin.\n");
+        }
+
+        sb.append("\n🏠 Asosiy menyuga qaytish uchun <b>Asosiy menyu</b> tugmasini bosing.");
+
+        return sb.toString();
+    }
+
+    public static String buildFaqAnswerText(FaqDTO faqDTO) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("❓ <b>Savol:</b>\n");
+        sb.append(faqDTO.getQuestion()).append("\n\n");
+
+        sb.append("💡 <b>Javob:</b>\n");
+        sb.append(faqDTO.getAnswer());
+
+        return sb.toString();
     }
 }

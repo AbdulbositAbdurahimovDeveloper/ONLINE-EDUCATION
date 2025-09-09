@@ -2,9 +2,7 @@ package uz.pdp.online_education.telegram.mapper;
 
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
-import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
+import org.telegram.telegrambots.meta.api.methods.send.*;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.*;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto;
@@ -201,4 +199,78 @@ public class SendMsgImpl implements SendMsg {
         editMessageCaption.setParseMode("HTML");
         return editMessageCaption;
     }
+
+    /**
+     * @param channelId - qaysi kanal/guruhga yuborish
+     * @param fileId    - telegram file_id yoki URL
+     * @param caption   - xabar tagidagi izoh
+     * @return SendPhoto
+     */
+    @Override
+    public SendPhoto sendPhoto(String channelId, String fileId, String caption) {
+        SendPhoto sendPhoto = new SendPhoto();
+        sendPhoto.setChatId(channelId);
+        sendPhoto.setPhoto(new InputFile(fileId));
+        if (caption != null) sendPhoto.setCaption(caption);
+        return sendPhoto;
+    }
+
+    /**
+     * @param channelId
+     * @param fileId
+     * @param caption
+     * @return SendVideo
+     */
+    @Override
+    public SendVideo sendVideo(String channelId, String fileId, String caption) {
+        SendVideo sendVideo = new SendVideo();
+        sendVideo.setChatId(channelId);
+        sendVideo.setVideo(new InputFile(fileId));
+        if (caption != null) sendVideo.setCaption(caption);
+        return sendVideo;
+    }
+
+    /**
+     * @param channelId
+     * @param fileId
+     * @param caption
+     * @return SendAudio
+     */
+    @Override
+    public SendAudio sendAudio(String channelId, String fileId, String caption) {
+        SendAudio sendAudio = new SendAudio();
+        sendAudio.setChatId(channelId);
+        sendAudio.setAudio(new InputFile(fileId));
+        if (caption != null) sendAudio.setCaption(caption);
+        return sendAudio;
+    }
+
+    /**
+     * @param channelId
+     * @param fileId
+     * @param caption
+     * @return SendVoice
+     */
+    @Override
+    public SendVoice sendVoice(String channelId, String fileId, String caption) {
+        SendVoice sendVoice = new SendVoice();
+        sendVoice.setChatId(channelId);
+        sendVoice.setVoice(new InputFile(fileId));
+        if (caption != null) sendVoice.setCaption(caption);
+        return sendVoice;
+    }
+
+    /**
+     * @param channelId
+     * @param fileId
+     * @return SendVideoNote
+     */
+    @Override
+    public SendVideoNote sendVideoNote(String channelId, String fileId) {
+        SendVideoNote sendVideoNote = new SendVideoNote();
+        sendVideoNote.setChatId(channelId);
+        sendVideoNote.setVideoNote(new InputFile(fileId));
+        return sendVideoNote;
+    }
+
 }

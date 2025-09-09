@@ -5,65 +5,89 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Vaqtinchalik, ko'p maydonli ma'lumotlarni Redis'da saqlash va boshqarish uchun servis.
- * Bu servis Redis'ning Hash ma'lumotlar turi va TTL (Time-To-Live) xususiyatidan foydalanadi
- * vaqtinchalik jarayonlarni (masalan, Telegram botdagi ko'p qadamli so'rovnomalar)
- * boshqarish uchun mo'ljallangan.
+ * Service abstraction for managing temporary, multi-field data in Redis.
+ * <p>
+ * This service is designed for handling short-lived, multistep processes
+ * (e.g., conversational flows in a Telegram bot) using Redis Hashes combined
+ * with Time-To-Live (TTL) expiration.
+ * </p>
+ *
+ * <p>Typical use cases include:</p>
+ * <ul>
+ *     <li>Storing in-progress form submissions or wizards</li>
+ *     <li>Managing multistep user interactions with partial state persistence</li>
+ *     <li>Ensuring temporary data automatically expires without manual cleanup</li>
+ * </ul>
  */
 public interface RedisTemporaryDataService {
 
     /**
-     * Yangi vaqtinchalik jarayonni standart yashash vaqti (TTL) bilan boshlaydi.
-     * Standart TTL qiymati 'application.yml' faylidagi 'app.cache.temporary-process-ttl-seconds'
-     * xususiyatidan olinadi.
+     * Starts a new temporary process with a default TTL (Time-To-Live).
+     * <p>
+     * The default TTL value is configured in {@code application.yml} under
+     * {@code application.cache.temporary-process-ttl-seconds}.
+     * </p>
      *
-     * @param key         Asosiy unikal kalit (masalan, "module_create:chatId:12345:courseId:99").
-     * @param initialData Jarayon boshlanishidagi dastlabki ma'lumotlar (masalan, courseId).
+     * @param key         Unique Redis key for the process (e.g.,
+     *                    {@code "module_create:chatId:12345:courseId:99"}).
+     * @param initialData Initial fields to store at process start
+     *                    (e.g., a courseId or metadata).
      */
     void startProcess(String key, Map<String, Object> initialData);
 
     /**
-     * Yangi vaqtinchalik jarayonni maxsus yashash vaqti (TTL) bilan boshlaydi.
+     * Starts a new temporary process with a custom TTL.
      *
-     * @param key         Asosiy unikal kalit.
-     * @param initialData Jarayon boshlanishidagi dastlabki ma'lumotlar.
-     * @param ttlSeconds  Jarayonning yashash vaqti (sekundda).
+     * @param key         Unique Redis key for the process.
+     * @param initialData Initial fields to store at process start.
+     * @param ttlSeconds  Expiration time in seconds. Once expired,
+     *                    all process-related data will be discarded automatically.
      */
     void startProcess(String key, Map<String, Object> initialData, long ttlSeconds);
 
     /**
-     * Mavjud jarayonga bitta maydon va uning qiymatini qo'shadi yoki yangilaydi.
+     * Adds or updates a single field within an existing process.
+     * <p>
+     * If the key or field does not exist, it will be created. If it exists,
+     * the value will be updated.
+     * </p>
      *
-     * @param key   Asosiy kalit.
-     * @param field Qo'shiladigan yoki yangilanadigan maydon nomi (masalan, "title").
-     * @param value Maydon qiymati.
+     * @param key   Redis key of the process.
+     * @param field Field name to add or update (e.g., {@code "title"}).
+     * @param value Field value.
      */
     void addField(String key, String field, Object value);
 
     /**
-     * Mavjud jarayondan bir nechta maydonning qiymatini oladi.
-     * Agar biror maydon topilmasa, u natijaviy Map'ga qo'shilmaydi.
+     * Retrieves the values of specific fields from an existing process.
+     * <p>
+     * Fields that are not found in Redis will be excluded from the result map.
+     * </p>
      *
-     * @param key    Asosiy kalit.
-     * @param fields Olinishi kerak bo'lgan maydonlar ro'yxati (masalan, ["title", "description"]).
-     * @return Topilgan maydonlar va ularning qiymatlari bilan Map.
+     * @param key    Redis key of the process.
+     * @param fields List of field names to fetch
+     *               (e.g., {@code ["title", "description"]}).
+     * @return A map of found fields and their corresponding values.
      */
     Map<String, Object> getFields(String key, List<String> fields);
 
     /**
-     * Mavjud jarayondagi barcha maydonlarni va ularning qiymatlarini oladi.
+     * Retrieves all fields and their values for an existing process.
      *
-     * @param key Asosiy kalit.
-     * @return Jarayondagi barcha ma'lumotlar bilan to'ldirilgan Optional.
-     * Agar kalit mavjud bo'lmasa, Optional.empty() qaytariladi.
+     * @param key Redis key of the process.
+     * @return An {@link Optional} containing all fields as a map if the process exists,
+     *         or {@link Optional#empty()} if the key does not exist or has expired.
      */
     Optional<Map<String, Object>> getAllFields(String key);
 
     /**
-     * Jarayonni tugatadi va unga tegishli barcha vaqtinchalik ma'lumotlarni Redis'dan o'chiradi.
-     * Bu metod TTL tugashini kutmasdan, darhol tozalash uchun ishlatiladi.
+     * Explicitly terminates a process by deleting all related data from Redis.
+     * <p>
+     * This provides a way to clean up resources immediately without waiting
+     * for TTL expiration.
+     * </p>
      *
-     * @param key O'chirilishi kerak bo'lgan asosiy kalit.
+     * @param key Redis key of the process to remove.
      */
     void endProcess(String key);
 }

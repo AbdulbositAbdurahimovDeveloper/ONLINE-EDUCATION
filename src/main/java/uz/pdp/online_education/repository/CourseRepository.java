@@ -118,17 +118,6 @@ public interface CourseRepository extends JpaRepository<Course, Long>, CourseRep
             Pageable pageable
     );
 
-    /**
-     * Berilgan qidiruv matni bo'yicha kurslarni sarlavhasi (title)
-     * orqali (case-insensitive) qidiradi.
-     *
-     * @param searchTerm Qidiruv uchun matn
-     * @param pageable   Sahifalash uchun ma'lumot
-     * @return Topilgan kurslar sahifasi
-     */
-    @Query("SELECT c FROM courses c WHERE LOWER(c.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) AND c.deleted = false")
-    Page<Course> searchActiveCoursesByTitle(@Param("searchTerm") String searchTerm, Pageable pageable);
-
     Page<Course> findAllByInstructorIdAndDeletedFalse(Long instructorId, Pageable pageable);
 
 
@@ -145,7 +134,6 @@ public interface CourseRepository extends JpaRepository<Course, Long>, CourseRep
 
 
     Page<Course> findAllByCategoryIdAndDeletedFalse(Long categoryId, Pageable pageable);
-
 
     @Query(
             value = """

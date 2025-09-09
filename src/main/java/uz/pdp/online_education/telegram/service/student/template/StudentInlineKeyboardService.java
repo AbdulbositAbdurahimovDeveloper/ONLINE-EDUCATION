@@ -3,6 +3,7 @@ package uz.pdp.online_education.telegram.service.student.template;
 import org.springframework.data.domain.Page;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import uz.pdp.online_education.model.Course;
+import uz.pdp.online_education.model.Faq;
 import uz.pdp.online_education.model.Module;
 import uz.pdp.online_education.model.Payment;
 import uz.pdp.online_education.model.lesson.Lesson;
@@ -127,4 +128,6 @@ public interface StudentInlineKeyboardService {
     InlineKeyboardMarkup userPendingPaymentsKeyboard(Page<Module> modules);
 
     InlineKeyboardMarkup buildModuleButtons(Module module);
+
+    InlineKeyboardMarkup studentSupportMessage(Page<Faq> faqs, String backButton,int pageNumber);
 }

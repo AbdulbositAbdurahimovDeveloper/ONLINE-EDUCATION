@@ -12,9 +12,6 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-/**
- * TemporaryDataService interfeysining Redis'ga asoslangan implementatsiyasi.
- */
 @Service
 @RequiredArgsConstructor
 public class RedisTemporaryDataServiceImpl implements RedisTemporaryDataService {
@@ -42,6 +39,7 @@ public class RedisTemporaryDataServiceImpl implements RedisTemporaryDataService 
     @Override
     public void addField(String key, String field, Object value) {
         redisTemplate.opsForHash().put(key, field, value);
+        redisTemplate.expire(key, defaultTtlSeconds, TimeUnit.SECONDS);
     }
 
     @Override
