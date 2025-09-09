@@ -180,6 +180,12 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
 
             String callbackData = "admin:courses:view:" + course.getId() + ":" + fromContext + ":" + coursePage.getNumber();
             numberButtonsRow.add(createButton(buttonText, callbackData));
+
+            if (i == 4) {
+                keyboardRows.add(numberButtonsRow);
+                numberButtonsRow = new ArrayList<>();
+            }
+
         }
         if (!numberButtonsRow.isEmpty()) keyboardRows.add(numberButtonsRow);
 
@@ -192,9 +198,69 @@ public class InlineKeyboardServiceImpl implements InlineKeyboardService {
         } else {
             backCallback = "admin:courses:browse:init"; // Tanlash menyusiga
         }
+
+        List<InlineKeyboardButton> paginationRow = createPaginationRow(coursePage, "admin:courses");
+        keyboardRows.add(paginationRow);
+
+        //admin:courses:page:0
+
+
         keyboardRows.add(List.of(createButton("⬅️ Orqaga", backCallback)));
 
         return new InlineKeyboardMarkup(keyboardRows);
+    }
+
+
+    /**
+     * Creates a universal pagination row for any paginated data.
+     * This helper method is designed to be reusable across different menus.
+     *
+     * @param page         The Page object containing pagination info (e.g., hasNext, getNumber).
+     *                     Using Page<?> makes it generic for any type of content.
+     * @param baseCallback The base string for the callback, which defines the context.
+     *                     For example: "allc:l:cat" or "myc:l".
+     * @return A list of pagination buttons (a row), or an empty list if not needed.
+     */
+    private List<InlineKeyboardButton> createPaginationRow(Page<?> page, String baseCallback) {
+        List<InlineKeyboardButton> paginationRow = new ArrayList<>();
+
+        // 1. Agar sahifalar soni 1 ta yoki undan kam bo'lsa, sahifalash kerak emas.
+        if (page.getTotalPages() <= 1) {
+            return paginationRow;
+        }
+
+        int currentPage = page.getNumber(); // Joriy sahifa raqami (0 dan boshlanadi)
+
+        // 2. "Oldingi" sahifa tugmasini yasaymiz (agar oldingi sahifa mavjud bo'lsa)
+        if (page.hasPrevious()) {
+            // Callback'ni yig'amiz: {baseCallback}:p:{sahifa_raqami}
+            // Masalan: "allc:l:cat:p:0"
+            String prevCallback = String.join(":",
+                    baseCallback,
+                    "page",
+                    String.valueOf(currentPage - 1)
+            );
+            paginationRow.add(createButton(Utils.InlineButtons.PAGINATION_PREVIOUS_TEXT, prevCallback));
+        }
+
+        // 3. Joriy sahifa ko'rsatkichini qo'shamiz (masalan, "1 / 5")
+        String pageIndicator = String.format("%d / %d", currentPage + 1, page.getTotalPages());
+        paginationRow.add(createButton(pageIndicator, "do_nothing")); // Bosilganda hech nima qilmaydi
+
+        // 4. "Keyingi" sahifa tugmasini yasaymiz (agar keyingi sahifa mavjud bo'lsa)
+        if (page.hasNext()) {
+            // Callback'ni yig'amiz: {baseCallback}:p:{sahifa_raqami}
+            // Masalan: "allc:l:cat:p:2"
+            String nextCallback = String.join(":",
+                    baseCallback,
+                    "page",
+                    String.valueOf(currentPage + 1)
+            );
+            paginationRow.add(createButton(Utils.InlineButtons.PAGINATION_NEXT_TEXT, nextCallback));
+        }
+
+        // 5. Tayyor bo'lgan qatorni qaytaramiz
+        return paginationRow;
     }
 
 

@@ -6,12 +6,12 @@ import io.minio.http.Method;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
@@ -21,10 +21,15 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import uz.pdp.online_education.config.properties.MinioProperties;
 import uz.pdp.online_education.exceptions.DataConflictException;
 import uz.pdp.online_education.exceptions.EntityNotFoundException;
+import uz.pdp.online_education.mapper.AttachmentContentMapper;
 import uz.pdp.online_education.mapper.AttachmentMapper;
 import uz.pdp.online_education.model.Attachment;
+import uz.pdp.online_education.model.User;
+import uz.pdp.online_education.payload.UploadLink;
+import uz.pdp.online_education.payload.content.AttachmentRequestDTO;
 import uz.pdp.online_education.payload.content.attachmentContent.AttachmentContentCreateDTO;
 import uz.pdp.online_education.payload.content.attachmentContent.AttachmentDTO;
+import uz.pdp.online_education.payload.lesson.AttachmentContentDTO;
 import uz.pdp.online_education.repository.AttachmentRepository;
 import uz.pdp.online_education.service.interfaces.AttachmentContentService;
 import uz.pdp.online_education.service.interfaces.AttachmentService;
@@ -67,7 +72,7 @@ public class AttachmentServiceImpl implements AttachmentService {
     public AttachmentServiceImpl(AttachmentRepository attachmentRepository,
                                  AttachmentMapper attachmentMapper,
                                  MinioClient minioClient,
-                                 MinioProperties minio, OnlineEducationBot bot, SendMsg sendMsg, AttachmentContentService attachmentContentService) {
+                                 MinioProperties minio, OnlineEducationBot bot, SendMsg sendMsg, @Lazy AttachmentContentService attachmentContentService, AttachmentContentMapper attachmentContentMapper) {
         this.attachmentRepository = attachmentRepository;
         this.attachmentMapper = attachmentMapper;
         this.minioClient = minioClient;
@@ -137,7 +142,7 @@ public class AttachmentServiceImpl implements AttachmentService {
      * @param chatId
      */
     @Override
-    public void saveTgVideoAsync(Video video, Long chatId,Long lessonId) {
+    public void saveTgVideoAsync(Video video, Long chatId, Long lessonId) {
         if (video == null) {
             log.warn("Attempted to process a null video object.");
             return;
@@ -146,7 +151,7 @@ public class AttachmentServiceImpl implements AttachmentService {
         log.info("Starting asynchronous processing for video file_id: {}", video.getFileId());
         // Asosiy, @Async annotatsiyasi bor metodni chaqiramiz.
         // Spring bu chaqiruvni tutib olib, uni alohida thread'da bajaradi.
-        processAndSaveTgVideo(video, chatId,lessonId);
+        processAndSaveTgVideo(video, chatId, lessonId);
     }
 
     /**
@@ -159,7 +164,7 @@ public class AttachmentServiceImpl implements AttachmentService {
      */
     @Async
     @Transactional // DB operatsiyalari uchun tranzaksiyani boshqaradi
-    public void processAndSaveTgVideo(Video video, Long chatId,Long lessonId) {
+    public void processAndSaveTgVideo(Video video, Long chatId, Long lessonId) {
         try {
             // 1. Fayl haqidagi ma'lumotni Telegramdan olamiz.
             org.telegram.telegrambots.meta.api.objects.File telegramFile = bot.execute(new GetFile(video.getFileId()));
@@ -397,6 +402,55 @@ public class AttachmentServiceImpl implements AttachmentService {
                 .orElseThrow(() -> new EntityNotFoundException("Attachment not fount with id :" + id));
 
         attachmentRepository.delete(attachment);
+    }
+
+    /**
+     * @param fileName
+     * @return
+     */
+    @Override
+    public UploadLink generateUploadLink(String fileName) {
+        try {
+            // unique objectName yaratish
+            String objectName = UUID.randomUUID() + "-" + fileName;
+
+            // PUT presigned URL olish
+            String presignedUrl = minioClient.getPresignedObjectUrl(
+                    GetPresignedObjectUrlArgs.builder()
+                            .method(Method.PUT)
+                            .bucket(minio.getBuckets().get(1)) // bucket nomi
+                            .object(objectName)
+                            .expiry(60 * 10) // 10 daqiqa amal qiladi
+                            .build()
+            );
+
+            return new UploadLink(objectName, presignedUrl);
+        } catch (Exception e) {
+            throw new RuntimeException("Presigned URL yaratishda xatolik: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * @param attachmentRequestDTO
+     * @param user
+     * @return
+     */
+    @Override
+    public AttachmentContentDTO complete(AttachmentRequestDTO attachmentRequestDTO, User user) {
+
+        Attachment attachment = new Attachment(
+                attachmentRequestDTO.getOriginalName(),
+                attachmentRequestDTO.getContentType(),
+                attachmentRequestDTO.getFileSize(),
+                attachmentRequestDTO.getMinioKey(),
+                attachmentRequestDTO.getBucketName(),
+                null);
+
+
+        Long lessonId = attachmentRequestDTO.getLessonId();
+        Attachment saved = attachmentRepository.save(attachment);
+
+        return attachmentContentService.create(new AttachmentContentCreateDTO(lessonId, saved.getId()));
     }
 
     private String saveFileMinio(MultipartFile multipartFile, String bucketName) {

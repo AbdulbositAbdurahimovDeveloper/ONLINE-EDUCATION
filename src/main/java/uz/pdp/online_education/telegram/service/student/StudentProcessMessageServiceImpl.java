@@ -271,7 +271,7 @@ public class StudentProcessMessageServiceImpl implements StudentProcessMessageSe
         int pageNumber = 0;
         Page<Faq> faqs = faqRepository.findAll(PageRequest.of(pageNumber, 5));
         String built = buildFaqListText(faqs);
-        InlineKeyboardMarkup inlineKeyboardMarkup = studentInlineKeyboardService.studentSupportMessage(faqs, String.join("", ACTION_SUPPORT, BACK_TO_MAIN_MENU), pageNumber);
+        InlineKeyboardMarkup inlineKeyboardMarkup = studentInlineKeyboardService.studentSupportMessage(faqs, String.join(":", ACTION_SUPPORT, BACK_TO_MAIN_MENU), pageNumber);
         onlineEducationBot.myExecute(sendMsg.sendMessage(chatId, built, inlineKeyboardMarkup));
     }
 

@@ -85,4 +85,6 @@ public interface InstructorInlineKeyboardService {
     InlineKeyboardMarkup courseReviews(Page<CourseReviewProjection> reviews, Long id, String backButton);
 
     InlineKeyboardMarkup mentorRevenue();
+
+    InlineKeyboardMarkup succesOrDraftBtnCourse(String id);
 }
