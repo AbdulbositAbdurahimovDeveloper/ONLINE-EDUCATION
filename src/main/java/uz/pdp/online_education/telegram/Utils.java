@@ -141,6 +141,8 @@ public interface Utils {
         String ACTION_REVENUE = "revenue";
         String ACTION_COURSE = "course";
         String ACTION_MODULE = "mod";
+        String ACTION_STATUS = "status";
+
 
         String ACTION_CHOICE = "choice";
 

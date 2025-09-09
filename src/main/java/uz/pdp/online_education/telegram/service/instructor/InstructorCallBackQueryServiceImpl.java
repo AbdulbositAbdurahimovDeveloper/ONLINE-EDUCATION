@@ -17,6 +17,7 @@ import uz.pdp.online_education.model.Abs.AbsDateEntity;
 import uz.pdp.online_education.model.Category;
 import uz.pdp.online_education.model.Course;
 import uz.pdp.online_education.model.User;
+import uz.pdp.online_education.model.lesson.AttachmentContent;
 import uz.pdp.online_education.payload.PageDTO;
 import uz.pdp.online_education.payload.category.CategoryDTO;
 import uz.pdp.online_education.payload.content.attachmentContent.AttachmentDTO;
@@ -96,6 +97,7 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
     private final LessonRepository lessonRepository;
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
+    private final AttachmentContentRepository attachmentContentRepository;
 
 
     @Override
@@ -121,9 +123,6 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
                 case BACK_TO_MAIN_MENU -> backToMain(chatId, messageId);
                 case AUTH_PREFIX -> handleAuthCallback(user, chatId, messageId, data);
                 case MY_COURSE_PREFIX -> instructorMyCourseHandle(chatId, user, messageId, data, queryData);
-                case STUDENT_PREFIX -> instructorMyStudentHandle(chatId, user, messageId, data, queryData);
-                case ACTION_REVIEWS -> instructorReviewsHandle(chatId, user, messageId, data, queryData);
-                case ACTION_REVENUE -> instructorMyRevenueHandle(chatId, user, messageId, data, queryData);
                 case ACTION_ADD -> instructorActionAddHandle(chatId, user, messageId, data, queryData, userState);
                 case ACTION_EDIT -> instructorActionEditHandle(chatId, user, messageId, data, queryData);
                 case ACTION_DELETE -> instructorActionDeleteHandle(chatId, user, messageId, data, queryData);
@@ -169,36 +168,35 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
             case ACTION_SUCCESS -> instructorMyCoursesSuccess(chatId, user, messageId, data);
             case ACTION_DRAFT -> instructorMyCourseDraft(chatId, user, messageId, data);
             case ACTION_COURSE -> instructorMyCourseViewId(chatId, messageId, data);
-            case ACTION_MODULE -> instructorMyModuleViewId(chatId, messageId, data);
+            case ACTION_STATUS -> {
+
+                if (data.length == 3) {
+                    String message = """
+                            Siz ushbu kursni aktiv qilmoqchimisiz
+                            """;
+                    InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.succesOrDraftBtnCourse(data[2]);
+                    bot.myExecute(sendMsg.editMessage(chatId, messageId, message, inlineKeyboardMarkup));
+                } else if (data.length == 4) {
+
+                    boolean choose = Boolean.parseBoolean(data[3]);
+                    Long id = Long.valueOf(data[2]);
+
+                    if (choose) {
+                        courseService.updateSuccess(id);
+                    } else {
+
+                    }
+
+
+                }
+
+            }
         }
-    }
-
-    private void instructorMyModuleViewId(Long chatId, Integer messageId, String[] data) {
-
-
-    }
-
-
-    private void instructorMyStudentHandle(Long chatId, User user, Integer messageId, String[] data, String queryData) {
-        // ... Logika
-    }
-
-    private void instructorReviewsHandle(Long chatId, User user, Integer messageId, String[] data, String queryData) {
-        // ... Logika
-    }
-
-    private void instructorMyRevenueHandle(Long chatId, User user, Integer messageId, String[] data, String queryData) {
-        // ... Logika
     }
 
     private void instructorActionAddHandle(Long chatId, User user, Integer messageId, String[] data, String queryData, UserState userState) {
 
         String type = data[1];
-
-        // todo:  ochirish kerek
-        System.err.println(queryData);
-
-
         switch (type) {
             case CATEGORY -> {
 
@@ -1339,7 +1337,7 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
                 Long lessonId = Long.valueOf(data[2]);
 
                 LessonResponseDTO lessonResponseDTO = lessonService.read(lessonId);
-                String backButton = String.join(":", ACTION_VIEW, LESSON_PREFIX, lessonId.toString(), ACTION_PAGE, "0");
+                String backButton = String.join(":", ACTION_VIEW, LESSON_ID, lessonId.toString(), ACTION_PAGE, "0");
                 InlineKeyboardMarkup inlineKeyboardMarkup = inlineKeyboardService.instructorContent(lessonResponseDTO, backButton);
                 bot.myExecute(sendMsg.editMessage(chatId, messageId, "Dars nomi " + lessonResponseDTO.getTitle(), inlineKeyboardMarkup));
             }
@@ -1347,7 +1345,8 @@ public class InstructorCallBackQueryServiceImpl implements InstructorCallBackQue
 
                 Long id = Long.valueOf(data[2]);
 
-                AttachmentDTO attachmentDTO = attachmentService.read(id);
+                AttachmentContent attachmentContent = attachmentContentRepository.findById(id).orElseThrow();
+                AttachmentDTO attachmentDTO = attachmentService.read(attachmentContent.getAttachment().getId());
 
                 if (attachmentDTO.getTelegramFileId() != null && !attachmentDTO.getContentType().equals("image/jpeg")) {
 

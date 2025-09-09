@@ -10,11 +10,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageMedia;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import uz.pdp.online_education.enums.TransactionStatus;
-import uz.pdp.online_education.model.*;
 import uz.pdp.online_education.model.Abs.AbsDateEntity;
+import uz.pdp.online_education.model.*;
 import uz.pdp.online_education.model.Module;
 import uz.pdp.online_education.model.lesson.*;
 import uz.pdp.online_education.payload.CategoryInfo;
@@ -32,7 +35,6 @@ import uz.pdp.online_education.service.interfaces.*;
 import uz.pdp.online_education.telegram.Utils;
 import uz.pdp.online_education.telegram.config.controller.OnlineEducationBot;
 import uz.pdp.online_education.telegram.enums.BotMessage;
-import uz.pdp.online_education.telegram.enums.UserState;
 import uz.pdp.online_education.telegram.mapper.SendMsg;
 import uz.pdp.online_education.telegram.service.RedisTemporaryDataService;
 import uz.pdp.online_education.telegram.service.TelegramUserService;
@@ -47,7 +49,6 @@ import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 import static uz.pdp.online_education.telegram.Utils.CallbackData.*;
@@ -473,8 +474,11 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
             } else if (content instanceof AttachmentContent attachmentContent) {
                 Attachment attachment = attachmentContent.getAttachment();
                 if (attachment != null && attachment.getTelegramFileId() != null) {
-                    // TODO: sendVideo yoki sendDocument logikasini implementatsiya qilish kerak.
-                    log.info("Foydalanuvchiga video yuborish so'rovi keldi. File ID: {}", attachment.getTelegramFileId());
+                    InlineKeyboardMarkup keyboard = studentInlineKeyboardService.createSingleButtonKeyboard(
+                            "Xabarni ochirish",
+                            DELETED
+                    );
+                    bot.myExecute(sendMsg.sendVideo(chatId, attachment.getTelegramFileId(), keyboard));
                 }
             } else if (content instanceof QuizContent quizContent) {
 //                String url = SITE_URL + "/quiz/" + quizContent.getQuiz().getId();
@@ -950,7 +954,18 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
         Page<Course> coursePage = courseRepository.findDistinctEnrolledCoursesForUser(user.getId(), pageable);
         String text = messageService.getMessage(BotMessage.MY_COURSES_TITLE, pageNum + 1, coursePage.getTotalPages());
         InlineKeyboardMarkup keyboard = studentInlineKeyboardService.myCoursesMenu(coursePage);
-        bot.myExecute(sendMsg.editMessage(chatId, messageId, text, keyboard));
+
+        try {
+            EditMessageText editMessageText = new EditMessageText(text);
+            editMessageText.setReplyMarkup(keyboard);
+            editMessageText.setMessageId(messageId);
+            editMessageText.setChatId(chatId);
+
+            bot.execute(editMessageText);
+        } catch (Exception e) {
+            bot.myExecute(sendMsg.deleteMessage(chatId, messageId));
+            bot.myExecute(sendMsg.sendMessage(chatId, text, keyboard));
+        }
     }
 
     /**
@@ -990,7 +1005,12 @@ public class StudentCallBackQueryServiceImpl implements StudentCallBackQueryServ
 
         String text = messageService.getMessage(BotMessage.LESSONS_LIST_TITLE, module.getTitle(), pageNum + 1, lessonPage.getTotalPages());
         InlineKeyboardMarkup keyboard = studentInlineKeyboardService.lessonsMenu(lessonPage, moduleId, module.getCourse().getId(), isModuleEnrolled);
-        bot.myExecute(sendMsg.editMessage(chatId, messageId, text, keyboard));
+        if (module.getCourse().getThumbnailUrl() == null) {
+            bot.myExecute(sendMsg.editMessage(chatId, messageId, text, keyboard));
+        } else {
+            bot.myExecute(sendMsg.deleteMessage(chatId, messageId));
+            bot.myExecute(sendMsg.sendMessage(chatId, text, keyboard));
+        }
     }
 
     /**

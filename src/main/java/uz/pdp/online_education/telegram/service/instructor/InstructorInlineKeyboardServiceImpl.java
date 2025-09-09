@@ -247,8 +247,8 @@ public class InstructorInlineKeyboardServiceImpl implements InstructorInlineKeyb
             List<InlineKeyboardButton> button = List.of(
                     createButton("status",
                             String.join(":",
-                                    ACTION_EDIT,
-                                    ACTION_COURSE,
+                                    MY_COURSE_PREFIX,
+                                    ACTION_STATUS,
                                     courseId.toString()
                             )
                     ),
@@ -1361,7 +1361,7 @@ public class InstructorInlineKeyboardServiceImpl implements InstructorInlineKeyb
                 createButton("📊 Kurslar bo`yicha sharhlarni ko`rish",
                         String.join(":",
                                 ACTION_VIEW,
-                               ACTION_REVIEWS,
+                                ACTION_REVIEWS,
                                 ACTION_PAGE,
                                 "0"
                         )
@@ -1378,7 +1378,7 @@ public class InstructorInlineKeyboardServiceImpl implements InstructorInlineKeyb
     }
 
     /**
-     * @param stats 
+     * @param stats
      * @param backButton
      * @return
      */
@@ -1499,11 +1499,48 @@ public class InstructorInlineKeyboardServiceImpl implements InstructorInlineKeyb
     }
 
     /**
-     * @return 
+     * @return
      */
     @Override
     public InlineKeyboardMarkup mentorRevenue() {
         return null;
+    }
+
+    /**
+     * @param id
+     * @return
+     */
+    @Override
+    public InlineKeyboardMarkup succesOrDraftBtnCourse(String id) {
+
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+
+        List<InlineKeyboardButton> button1 = List.of(
+                createButton("❌ Bekor qilish",
+                        String.join(":",
+                                MY_COURSE_PREFIX,
+                                ACTION_STATUS,
+                                id,
+                                FALSE
+                        )
+                ),
+                createButton("✅ Tasdiqlash",
+                        String.join(":",
+                                MY_COURSE_PREFIX,
+                                ACTION_STATUS,
+                                id,
+                                TRUE
+                        )
+                )
+        );
+
+
+        rows.add(button1);
+        inlineKeyboardMarkup.setKeyboard(rows);
+        return inlineKeyboardMarkup;
+
+
     }
 
     /**

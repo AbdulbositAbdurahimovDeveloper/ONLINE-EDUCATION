@@ -605,6 +605,9 @@ public class InstructorProcessMessageServiceImpl implements InstructorProcessMes
 
                     textContentService.create(new TextContentCreateDTO(lessonId, text));
 
+                    bot.myExecute(sendMsg.sendMessage(chatId, "Kontent muvofiqaytali qoshildi"));
+                    telegramUserService.updateUserState(chatId, UserState.NONE);
+
                 }
             }
 
