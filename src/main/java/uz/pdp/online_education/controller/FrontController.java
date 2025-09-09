@@ -11,4 +11,9 @@ public class FrontController {
         // templates/registry-telegram-bot.html ni ochadi
         return "registry-telegram-bot";
     }
+
+    @GetMapping("/upload")
+    public String upload() {
+        return "uploadVideo";
+    }
 }

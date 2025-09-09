@@ -396,7 +396,7 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
 
 
     @Transactional(readOnly = true)
-    public void sendCoursesListPage(Long chatId, Integer messageId, int pageNumber, String searchTerm, Long mentorId, Long categoryId) {
+    protected void sendCoursesListPage(Long chatId, Integer messageId, int pageNumber, String searchTerm, Long mentorId, Long categoryId) {
         Pageable pageable = PageRequest.of(pageNumber, 10, Sort.by("id"));
         Page<Course> coursePage;
         StringBuilder text = new StringBuilder();
@@ -768,7 +768,7 @@ public class AdminCallBackQueryServiceImpl implements AdminCallBackQueryService 
 
         if (text == null || text.isBlank()) {
             log.error("Broadcast text not found in cache for admin {}", chatId);
-            onlineEducationBot.myExecute(sendMsg.editMessage(chatId, messageId, "Xatolik: Yuboriladigan matn topilmadi.", null));
+            onlineEducationBot.myExecute(sendMsg.editMessage(chatId, messageId, "Xatolik: Yuboriladigan matn topilmadi."));
             return;
         }
 

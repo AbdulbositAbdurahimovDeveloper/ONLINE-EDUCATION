@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Video Upload to MinIO</title>
+</head>
+<body>
+<h2>Video upload (token + lessonId)</h2>
+
+<label>Bearer Token:</label><br>
+<input id="token" type="text" placeholder="Bearer token" style="width:500px"><br><br>
+
+<label>Lesson ID:</label><br>
+<input id="lessonId" type="number" placeholder="Masalan: 5"><br><br>
+
+<label>Video fayl:</label><br>
+<input id="video" type="file" accept="video/*"><br><br>
+
+<button id="send">Upload & Complete</button>
+
+<pre id="result" style="background:#f0f0f0; padding:10px; margin-top:20px"></pre>
+
+<script>
+    document.getElementById('send').onclick = async () => {
+        const token = document.getElementById('token').value.trim();
+        const lessonId = Number(document.getElementById('lessonId').value);
+        const file = document.getElementById('video').files[0];
+
+        if (!token || !lessonId || !file) {
+            alert("Token, lessonId va fayl kiritilishi shart!");
+            return;
+        }
+
+        // 1. Backenddan upload-link olish
+        const linkRes = await fetch("/api/attachment/upload-link?fileName=" + encodeURIComponent(file.name), {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        const linkJson = await linkRes.json();
+        const uploadUrl = linkJson.data.url;
+        const objectName = uploadUrl.split("?")[0].split("/").pop(); // minioKey olish uchun
+
+        // 2. Faylni to'g'ridan-to'g'ri MinIO'ga PUT qilish
+        await fetch(uploadUrl, {
+            method: "PUT",
+            body: file
+        });
+
+        // 3. Complete endpointga xabar berish
+        const completeBody = {
+            lessonId: lessonId,
+            originalName: file.name,
+            contentType: file.type,
+            fileSize: file.size,
+            minioKey: objectName,
+            bucketName: "other" // yoki sizda qaysi bucket ishlatilsa
+        };
+
+        const completeRes = await fetch("/api/attachment/complete", {
+            method: "POST",
+            headers: {
+                "Authorization": "Bearer " + token,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(completeBody)
+        });
+
+        const completeJson = await completeRes.json();
+        document.getElementById('result').textContent = JSON.stringify(completeJson, null, 2);
+    };
+</script>
+
+</body>
+</html>

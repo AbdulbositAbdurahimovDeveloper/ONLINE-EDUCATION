@@ -10,14 +10,17 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import uz.pdp.online_education.model.User;
 import uz.pdp.online_education.payload.ResponseDTO;
 import uz.pdp.online_education.payload.content.attachmentContent.AttachmentContentCreateDTO;
 import uz.pdp.online_education.payload.lesson.AttachmentContentDTO;
+import uz.pdp.online_education.payload.user.UserDTO;
 import uz.pdp.online_education.service.interfaces.AttachmentContentService;
 
 @RestController
@@ -147,5 +150,13 @@ public class AttachmentContentController {
     ) {
         attachmentContentService.delete(id);
         return ResponseEntity.ok(ResponseDTO.success("Content deleted successfully"));
+    }
+
+    @PostMapping(value = "/upload/video/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ResponseDTO<?>> uploadVideo(@PathVariable Long id,
+                                                      @RequestParam("file") MultipartFile file,
+                                                      @AuthenticationPrincipal User user) {
+        AttachmentContentDTO attachmentContentDTO = attachmentContentService.upload(id, file, user);
+        return ResponseEntity.ok(ResponseDTO.success(attachmentContentDTO));
     }
 }

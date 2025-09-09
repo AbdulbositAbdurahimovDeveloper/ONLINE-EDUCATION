@@ -30,14 +30,17 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/**",
+//                                "/**",
+                                "/upload",
                                 "/telegram-bot",
                                 "/api/attachment/open/**",
                                 "/api/auth/**",
                                 "/api/open/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html/**",
-                                "/v3/api-docs/**").permitAll()
+                                "/v3/api-docs/**",
+                                "/favicon.ico"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(Customizer.withDefaults())
