@@ -43,7 +43,7 @@ pipeline {
             steps {
                 echo "Container ishga tushirilmoqda: ${CONTAINER_NAME}"
                 sh "docker rm -f ${CONTAINER_NAME} || true"
-                sh "docker run -d --name ${CONTAINER_NAME} -p 8808:8080 --network app-network ${LATEST_IMAGE}"
+                sh "docker run -d --name ${CONTAINER_NAME} -p 8809:8080 --network app-network ${LATEST_IMAGE}"
                 echo "Ilova http://localhost:8808 manzilida ishga tushdi."
             }
         }
