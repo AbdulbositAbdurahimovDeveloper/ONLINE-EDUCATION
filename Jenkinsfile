@@ -3,7 +3,7 @@ pipeline {
 
     tools {
         maven 'maven'
-        jdk 'JDK24'
+        jdk 'JDK21'
     }
 
     environment {
