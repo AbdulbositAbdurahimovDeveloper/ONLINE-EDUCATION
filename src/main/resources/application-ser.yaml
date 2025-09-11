@@ -12,7 +12,7 @@ spring:
     location: classpath:banner.txt
 
   datasource:
-    url: jdbc:postgresql://central_postgres_db:5432/online_education
+    url: jdbc:postgresql://postgres:5432/online_education
     username: postgres
     password: 2503
     driver-class-name: org.postgresql.Driver
