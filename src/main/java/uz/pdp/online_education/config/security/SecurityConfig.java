@@ -30,7 +30,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-//                                "/**",
+                                "/**",
                                 "/upload",
                                 "/telegram-bot",
                                 "/api/attachment/open/**",
