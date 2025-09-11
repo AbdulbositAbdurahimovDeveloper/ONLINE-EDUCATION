@@ -59,7 +59,7 @@ application:
     temporary-process-ttl-seconds: 3600
   minio:
     endpoint: http://213.199.55.47:9001
-    access-key: minioadmin
+    access-key: minio
     secret-key: minioadmin
     buckets:
       - images
