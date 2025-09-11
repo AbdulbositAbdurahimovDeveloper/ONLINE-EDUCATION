@@ -22,7 +22,7 @@ spring:
 
   data:
     redis:
-      host: 176.57.188.165
+      host: 213.199.55.47
       port: 6379
       password: 2503
 
@@ -58,7 +58,7 @@ application:
   cache:
     temporary-process-ttl-seconds: 3600
   minio:
-    endpoint: http://176.57.188.165:9001
+    endpoint: http://213.199.55.47:9001
     access-key: minioadmin
     secret-key: minioadmin
     buckets:
