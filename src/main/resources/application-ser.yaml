@@ -4,20 +4,23 @@ server:
 spring:
   application:
     name: ONLINE-EDUCATION
+
   servlet:
     multipart:
       max-file-size: 2GB
       max-request-size: 2GB
+
   banner:
     location: classpath:banner.txt
 
   datasource:
+    driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://postgres:5432/online_education
     username: postgres
     password: 2503
-    driver-class-name: org.postgresql.Driver
 
   liquibase:
+    analytics-enabled: true
     change-log: classpath:/db/changelog/db.changelog-master.yaml
 
   data:
@@ -25,10 +28,10 @@ spring:
       host: 213.199.55.47
       port: 6379
       password: 2503
-
   jpa:
     hibernate:
-      ddl-auto: none # Production uchun 'none' yoki 'validate' eng to'g'ri
+      ddl-auto: none
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
@@ -37,7 +40,7 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: abdulbositabdurahimov70@gmail.com
-    password: cphf yxno yydk sufr
+    password: 12356467946513
     properties:
       mail:
         smtp:
@@ -45,11 +48,34 @@ spring:
           starttls:
             enable: true
 
+education:
+  app:
+    file:
+      base-folder: /home/abdulbosit/IdeaProjects/certificate/ONLINE-EDUCATION/src/main/resources/education/files/content
+      icons: /home/abdulbosit/IdeaProjects/certificate/ONLINE-EDUCATION/src/main/resources/education/files/icons
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
-# Ilovaning maxsus sozlamalari
+logging:
+  level:
+    uz:
+      pdp:
+        online_education:
+          service:
+            GenerateService=DEBUG:
+#    root: WARN
+#    org.springframework.web: INFO
+#    org.hibernate.SQL: DEBUG
+#    org.hibernate.orm.jdbc.bind: TRACE
+#    org.hibernate.type.descriptor.sql: TRACE
+#    com.example.your.app: DEBUG
+
+recaptcha:
+  site-key: 6Lcxxxxx
+  secret-key: 6Lcxxxxx
+
 application:
   jwt:
     secret: ZTAyOWY4YTNiODhjMWQ1ZjdlNmE0YjJjMWQwZTlmOGEzYjJjMWQwZjllOGE3YjZjNWQ0ZTNmMmExYjBjOWQ4ZQ==
@@ -65,10 +91,12 @@ application:
       - images
       - other
       - icons
-  telegram:
-    bot:
-      token: 8481051986:AAEl9l4rDExYaZ7x5GdQIj4NT-cpMU-XL-c
-      username: onlineducation_bot
-      webhook-path: ${APPLICATION_TELEGRAM_BOT_WEBHOOK_PATH}
-      chat-id: 5902268851
-      channel-id: -1002895768675
+
+telegram:
+  bot:
+    token: 8481051986:AAEl9l4rDExYaZ7x5GdQIj4NT-cpMU-XL-c
+    username: onlineducation_bot
+    webhook-path: online-education.abdulbosit.uz
+    webapp.url: online-education.abdulbosit.uz/tg-bot-mini-app/index.html
+    chat-id: 5902268851
+    channel-id: -1002895768675
