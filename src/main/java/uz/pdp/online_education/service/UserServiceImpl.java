@@ -116,7 +116,7 @@ public class UserServiceImpl implements UserService {
             return ResponseDTO.success(tokenDto);
 
         } catch (UsernameNotFoundException e) {
-            // Xavfsizlik uchun "User not found" xatoligini ham "Bad credentials" ga o'girib yuboramiz
+
             log.warn("Failed login attempt for non-existent user '{}'", username);
             throw new BadCredentialsException("Bad credentials provided");
         }
@@ -125,7 +125,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public RegistrationResponseDTO register(UserRegisterRequestDTO request, HttpServletRequest httpServletRequest) {
-        // 1. Username yoki email bandligini tekshirish
+
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new DataConflictException("Username already exists!");
         }
@@ -143,13 +143,13 @@ public class UserServiceImpl implements UserService {
                     .orElseThrow(() -> new EntityNotFoundException("Attachment not found!"));
         }
 
-        // 2. User obyektini yaratish
+
         User user = new User();
         user.setUsername(request.getUsername());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(Role.STUDENT); // Standart rol berish
+        user.setRole(Role.STUDENT);
 
-        // 3. UserProfile obyektini yaratish
+
         UserProfile profile = new UserProfile();
         profile.setFirstName(request.getFirstName());
         profile.setLastName(request.getLastName());
@@ -158,27 +158,26 @@ public class UserServiceImpl implements UserService {
         profile.setProfilePicture(attachment);
         profile.setBio(request.getBio());
 
-        // 4. Eng muhim qadam: Ikkala obyektni bir-biriga bog'lash
+
         user.setProfile(profile);
         profile.setUser(user);
 
-        // 5. User-ni saqlash (UserProfile @OneToOne da cascade=ALL bo'lgani uchun avtomatik saqlanadi)
+
         User savedUser = userRepository.save(user);
 
-        // 6. Javob DTO-sini yaratib, qaytarish
-//        return userMapper.toDto(savedUser);
 
-        // 2. Verifikatsiya tokenini yaratish va saqlash
+
+
         String token = UUID.randomUUID().toString();
         VerificationToken verificationToken = new VerificationToken(token, savedUser);
         verificationTokenRepository.save(verificationToken);
 
-        // 3. Tasdiqlash xabarini yuborish
+
 //        String confirmationUrl = "http://localhost:8080/api/auth/verify?token=" + token;
         String confirmationUrl = getApplicationUrl(httpServletRequest);
         emailService.sendVerificationEmail(savedUser.getProfile().getEmail(), confirmationUrl + "/api/auth/verify?token=" + token);
 
-        // 4. Javob DTO'sini shakllantirish
+
         UserSummaryDTO userSummary = UserSummaryDTO.builder()
                 .id(savedUser.getId())
                 .username(savedUser.getUsername())
@@ -249,24 +248,23 @@ public class UserServiceImpl implements UserService {
 
         UserProfile profile = user.getProfile();
 
-        //1. Yangi profil rasmining ID 'sini DTO' dan olamiz.
+
         Long newPictureId = userUpdateRequestDTO.getProfilePictureId();
 
-        // 2. Mavjud profil rasmini va uning ID'sini olamiz (xavfsiz usulda).
+
         Attachment currentPicture = profile.getProfilePicture();
         Long currentPictureId = (currentPicture != null) ? currentPicture.getId() : null;
 
-        // 3. Eski va yangi ID'lar bir-biridan farq qilsagina ishni davom ettiramiz.
-        // Bu keraksiz bazaga murojaatlarning oldini oladi.
+
         if (!Objects.equals(currentPictureId, newPictureId)) {
 
-            // Holat A: Yangi rasm qo'shilyapti yoki almashtirilyapti.
+
             if (newPictureId != null) {
                 Attachment newAttachment = attachmentRepository.findById(newPictureId)
                         .orElseThrow(() -> new EntityNotFoundException("Attachment not found with id: " + newPictureId));
                 profile.setProfilePicture(newAttachment);
 
-                // Holat B: Mavjud rasm o'chirilyapti.
+
             } else {
                 profile.setProfilePicture(null);
             }

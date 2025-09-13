@@ -174,51 +174,36 @@ public class ModuleServiceImpl implements ModuleService {
         courseRepository.findById(courseId)
                 .orElseThrow(() -> new EntityNotFoundException("Course not found with id: " + courseId));
 
-        // 1. Kursga tegishli barcha modullarni bazadan olamiz.
+
         List<Module> modulesInDb = moduleRepository.findAllByCourse_Id(courseId);
 
-        // --- O'ZGARISH: DTO listidan ID listini ajratib olamiz ---
+
         List<Long> orderedModuleIds = orderedModuleDtos.stream()
                 .map(ModuleOrderIndexDTO::getModuleId)
                 .toList();
 
-        // 2. O'lchamlar mosligini tekshiramiz.
+
         if (orderedModuleIds.size() != modulesInDb.size()) {
             throw new DataConflictException("The number of module IDs sent does not match the number of modules in the course.");
         }
 
-        // 3. Modullarni tez topish uchun Map'ga joylashtiramiz.
         Map<Long, Module> moduleMap = modulesInDb.stream()
                 .collect(Collectors.toMap(Module::getId, Function.identity()));
 
-        // 4. Ma'lumotlar yaxlitligini tekshiramiz.
-        // Endi ajratib olingan `orderedModuleIds` ro'yxatini ishlatamiz.
+
         if (!moduleMap.keySet().equals(new HashSet<>(orderedModuleIds))) {
             throw new DataConflictException("The provided module IDs are invalid, do not match the course's modules, or contain duplicates.");
         }
 
-        // 5. Yangi tartib raqamlarini o'rnatamiz.
         for (int i = 0; i < orderedModuleIds.size(); i++) {
             Long moduleId = orderedModuleIds.get(i);
             Module moduleToUpdate = moduleMap.get(moduleId);
             moduleToUpdate.setOrderIndex(i);
         }
 
-        // 6. O'zgarishlarni ma'lumotlar bazasiga saqlaymiz.
         moduleRepository.saveAll(modulesInDb);
     }
-//    @Override
-//    public void updateModuleOrderIndex(Long courseId, List<Long> orderedModules) {
-//
-//        List<Module> allByCourseId = moduleRepository.findAllByCourse_Id(courseId);
-//
-//        if (orderedModules.size() != allByCourseId.size()) {
-//            throw new DataConflictException("The number of module IDs sent does not match the number of modules in the course.");
-//        }
-//
-//
-//
-//    }
+
 
     /**
      * @param id Long
@@ -237,20 +222,10 @@ public class ModuleServiceImpl implements ModuleService {
 
         moduleRepository.shiftOrderIndexesAfterDelete(course, deletedOrderIndex);
 
-//        moduleRepository.delete(moduleToDelete);
-//        moduleRepository.flush();
 
         course.getModules().remove(moduleToDelete);
 
-//        moduleRepository.deleteById(id);
     }
-//    @Override
-//    public void delete(Long id) {
-//        Module module = moduleRepository.findById(id)
-//                .orElseThrow(() -> new EntityNotFoundException("Module nor found with id: " + id));
-//
-//        moduleRepository.delete(module);
-//    }
 
     /**
      * @param username String

@@ -39,11 +39,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        // LoggingInterceptor'ni ro'yxatga olamiz
-        registry.addInterceptor(loggingInterceptor)
-                // VA UNGA QOIDALAR BELGILAYMIZ:
 
-                // 1. Qaysi yo'llar uchun ISHLAMASLIGINI ko'rsatamiz
+        registry.addInterceptor(loggingInterceptor)
+
+
+
                 .excludePathPatterns("/telegram-bot");
 
         // Agar boshqa yo'llarni ham istisno qilmoqchi bo'lsangiz:
@@ -114,8 +114,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**") // barcha endpointlarga
-                .allowedOrigins("*") // frontend IP + port
+        registry.addMapping("/**")
+                .allowedOrigins("*")
                 .allowedMethods("*")
                 .allowedHeaders("*")
                 .allowCredentials(false);

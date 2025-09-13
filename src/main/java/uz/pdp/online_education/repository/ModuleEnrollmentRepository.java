@@ -64,7 +64,7 @@ public interface ModuleEnrollmentRepository extends JpaRepository<ModuleEnrollme
 
     boolean existsByUserAndModuleId(User user, Long moduleId);
 
-    // 3-so'rov: Foydalanuvchining to'lov qilmagan modullarini topish
+
     @Query("SELECT me.module FROM module_enrollments me WHERE me.user.id = :userId AND me.module.id NOT IN " +
             "(SELECT p.module.id FROM payment p WHERE p.user.id = :userId AND p.status = uz.pdp.online_education.enums.TransactionStatus.SUCCESS)")
     List<Module> findUnpaidModulesByUserId(@Param("userId") Long userId);

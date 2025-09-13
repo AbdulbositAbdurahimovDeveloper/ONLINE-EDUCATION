@@ -26,7 +26,7 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
     public Page<CourseWithRatingDTO> filterWithCriteria(FilterDTO filter, Pageable pageable) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
 
-        // 1. Asosiy so'rovni (ma'lumotlarni olish uchun) qurish
+
         CriteriaQuery<CourseWithRatingDTO> query = cb.createQuery(CourseWithRatingDTO.class);
         Root<Course> root = query.from(Course.class);
 
@@ -45,19 +45,19 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
 
         applySorting(pageable, query, cb, root, avgRating);
 
-        // Asosiy so'rovni bajarish
+
         TypedQuery<CourseWithRatingDTO> typedQuery = entityManager.createQuery(query);
         typedQuery.setFirstResult((int) pageable.getOffset());
         typedQuery.setMaxResults(pageable.getPageSize());
         List<CourseWithRatingDTO> resultList = typedQuery.getResultList();
 
-        // 2. Jami sonni to'g'ri hisoblash
+
         Long total = getTotalCount(filter, cb);
 
         return new PageImpl<>(resultList, pageable, total);
     }
 
-    // Yordamchi metod: WHERE shartlarini qurish uchun (o'zgarishsiz)
+
     private Predicate buildWhereClause(FilterDTO filter, CriteriaBuilder cb, Root<Course> root, CriteriaQuery<?> query) {
         List<Predicate> predicates = new ArrayList<>();
 
@@ -103,7 +103,7 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
         return cb.and(predicates.toArray(new Predicate[0]));
     }
 
-    // Jami sonni hisoblash uchun YAKUNIY va TO'G'RI metod
+
     private Long getTotalCount(FilterDTO filter, CriteriaBuilder cb) {
         CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
         Root<Course> root = countQuery.from(Course.class);
@@ -111,12 +111,12 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
         Predicate whereClause = buildWhereClause(filter, cb, root, countQuery);
 
         if (filter.getReview() != null) {
-            // Agar reyting bo'yicha filtr bo'lsa, count hisoblash murakkablashadi.
-            // Biz filtrga mos keladigan kurslarning ID'larini sanashimiz kerak.
+
+
             CriteriaQuery<Long> idQuery = cb.createQuery(Long.class);
             Root<Course> idRoot = idQuery.from(Course.class);
 
-            // Barcha kerakli JOIN va Predicate'larni qaytadan qurish kerak
+
             Predicate idWhereClause = buildWhereClause(filter, cb, idRoot, idQuery);
             Join<Course, Review> reviewJoin = idRoot.join("reviews", JoinType.LEFT);
 
@@ -129,15 +129,15 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
             return (long) ids.size();
 
         } else {
-            // Agar reyting filtri bo'lmasa, oddiy count ishlaydi
+
             countQuery.select(cb.count(root)).where(whereClause);
             return entityManager.createQuery(countQuery).getSingleResult();
         }
     }
 
-    // Saralashni qo'llash uchun yordamchi metod
+
     private void applySorting(Pageable pageable, CriteriaQuery<CourseWithRatingDTO> query, CriteriaBuilder cb, Root<Course> root, Expression<Double> avgRating) {
-        // Har doim reyting bo'yicha kamayish tartibida saralaymiz
+
         query.orderBy(
                 cb.desc(avgRating),
                 cb.asc(root.get(Course.Fields.title))

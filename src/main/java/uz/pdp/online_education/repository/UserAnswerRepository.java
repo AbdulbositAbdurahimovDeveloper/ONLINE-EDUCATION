@@ -8,8 +8,6 @@ import java.util.List;
 
 public interface UserAnswerRepository extends JpaRepository<UserAnswer, Long> {
 
-    // Bitta urinishga tegishli barcha javoblarni, ularning savollari va
-    // tanlangan/to'g'ri javob variantlari bilan birga samarali yuklab oladi.
     @Query("SELECT ua FROM user_answers ua " +
             "LEFT JOIN FETCH ua.question q " +
             "LEFT JOIN FETCH q.options " + // Savolning barcha variantlarini

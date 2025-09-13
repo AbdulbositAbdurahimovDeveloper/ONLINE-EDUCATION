@@ -10,10 +10,10 @@ import org.telegram.telegrambots.meta.api.objects.User;
 @Service
 public class TelegramUpdateLogger {
 
-    // SLF4J loggerini yaratib olamiz
+
     private static final Logger log = LoggerFactory.getLogger(TelegramUpdateLogger.class);
 
-    // Ranglar uchun ANSI kodlari
+
     public static final String ANSI_RESET = "\u001B[0m";
     public static final String ANSI_GREEN = "\u001B[32m";
     public static final String ANSI_YELLOW = "\u001B[33m";
@@ -29,7 +29,7 @@ public class TelegramUpdateLogger {
     public void logUpdate(Update update) {
         StringBuilder logBuilder = new StringBuilder();
 
-        // Logning boshi
+
         logBuilder.append("\n")
                 .append(ANSI_GREEN).append("================ INCOMING TELEGRAM REQUEST ================").append(ANSI_RESET)
                 .append("\n");
@@ -56,7 +56,7 @@ public class TelegramUpdateLogger {
             logBuilder.append(ANSI_YELLOW).append("Chat ID   : ").append(ANSI_RESET).append(update.getCallbackQuery().getMessage().getChatId()).append("\n");
             logBuilder.append(ANSI_YELLOW).append("Data      : ").append(ANSI_RESET).append("\"").append(data).append("\"\n");
 
-        } else if (update.hasMyChatMember()) { // <--- YANGI BLOK
+        } else if (update.hasMyChatMember()) {
             ChatMemberUpdated chatMemberUpdated = update.getMyChatMember();
             User from = chatMemberUpdated.getFrom();
             String oldStatus = chatMemberUpdated.getOldChatMember().getStatus();
@@ -68,28 +68,28 @@ public class TelegramUpdateLogger {
                     .append(from.getUserName()).append(")\n");
             logBuilder.append(ANSI_YELLOW).append("Chat ID   : ").append(ANSI_RESET).append(chatMemberUpdated.getChat().getId()).append("\n");
 
-            // Holat o'zgarishini ranglar bilan ko'rsatish
+
             logBuilder.append(ANSI_BLUE).append("Status    : ").append(ANSI_RESET)
                     .append(oldStatus).append(" -> ");
 
-            if (newStatus.equals("kicked")) { // Agar bloklansa
+            if (newStatus.equals("kicked")) {
                 logBuilder.append(ANSI_RED).append(newStatus.toUpperCase()).append(ANSI_RESET).append(" (Bot Blocked)\n");
-            } else if (newStatus.equals("member")) { // Agar qayta ishga tushirilsa
+            } else if (newStatus.equals("member")) {
                 logBuilder.append(ANSI_GREEN).append(newStatus.toUpperCase()).append(ANSI_RESET).append(" (Bot (Re)Started)\n");
             } else {
                 logBuilder.append(newStatus).append("\n");
             }
 
         } else {
-            // Boshqa turdagi so'rovlar uchun (masalan, fayl, kontakt)
+
             logBuilder.append(ANSI_CYAN).append("Type      : ").append(ANSI_RESET).append("Unsupported or Unknown Update Type\n");
             logBuilder.append(ANSI_YELLOW).append("Update ID : ").append(ANSI_RESET).append(update.getUpdateId()).append("\n");
         }
 
-        // Logning oxiri
+
         logBuilder.append(ANSI_GREEN).append("=========================================================").append(ANSI_RESET);
 
-        // Tayyor bo'lgan matnni INFO darajasida logga chiqarish
+
         log.info(logBuilder.toString());
     }
 }

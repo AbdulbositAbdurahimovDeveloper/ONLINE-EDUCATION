@@ -33,7 +33,7 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
 
     boolean existsByTitleAndModuleIdAndIdNot(String title, Long moduleId, Long id);
 
-    @Modifying // Bu metodning ma'lumotlarni o'zgartirishini bildiradi
+    @Modifying
     @Query("UPDATE Lesson l SET l.orderIndex = l.orderIndex - 1 WHERE l.module.id = :moduleId AND l.orderIndex > :orderIndex")
     void shiftOrderIndexesAfterDelete(Long moduleId, Integer orderIndex);
 

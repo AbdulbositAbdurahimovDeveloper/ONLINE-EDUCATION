@@ -61,7 +61,7 @@ public class AttachmentServiceImpl implements AttachmentService {
     @Value("${telegram.bot.channel-id}")
     private String CHANNEL_ID;
 
-    // Ruxsat etilgan rasm turlari ro'yxati
+
     private static final List<String> ALLOWED_IMAGE_TYPES = List.of(
             MediaType.IMAGE_JPEG_VALUE, // "image/jpeg"
             MediaType.IMAGE_PNG_VALUE,  // "image/png"
@@ -103,15 +103,15 @@ public class AttachmentServiceImpl implements AttachmentService {
             throw new IllegalArgumentException("Photo list cannot be null or empty.");
         }
 
-        // Eng katta o'lchamdagi rasmni tanlab olamiz
+
         PhotoSize largestPhoto = photoList.stream()
                 .max(Comparator.comparing(PhotoSize::getFileSize))
                 .orElseThrow(() -> new IllegalArgumentException("Could not find a valid photo in the list."));
 
-        // 1. Rasmni MinIO'ga yuklaymiz (yangi metodimizni chaqiramiz)
+
         String minioKey = saveTgPhotoToMinio(largestPhoto);
 
-        // 2. Ma'lumotlarni bazaga saqlaymiz
+
         Attachment attachment = new Attachment();
         try {
             attachment.setOriginalName(new java.io.File(bot.execute(new GetFile(largestPhoto.getFileId())).getFilePath()).getName()); // Haqiqiy nomni olish
@@ -126,10 +126,10 @@ public class AttachmentServiceImpl implements AttachmentService {
 
         Attachment savedAttachment = attachmentRepository.save(attachment);
 
-        // 3. Rasmni kanalga yuboramiz (file_id orqali, bu tezroq)
+
         sendPhotoToChannel(savedAttachment.getTelegramFileId());
 
-        // 4. DTO ni qaytaramiz
+
         return attachmentMapper.toDTO(savedAttachment);
     }
 
@@ -149,6 +149,8 @@ public class AttachmentServiceImpl implements AttachmentService {
         }
 
         log.info("Starting asynchronous processing for video file_id: {}", video.getFileId());
+
+        processAndSaveTgVideo(video, chatId,lessonId);
         // Asosiy, @Async annotatsiyasi bor metodni chaqiramiz.
         // Spring bu chaqiruvni tutib olib, uni alohida thread'da bajaradi.
         processAndSaveTgVideo(video, chatId, lessonId);
@@ -166,13 +168,12 @@ public class AttachmentServiceImpl implements AttachmentService {
     @Transactional // DB operatsiyalari uchun tranzaksiyani boshqaradi
     public void processAndSaveTgVideo(Video video, Long chatId, Long lessonId) {
         try {
-            // 1. Fayl haqidagi ma'lumotni Telegramdan olamiz.
+
             org.telegram.telegrambots.meta.api.objects.File telegramFile = bot.execute(new GetFile(video.getFileId()));
 
-            // 2. Faylni MinIO'ga yuklaymiz.
             String minioKey = saveTgFileToMinio(telegramFile, video.getMimeType(), video.getFileSize());
 
-            // 3. Ma'lumotlarni bazaga saqlaymiz.
+
             Attachment attachment = new Attachment();
             attachment.setOriginalName(video.getFileName());
             attachment.setContentType(video.getMimeType());
@@ -186,14 +187,14 @@ public class AttachmentServiceImpl implements AttachmentService {
             attachmentContentService.create(new AttachmentContentCreateDTO(lessonId, saved.getId()));
             bot.myExecute(sendMsg.sendMessage(chatId, buildAttachmentText(saved)));
 
-            // 4. Videoni kanalga yuboramiz.
+
             sendVideoToChannel(video.getFileId(), video.getFileName());
 
             log.info("Successfully processed and saved video file_id: {}", video.getFileId());
 
         } catch (Exception e) {
             log.error("Failed to process video file_id: {} in background.", video.getFileId(), e);
-            // Bu yerda xatolik haqida adminlarga xabar yuborish logikasi bo'lishi mumkin.
+
         }
     }
 
@@ -241,17 +242,17 @@ public class AttachmentServiceImpl implements AttachmentService {
         try (InputStream fileStream = bot.downloadFileAsStream(telegramFile)) {
             String bucketName = minio.getBuckets().get(0);
 
-            // Bucket mavjudligini tekshiramiz va kerak bo'lsa yaratamiz
+
             if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
                 log.info("Bucket '{}' created successfully.", bucketName);
             }
 
-            // Fayl uchun unikal nom (key) generatsiya qilamiz
+
             String originalFileName = new java.io.File(telegramFile.getFilePath()).getName();
             String objectKey = UUID.randomUUID() + "_" + originalFileName;
 
-            // Faylni MinIO'ga yuklaymiz
+
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucketName)
@@ -319,7 +320,7 @@ public class AttachmentServiceImpl implements AttachmentService {
             throw new IllegalArgumentException("Fayl bo'sh bo'lishi mumkin emas.");
         }
 
-        // 2. Fayl turini tekshirish
+
         String contentType = multipartFile.getContentType();
         if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType)) {
             throw new DataConflictException("Faqat .jpeg, .png, .svg formatdagi rasmlar yuklash mumkin.");
@@ -473,7 +474,7 @@ public class AttachmentServiceImpl implements AttachmentService {
         }
     }
 
-    // AttachmentService.java ichida
+
 
     /**
      * Telegramdan kelgan PhotoSize obyektidagi rasmni MinIO'ga yuklaydi.
@@ -484,30 +485,28 @@ public class AttachmentServiceImpl implements AttachmentService {
      */
     private String saveTgPhotoToMinio(PhotoSize photo) {
         try {
-            // 1. Telegram API orqali faylning yo'lini (path) olamiz
+
             org.telegram.telegrambots.meta.api.objects.File telegramFile = bot.execute(new GetFile(photo.getFileId()));
 
-            // 2. Faylni yuklab olish uchun URL hosil qilamiz va fayl oqimini (InputStream) olamiz
-            // Eslatma: Bu metod to'g'ridan-to'g'ri faylni yuklab oladi.
+
             try (InputStream fileStream = bot.downloadFileAsStream(telegramFile)) {
 
                 String bucketName = minio.getBuckets().get(0);
 
-                // Bucket mavjudligini tekshiramiz va kerak bo'lsa yaratamiz
+
                 if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
                     minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
                     log.info("Bucket '{}' created successfully.", bucketName);
                 }
 
-                // 3. Fayl uchun unikal nom (key) generatsiya qilamiz
-                // Asl nomni olishga harakat qilamiz, agar bo'lmasa UUID ishlatamiz.
+
                 String originalFileName = telegramFile.getFilePath() != null ?
                         new java.io.File(telegramFile.getFilePath()).getName() :
                         UUID.randomUUID().toString();
 
                 String objectKey = UUID.randomUUID() + "_" + originalFileName;
 
-                // 4. MinIO'ga yuklaymiz
+
                 minioClient.putObject(
                         PutObjectArgs.builder()
                                 .bucket(bucketName)

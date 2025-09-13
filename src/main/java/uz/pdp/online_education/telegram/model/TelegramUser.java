@@ -18,17 +18,17 @@ public class TelegramUser {
     @Id
     private Long chatId;
 
-    @OneToOne// FetchType.LAZY tavsiya etiladi
+    @OneToOne
     @JoinColumn(name = "user_id", unique = true)
     @JsonBackReference
-    @ToString.Exclude // Bu ustun aloqani o'rnatadi
+    @ToString.Exclude
     private User user;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserState userState;
 
-    @Lob // Bu TEXT tipidagi ustun yaratishni bildiradi
+    @Lob
     @Column(name = "temporary_data")
     private String temporaryData;
 

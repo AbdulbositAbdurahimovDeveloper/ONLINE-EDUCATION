@@ -27,7 +27,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
     private final ReviewMapper reviewMapper;
-    private final EmailService emailService; // Email servisni inject qilamiz
+    private final EmailService emailService;
     private final NotificationService notificationService;
 
 //    @Override
@@ -73,21 +73,21 @@ public class ReviewServiceImpl implements ReviewService {
         boolean isNewReview;
 
         if (optionalReview.isPresent()) {
-            // Sharh mavjud, uni yangilaymiz
+
             review = optionalReview.get();
             review.setRating(dto.getRating());
             review.setComment(dto.getComment());
             log.info("Review updated with id: {}", review.getId());
             isNewReview = false;
         } else {
-            // Sharh mavjud emas, yangisini yaratamiz
+
             review = new Review(dto.getRating(), dto.getComment(), course, currentUser);
             review = reviewRepository.save(review);
             log.info("Review created with id: {}", review.getId());
             isNewReview = true;
         }
 
-        // Yangilangan va to'g'rilangan chaqiruv
+
         notificationService.sendReviewNotification(review, isNewReview);
 
         return reviewMapper.toDto(review);

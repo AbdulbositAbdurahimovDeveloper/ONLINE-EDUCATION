@@ -5,25 +5,25 @@ import lombok.Getter;
 @Getter
 public enum BotMessage {
 
-    // --- Common Messages ---
+
     WELCOME_FIRST_TIME("common.welcome-first-time"),
     ERROR_UNEXPECTED("common.error.unexpected"),
     ERROR_USER_NOT_FOUND("common.error.user-not-found"),
     KEY_NOT_FOUND("common.key-not-found"),
 
-    // --- Role Changed Messages ---
+
     ROLE_CHANGED_STUDENT("common.role-changed.student"),
     ROLE_CHANGED_INSTRUCTOR("common.role-changed.instructor"),
     ROLE_CHANGED_ADMIN("common.role-changed.admin"),
 
-    // --- Student Messages ---
+
     START_MESSAGE_STUDENT("student.start-message"),
     DASHBOARD_STUDENT("student.dashboard"),
-    // --- Student Messages ---
+
     AUTH_LOGOUT_CONFIRMATION_TEXT("auth.logout.confirmation-text"),
     AUTH_LOGOUT_SUCCESS_TEXT("auth.logout.success-text"),
 
-    // --- Student "My Courses" Flow ---
+
     MY_COURSES_TITLE("student.my-courses.title"),
     NO_ENROLLED_COURSES("student.my-courses.no-courses-found"),
     MODULES_LIST_TITLE("student.my-courses.modules-list-title"),
@@ -96,15 +96,13 @@ public enum BotMessage {
 
 
 
-    // --- Instructor Messages ---
+
     START_MESSAGE_INSTRUCTOR("instructor.start-message"),
     DASHBOARD_INSTRUCTOR("instructor.dashboard"),
 
     INSTRUCTOR_CREATE_REMINDER("instructor.reminder"),
 
-    // ===============================================
-    // == INSTRUCTOR: KURS YARATISH (COURSE CREATION WIZARD) ==
-    // ===============================================
+
     INSTRUCTOR_COURSE_CREATE_CATEGORY_PROMPT("instructor.course_create.category_prompt"),
     INSTRUCTOR_COURSE_CREATE_CATEGORY_CHOSEN("instructor.course_create.category_chosen"),
     INSTRUCTOR_COURSE_CREATE_TITLE_PROMPT("instructor.course_create.title_prompt"),
@@ -132,7 +130,7 @@ public enum BotMessage {
 
 
 
-    // --- Admin Messages ---
+
     START_MESSAGE_ADMIN("admin.start-message"),
     DASHBOARD_ADMIN("admin.dashboard"),
     ADMIN_USERS_MENU("admin.users-menu"),

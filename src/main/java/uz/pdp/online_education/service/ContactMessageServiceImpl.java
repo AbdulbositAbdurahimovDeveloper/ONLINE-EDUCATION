@@ -82,12 +82,12 @@ public class ContactMessageServiceImpl implements ContactMessageService {
         ContactMessage message = contactMessageRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("ContactMessage not found"));
 
-        // Faqat o'ziga tegishli bo'lgan message'ni delete qilishga ruxsat beriladi
+
         if (!message.getEmail().equals(requesterEmail)) {
             throw new RuntimeException("You can only delete your own messages");
         }
 
-        // Agar message REPLIED bo'lsa, o'chirishga ruxsat berilmaydi
+
         if (message.getStatus() == MessageStatus.REPLIED) {
             throw new RuntimeException("Cannot delete a replied message");
         }

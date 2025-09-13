@@ -18,17 +18,21 @@ public class RedisTemporaryDataServiceImpl implements RedisTemporaryDataService 
 
     private final RedisTemplate<String, Object> redisTemplate;
 
+
     @Value("${application.cache.temporary-process-ttl-seconds}")
     private long defaultTtlSeconds;
 
     @Override
     public void startProcess(String key, Map<String, Object> initialData) {
+
         this.startProcess(key, initialData, this.defaultTtlSeconds);
     }
 
     @Override
     public void startProcess(String key, Map<String, Object> initialData, long ttlSeconds) {
+
         redisTemplate.opsForHash().putAll(key, initialData);
+
         redisTemplate.expire(key, ttlSeconds, TimeUnit.SECONDS);
     }
 
@@ -40,12 +44,15 @@ public class RedisTemporaryDataServiceImpl implements RedisTemporaryDataService 
 
     @Override
     public Map<String, Object> getFields(String key, List<String> fields) {
+
         List<Object> hashKeys = fields.stream().map(f -> (Object) f).collect(Collectors.toList());
+
 
         List<Object> values = redisTemplate.opsForHash().multiGet(key, hashKeys);
 
         Map<String, Object> result = new HashMap<>();
         for (int i = 0; i < fields.size(); i++) {
+
             if (values.get(i) != null) {
                 result.put(fields.get(i), values.get(i));
             }
@@ -55,11 +62,13 @@ public class RedisTemporaryDataServiceImpl implements RedisTemporaryDataService 
 
     @Override
     public Optional<Map<String, Object>> getAllFields(String key) {
+
         Map<Object, Object> rawMap = redisTemplate.opsForHash().entries(key);
 
         if (rawMap == null || rawMap.isEmpty()) {
             return Optional.empty();
         }
+
 
         Map<String, Object> resultMap = rawMap.entrySet().stream()
                 .collect(Collectors.toMap(
